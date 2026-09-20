@@ -1,0 +1,55 @@
+"""Ejecuta todas las pruebas del proyecto, una por una, y resume el resultado.
+
+Uso (desde la carpeta que contiene 'cripta' y 'pruebas'):
+    python -m pruebas.ejecutar_pruebas
+
+Cada prueba corre en su propio proceso, así una no contamina a las demás.
+Al agregar una prueba nueva, escribe su nombre en la lista PRUEBAS.
+"""
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+PRUEBAS = (
+    "prueba_1_3",               # DTO y convertidor de JSON
+    "prueba_1_4",               # puerto FuenteDatos
+    "prueba_1_5",               # ContadorSolicitudes
+    "prueba_falso_1_6",         # ClienteHttp contra un servidor simulado
+    "prueba_real_1_6",          # ClienteHttp real
+    "prueba_1_8",               # FuenteAsincrona
+    "prueba_falso_1_9",         # Todo junto
+    "prueba_real_1_9",          # todo junto real
+)
+
+TIEMPO_MAXIMO = 120  # segundos por prueba
+
+
+def main():
+    raiz = Path(__file__).resolve().parent.parent
+    fallidas = []
+    for nombre in PRUEBAS:
+        inicio = time.perf_counter()
+        try:
+            resultado = subprocess.run(
+                [sys.executable, "-m", "pruebas." + nombre],
+                cwd=raiz, capture_output=True, text=True, timeout=TIEMPO_MAXIMO)
+            salio_bien = resultado.returncode == 0
+            salida = resultado.stdout + resultado.stderr
+        except subprocess.TimeoutExpired:
+            salio_bien = False
+            salida = f"Se excedió el tiempo máximo de {TIEMPO_MAXIMO} s"
+        duracion = time.perf_counter() - inicio
+        estado = "OK   " if salio_bien else "FALLÓ"
+        print(f"[{estado}] {nombre:<26} {duracion:5.1f} s")
+        if not salio_bien:
+            fallidas.append(nombre)
+            print(salida)
+    print()
+    if fallidas:
+        print("Fallaron:", ", ".join(fallidas))
+        sys.exit(1)
+    print(f"Todas las pruebas pasaron ({len(PRUEBAS)}).")
+
+
+main()
