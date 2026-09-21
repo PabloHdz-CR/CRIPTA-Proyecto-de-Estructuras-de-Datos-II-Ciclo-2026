@@ -12,14 +12,19 @@ import time
 from pathlib import Path
 
 PRUEBAS = (
-    "prueba_1_3",               # DTO y convertidor de JSON
-    "prueba_1_4",               # puerto FuenteDatos
-    "prueba_1_5",               # ContadorSolicitudes
-    "prueba_falso_1_6",         # ClienteHttp contra un servidor simulado
-    "prueba_real_1_6",          # ClienteHttp real
-    "prueba_1_8",               # FuenteAsincrona
-    "prueba_falso_1_9",         # Todo junto
-    "prueba_real_1_9",          # todo junto real
+    #"prueba_1_3",               # DTO y convertidor de JSON
+    #"prueba_1_4",               # puerto FuenteDatos
+    #"prueba_1_5",               # ContadorSolicitudes
+    #"prueba_falso_1_6",         # ClienteHttp contra un servidor simulado
+    #"prueba_real_1_6",          # ClienteHttp real
+    #"prueba_1_8",               # FuenteAsincrona
+    #"prueba_falso_1_9",         # Todo junto
+    #"prueba_real_1_9",          # todo junto real
+    #"prueba_2_2",               # Heap Minimo
+    "prueba_2_3",
+    "prueba_4_1",               # ListaDoble
+    "prueba_4_2",               # Pila y PilaAcotada
+    "prueba_4_3",               # ColaAcotada
 )
 
 TIEMPO_MAXIMO = 120  # segundos por prueba

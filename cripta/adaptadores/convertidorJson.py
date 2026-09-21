@@ -118,16 +118,16 @@ def contenido_desde_json(datos):
     resultado = ListaEnlazada()
     for item in _requerido(datos, "contenido", operacion):
         enemigos = ListaEnlazada()
-        for e in item.get("enemigos", []):
+        for e in item.get("enemigos", ()):
             enemigos.agregar_al_final(EnemigoInstanciaDTO(
                 instancia=_requerido(e, "instancia", operacion),
                 tipo=_requerido(e, "tipo", operacion),
                 vida=e.get("vida"),
             ))
         objetos = ListaEnlazada()
-        objetos.agregar_todos(item.get("objetos", []))
+        objetos.agregar_todos(item.get("objetos", ()))
         trampas = ListaEnlazada()
-        for t in item.get("trampas", []):
+        for t in item.get("trampas", ()):
             trampas.agregar_al_final(TrampaInstanciaDTO(
                 instancia=_requerido(t, "instancia", operacion),
                 tipo=_requerido(t, "tipo", operacion),
@@ -154,7 +154,7 @@ def _ficha_desde_json(datos, operacion):
     # usar dict como tabla de búsqueda.
     if clase == "enemigo":
         suelta = ListaEnlazada()
-        suelta.agregar_todos(datos.get("suelta", []))
+        suelta.agregar_todos(datos.get("suelta", ()))
         return FichaEnemigoDTO(
             id=id_, nombre=nombre,
             vida_max=_requerido(datos, "vida_max", operacion),

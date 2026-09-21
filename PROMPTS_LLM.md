@@ -362,3 +362,54 @@ R: Terminar la solicitud en curso y descartar las pendientes (recomendada)"
 - **Prompt:** "P: ¿Se pueden cancelar solicitudes pendientes?
 R: No permitir cancelar (recomendada)"
 - **Uso:** implementar la sección 1.8 (Solicitud y FuenteAsincrona) con las decisiones de orden de incorporación, sin cancelación de solicitudes y cierre que descarta las pendientes; preparar notas para el Documento de Decisiones.
+
+## Entrada 19
+- **Fecha:** 20/09/2026
+- **Herramienta:** Claude
+- **Prompt:** "Todas las pruebas salieron exitosas, sigamos con el paso 2. Ya que estamos describeme cuantos pasos son lo que faltan."
+- **Uso:** conocer cuántos pasos y secciones faltan del proyecto y planificar el Paso 2 (MonticuloMinimo para la agenda de eventos) con sus decisiones de diseño sobre almacenamiento, comparación y cancelación de eventos.
+
+## Entrada 20
+- **Fecha:** 20/09/2026
+- **Herramienta:** Claude
+- **Prompt:** "P: 1. ¿Con qué se guarda el montículo por dentro?
+R: si con monticulo te refieres a un heap esta bien pero me parece que no vamos a usar list, si usamos una lista enlazada lo creamos en estructuras y de ahi lo implementamos.
+
+P: 2. ¿Cómo compara el montículo dos elementos?
+R: Los elementos se comparan con < (método __lt__) (recomendada)
+
+P: 3. ¿Cómo se cancelan y reprograman los eventos?
+R: igual si te refieres a un heap minimo como un monticulo si hagamos eso"
+- **Uso:** definir el almacenamiento del heap mínimo con nodos enlazados, la comparación con __lt__ y la cancelación perezosa; implementar las secciones 2.1 (NodoArbol, MonticuloBinario y MonticuloMinimo) y 2.2 (pruebas), y preparar notas para el Documento de Decisiones.
+
+## Entrada 21
+- **Fecha:** 20/09/2026
+- **Herramienta:** Claude
+- **Prompt:** "ok hagamos los pasos 2.2 y el 2.3 de un solo con sus respectivas pruebas y procesos"
+- **Uso:** ejecutar y verificar el montículo y la prueba 2.2, e implementar la sección 2.3 (alternativas descartadas de la agenda, medidor, reporte y benchmark de la agenda) con sus pruebas y una prueba de reglas del proyecto; preparar notas para el Documento de Decisiones.
+
+## Entrada 22
+- **Fecha:** 20/09/2026
+- **Herramienta:** Claude
+- **Prompt:** "P: 1. ¿Cómo guardamos el montículo de la agenda?
+R: Mantener el montículo de nodos como decisión (recomendada)
+
+P: 2. ¿Se permite usar list de Python solo como memoria interna de una estructura propia?
+R: cuando queramos usar list de python, usemos la lista enlazada la clase pq para algo la tenemos no?"
+- **Uso:** fijar la decisión de mantener el montículo de nodos y la política de no usar listas de Python (usar ListaEnlazada); auditar y corregir el código existente, reemplazar la prueba de reglas por un detector basado en ast que vigila todo el programa, y preparar las notas D23 y D27 para el Documento de Decisiones.
+
+## Entrada 23
+- **Fecha:** 20/09/2026
+- **Herramienta:** Claude
+- **Prompt:** "ahora si ya terminamos el paso 2 tengo entendido, empecemos con el siguiente que me toca trabajar"
+- **Uso:** confirmar el cierre del Paso 2 y planificar el Paso 4 (ListaDoble, Pila, PilaAcotada y ColaAcotada para el historial de retroceso, el inventario y la bitácora en pantalla), con sus decisiones de diseño.
+
+## Entrada 24
+- **Fecha:** 20/09/2026
+- **Herramienta:** Claude
+- **Prompt:** "P: 1. ¿Cómo apunta el inventario al objeto que está viendo?
+R: Nodos como posiciones que la lista valida (recomendada)
+
+P: 2. ¿Cómo hacemos la pila con tope de 5?
+R: Pila simple y PilaAcotada, dos clases (recomendada)"
+- **Uso:** implementar las secciones 4.1 (NodoDoble y ListaDoble con nodos como posiciones validadas), 4.2 (Pila y PilaAcotada) y 4.3 (ColaAcotada para la bitácora), con sus pruebas, y preparar las notas D28, D29 y D30 para el Documento de Decisiones.

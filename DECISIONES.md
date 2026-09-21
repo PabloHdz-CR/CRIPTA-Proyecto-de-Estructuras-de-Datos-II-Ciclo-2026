@@ -206,3 +206,107 @@ Decisión: un servidor HTTP local que imita el API (con latencia configurable, r
 Complejidad: el conteo esperado se deduce del diseño: menú 2 + esqueleto ⌈salas/salas_por_página⌉ + contenido ⌈salas/10⌉ + catálogo (en cadena, ≥ 2).
 Evidencia obtenida: las 12 solicitudes, sus rutas y su orden de recolección fueron idénticos con latencia de 50 ms y de 0 ms. El contador coincidió con las solicitudes que el servidor recibió realmente, incluido el 429. Se introdujeron tres fallas a propósito (reintentos sin contar, recolección desordenada, UUID variable) y las pruebas las detectaron todas.
 Límites: el servidor simulado solo es tan fiel como nuestra lectura del contrato. Por eso se complementa con real_1_9.py contra el servicio real.
+
+D23. Montículo con nodos enlazados en lugar de arreglo
+
+(§4.1, agenda de eventos.)
+
+Problema: obtener el próximo evento (menor (tiempo, secuencia)) sin examinar todos, con cientos de eventos y decenas de miles de extracciones. La restricción del equipo es usar solo estructuras propias, sin list de Python.
+Alternativas:
+(a) Heap sobre list de Python: el más rápido en la práctica, pero el equipo decidió no usarla.
+(b) Heap dentro de una ListaEnlazada: acceder a la posición i cuesta O(i), y las operaciones pasarían a O(n log n).
+(c) Búsqueda lineal del mínimo o lista ordenada: O(n) por operación.
+Decisión: árbol binario completo de nodos enlazados, con punteros a hijo izquierdo, derecho y padre. A la posición p se llega bajando según los bits de p, en O(log n), sin arreglos ni recorridos completos.
+Complejidad: insertar y extraer O(log n); mínimo O(1); recorrer O(n).
+Evidencia por medir (2.3): ciclos de "extraer y reprogramar" con 100, 300, 1000 y 10 000 eventos, comparando nodos enlazados contra el arreglo (alternativa descartada por decisión, se implementa solo para medir) y contra la búsqueda lineal.
+Límites: con nodos hay más memoria por elemento (cuatro referencias) y peor localidad de memoria que un arreglo. Con cientos de eventos no importa; con millones sí, y ahí convendría el arreglo.
+D24. Comparación mediante __lt__
+Problema: la agenda debe ordenar por (tiempo, secuencia), pero el montículo debe ser reutilizable (números, texto, eventos).
+Alternativas: pasar una función de comparación al constructor (más flexible, pero introduce funciones como valores y más partes móviles); guardar pares (prioridad, dato) (duplica objetos y acopla la estructura al uso).
+Decisión: el montículo solo usa <; el orden de desempate vive en Evento.__lt__.
+Complejidad: cada comparación cuesta O(1) si __lt__ compara dos números. Ojo con comparaciones costosas en otros usos (§4.9).
+Evidencia por medir: número de comparaciones por operación, contado con una clase de prueba que las cuenta.
+Límites: si dos elementos quedan "empatados" con <, el orden entre ellos no está definido. Para eventos no ocurre gracias a la secuencia única.
+D25. Cancelación perezosa
+Problema: al morir un actor o cancelarse un efecto sus eventos no deben ejecutarse, y no se puede recorrer toda la agenda para buscarlos (§4.1, §2.10).
+Alternativas: montículo indexado con eliminación inmediata (cada nodo guarda su posición y se saca del medio en O(log n); más código, acopla el TDA a Evento y complica el deshacer); reconstruir el montículo sin los cancelados (O(n) por cancelación).
+Decisión: montículo simple; la Agenda marca cancelado y descarta los eventos cancelados al llegar a la raíz. Reprogramar es cancelar e insertar uno nuevo; deshacer es quitar la bandera.
+Complejidad: cancelar es O(1). Cada evento cancelado cuesta una extracción O(log n) en total, una sola vez.
+Evidencia por medir: carga con un porcentaje de eventos cancelados (10 %, 50 %, 90 %) y crecimiento del tamaño del montículo frente a la cantidad de eventos vivos.
+Límites: los eventos cancelados ocupan memoria hasta llegar a la raíz. Si se cancelaran masivamente eventos muy lejanos en el tiempo, convendría una limpieza periódica.
+
+D23. Estructura de la agenda: montículo de nodos enlazados
+Problema: la agenda debe entregar siempre el evento de menor (tiempo, secuencia) sin examinar todos los pendientes. Hay cientos de eventos simultáneos y esta operación se ejecuta decenas de miles de veces (§4.1). El equipo decidió además usar solo estructuras propias y ninguna lista de Python (D27).
+Alternativas:
+(a) Vector (montículo sobre arreglo). Es la forma clásica. Se descarta por dos razones. Capacidad: un vector de tamaño fijo puede desbordarse, y como los eventos cancelados ocupan lugar hasta llegar a la raíz, el máximo simultáneo no se puede predecir; la revisión usa una cripta no vista (§9), así que un tope sería una suposición escondida en el código. Política: un vector que crece necesita reservar memoria con una lista de Python, y el equipo decidió no usarla. Esta alternativa no se mide.
+(b) Montículo sobre lista enlazada (los mismos pasos, pero accediendo a cada posición). Medida.
+(c) Búsqueda lineal sobre una lista enlazada sin orden. Medida.
+(d) Lista enlazada ordenada, con inserción lineal. Medida.
+Decisión: árbol binario completo de nodos enlazados (NodoArbol, con punteros a hijo izquierdo, hijo derecho y padre), sin arreglos. A la posición p se llega bajando según los bits de p en binario, en O(log n), sin necesitar acceso por índice.
+Complejidad: insertar y extraer son O(log n), ver el mínimo es O(1) y recorrer todos es O(n). Las alternativas medidas cuestan O(n) por operación (b, c) o por inserción (d).
+Evidencia: tablas 1 y 2 del benchmark de la agenda (anota tu sistema operativo y versión de Python; los números siguientes son de mi entorno y deben sustituirse por los tuyos).
+Al pasar de 100 a 10 000 eventos pendientes (100 veces más), el tiempo por ciclo de la decisión apenas se duplica (de unos 4 a unos 8 µs), mientras la búsqueda lineal se multiplica por unas 100 (de unos 12 a unos 1 300 µs).
+Con 10 000 eventos, la decisión es unas 140 veces más rápida que el montículo sobre lista, unas 160 veces más que la búsqueda lineal y unas 38 veces más que la lista ordenada. Es la más rápida de las alternativas medidas en todos los tamaños.
+El montículo sobre lista hace exactamente las mismas comparaciones que la decisión (15.7 y 18.4 por ciclo con 300 y 1 000 eventos): es el mismo algoritmo. Todo su retraso viene de que llegar a una posición cuesta O(i), y por eso demuestra por qué una lista enlazada no sirve para guardar un montículo.
+Con 10 000 eventos pendientes, un evento cuesta unos 8 µs, así que en los 20 ms de §5.2 caben unos 2 400. Se cumple con mucho margen.
+Límites: un vector tendría constantes menores (acceso directo en vez de seguir punteros), pero eso es una expectativa, no una medición del programa. La decisión se sostiene por la política de no usar listas y por escalar de forma logarítmica sin capacidad máxima. Cada elemento ocupa más memoria (cuatro referencias por nodo). Con cientos de eventos no importa; con millones, sí. Los resultados dependen de la máquina y de su carga al medir.
+D24. Comparación de eventos con < (__lt__)
+Problema: el montículo debe ordenar los eventos por (tiempo, secuencia), con un desempate determinista (§2.3), pero debe seguir siendo una estructura reutilizable con números, texto o eventos. Cada operación del montículo hace del orden de log n comparaciones, así que el costo de comparar importa.
+Alternativas:
+(a) Pasarle al montículo una función de comparación por parámetro. Es más flexible, pero introduce funciones como valores, un concepto que el equipo aún no domina, y reparte la regla de orden entre la estructura y quien la crea.
+(b) Guardar pares (prioridad, dato). Duplica información y acopla el montículo a ese formato.
+Decisión: el montículo compara solo con el operador < (_antes(a, b) devuelve a < b). La clase Evento define __lt__, que compara (tiempo, secuencia). Como la secuencia es única, nunca hay empates: el orden es total y determinista sin importar el orden de inserción.
+Complejidad: cada comparación cuesta O(1) mientras __lt__ compare dos números. Una operación del montículo hace del orden de log n comparaciones.
+Evidencia: tabla 2 del benchmark, que cuenta las llamadas a < por ciclo (con 300 y 1 000 eventos: 15.7 y 18.4 en el montículo). Ese conteo no depende de la velocidad de la máquina. La prueba_2_2 (prueba 5) comprueba que 200 eventos con muchos tiempos repetidos salen siempre en el mismo orden aunque se inserten ordenados, al revés o mezclados.
+Límites: dos elementos que < no distinga pueden salir en cualquier orden, algo que en los eventos no ocurre por la secuencia única. Si __lt__ se vuelve costoso (§4.9 advierte de comparaciones caras), el conteo de comparaciones domina el tiempo. Y < debe ser un orden estricto y consistente, o el montículo se corrompe.
+
+Un detalle sobre D24: su evidencia mide el costo del algoritmo, pero no mide la alternativa descartada (la función de comparación). Como §8 pide al menos una alternativa medida en el documento, y D23 ya cumple, no es obligatorio. Si quieres que D24 también tenga su tabla, puedo agregar una cuarta tabla al benchmark que compare __lt__ contra una función de comparación.
+
+Tabla 3: la cancelación perezosa cuesta de 15 a 75 veces menos que reconstruir, y su costo casi no depende de cuántos se cancelan.
+
+D26. Método de medición y alternativas dentro del programa
+Problema: §5.3 y §8 exigen mediciones propias con --bench que incluyan la alternativa descartada. Medir mal (una sola vez, con el recolector de basura activo, o comparando estructuras que no hacen lo mismo) produce números sin valor.
+Alternativas: medir con scripts sueltos fuera del programa (no cumple que --bench las reproduzca); una sola repetición (afectada por el ruido del sistema); promediar todas las repeticiones (el promedio mezcla ruido, y el mínimo se acerca más al costo real).
+Decisión: un Medidor que repite cada escenario 5 veces con la misma semilla, desactiva el recolector de basura mientras cronometra y reporta mínimo y promedio. Antes de medir se verifica que todas las agendas sacan los eventos en el mismo orden. Las alternativas viven en bench/, marcadas como "solo para medir".
+Complejidad: el modo completo tarda unos 16 s.
+Evidencia obtenida: al romper el código a propósito de cinco maneras, las pruebas detectaron las cinco.
+Límites: las mediciones dependen de la computadora y de la carga del sistema en ese momento. Se recomienda cerrar otros programas y repetirlas, y anotar siempre el sistema y la versión de Python.
+
+D27. Sin listas de Python: se usa ListaEnlazada, y una prueba lo hace cumplir
+Problema: §7 exige implementar las estructuras evaluadas, y la regla debe cumplirse también en el código que solo sirve para medir. Una regla que solo se recuerda de memoria se rompe sin querer.
+Alternativas: permitir list como memoria interna de estructuras propias (lo permite §7, pero deja una zona gris); revisar el código a mano antes de entregar (falla con el tiempo y el cansancio); buscar texto con grep (da falsas alarmas y se le escapan casos).
+Decisión: ninguna list de Python en cripta/; donde hace falta una lista se usa ListaEnlazada. La prueba prueba_reglas lee el código con ast y falla, con archivo y línea, ante [ ], list(), comprensiones de lista, .append/.pop/.insert/.extend/.remove, lambda, sorted, .sort, heapq, bisect, queue o deque.
+Complejidad: el acceso por posición cuesta O(i) en vez de O(1); el diseño evita necesitarlo.
+Evidencia obtenida: la primera auditoría encontró listas de Python en 5 archivos, incluida la propia ListaEnlazada; tras corregirlos, la prueba pasa con 26 archivos revisados. El detector tiene una autoprueba de 17 casos, y al introducir fallas a propósito (una lista en el medidor, un [] en el convertidor) las detectó.
+Límites: solo revisa cripta/. No prueba que no se use dict como índice, y las tuplas se permiten.
+
+D28. ListaDoble con nodos como posiciones validadas
+
+(§4.5, inventario.)
+
+Problema: el inventario se recorre hacia adelante y hacia atrás desde la posición actual, se suelta el objeto que se está viendo sin que el costo dependa de su posición, y equipar mueve el objeto al frente. Todo sin arreglos.
+Alternativas: (a) ListaEnlazada simple: eliminar un nodo exige llegar a su anterior, O(n), y no se puede retroceder. (b) ListaDoble con un cursor interno: interfaz simple, pero la estructura carga con un estado de navegación, admite un solo cursor y es menos reutilizable.
+Decisión: ListaDoble cuyos métodos devuelven y reciben NodoDoble como "posición". Cada nodo recuerda su lista y la lista lo valida (ValueError con nodos ajenos o eliminados). El dato del nodo es de solo lectura. mover_al_inicio conserva el mismo nodo, así quien lo guardó no pierde su lugar.
+Complejidad: agregar en los extremos, eliminar por nodo, insertar antes o después, mover al inicio y navegar son O(1). obtener(i) es O(mín(i, n − i)). Buscar, vaciar y recorrer son O(n).
+Evidencia: prueba aleatoria de 3 000 operaciones contra un modelo, revisando tras cada una los dos sentidos y los punteros; 6 fallas provocadas en la lista detectadas. Falta (4.4): tiempo de soltar un objeto en el medio con 10² a 10⁵ elementos, ListaDoble contra ListaEnlazada.
+Límites: guardar una posición exige actualizarla si ese objeto se elimina (el inventario debe tomar el siguiente antes de soltar). Cada nodo guarda dos punteros más que en una lista simple. No es segura entre hilos. Buscar por valor sigue siendo O(n).
+D29. Pila y PilaAcotada como dos clases
+
+(§2.11 y §4.6, historial reversible.)
+
+Problema: revertir los cambios de una acción en orden inverso, y conservar como máximo las últimas 5 acciones descartando la más antigua, sin copiar el estado completo (prohibido).
+Alternativas: (a) una sola Pila con capacidad opcional (mezcla dos comportamientos y la versión simple pagaría una lista doble sin necesitarla); (b) PilaAcotada sobre lista simple (descartar el fondo cuesta O(n)); (c) copias completas del estado (prohibido por el enunciado).
+Decisión: Pila sobre ListaEnlazada para los cambios de cada acción, y PilaAcotada sobre ListaDoble para las 5 acciones. Apilar en una pila llena devuelve el elemento descartado, y no se admite None.
+Complejidad: apilar, desapilar, ver el tope y descartar el fondo son O(1).
+Evidencia: escenario de 8 acciones donde quedan las 5 últimas y se deshacen en el orden correcto; prueba aleatoria de 3 000 operaciones contra un modelo; 2 fallas provocadas detectadas. Falta (4.4): medir con capacidades de 5 a 10⁴, lista simple contra lista doble.
+Límites: con capacidad 5 la diferencia entre lista simple y doble es mínima (5 saltos): la ventaja aparece con capacidades grandes. Devolver el descartado no libera nada por sí solo. None no se admite en la versión acotada.
+D30. ColaAcotada para la bitácora en pantalla
+
+(§4.8.)
+
+Problema: mostrar solo los últimos 20 mensajes, con memoria constante durante toda la partida y sin desplazar físicamente los otros 19 al agregar uno. BufferCircular no está entre los TDA permitidos.
+Alternativas: (a) lista con pop(0) (desplaza todos los elementos y usa la lista de Python, prohibida); (b) buffer circular sobre un arreglo (no permitido); (c) cola sin tope que se recorta al mostrar (la memoria crece con la partida).
+Decisión: ColaAcotada sobre Cola: al llenarse, se descarta el más antiguo. La capacidad la define quien la crea.
+Complejidad: encolar y desencolar son O(1). Recorrer es O(capacidad).
+Evidencia: prueba con 500 mensajes: nunca hay más de 20 nodos, quedan del 481 al 500 en orden y sin huecos, y se descartan 480; modelo aleatorio de 3 000 operaciones; 1 falla provocada detectada. Falta (4.4): memoria y tiempo frente a la alternativa (c) al crecer los mensajes.
+Límites: cada nodo tiene una sobrecarga fija, aunque con 20 es despreciable. Las cifras dependen de que quien la use respete el None como señal de "no se descartó nada".

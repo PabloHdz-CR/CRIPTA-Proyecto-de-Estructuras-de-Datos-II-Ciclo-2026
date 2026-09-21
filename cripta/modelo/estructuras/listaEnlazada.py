@@ -76,7 +76,46 @@ class ListaEnlazada:
             actual = actual.siguiente
 
     def __repr__(self):
-        textos = []
+        texto = ""
+        primero = True
         for dato in self:
-            textos.append(repr(dato))
-        return "ListaEnlazada([" + ", ".join(textos) + "])"
+            if not primero:
+                texto += ", "
+            texto += repr(dato)
+            primero = False
+        return "ListaEnlazada([" + texto + "])"
+
+    def establecer(self, indice, dato):
+        """Reemplaza el dato de la posición 'indice'. Cuesta O(indice)."""
+        if indice < 0 or indice >= self._tamano:
+            raise IndexError(f"Índice fuera de rango: {indice}")
+        actual = self._cabeza
+        for _ in range(indice):
+            actual = actual.siguiente
+        actual.dato = dato
+
+    def eliminar_en(self, indice):
+        """Elimina y devuelve el dato de la posición 'indice'. Cuesta O(indice)."""
+        if indice < 0 or indice >= self._tamano:
+            raise IndexError(f"Índice fuera de rango: {indice}")
+        if indice == 0:
+            return self.eliminar_primero()
+        anterior = self._cabeza
+        for _ in range(indice - 1):
+            anterior = anterior.siguiente
+        nodo = anterior.siguiente
+        anterior.siguiente = nodo.siguiente
+        if nodo is self._cola:
+            self._cola = anterior
+        self._tamano -= 1
+        return nodo.dato
+
+    def eliminar_ultimo(self):
+        """Elimina y devuelve el último dato.
+
+        En una lista SIMPLE cuesta O(n): hay que llegar hasta el penúltimo nodo
+        para poder soltar el último (no hay puntero hacia atrás).
+        """
+        if self._tamano == 0:
+            raise IndexError("La lista está vacía")
+        return self.eliminar_en(self._tamano - 1)

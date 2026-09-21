@@ -95,3 +95,14 @@ except ErrorDeRed as error:
     print("Error esperado:", error)
 
 print("Sección 1.3 OK")
+
+# --- Campos ausentes en el JSON (los valores por defecto)
+contenido = cj.contenido_desde_json({"contenido": [{"sala": 4}]})
+sala_vacia = contenido.obtener(0)
+assert sala_vacia.sala == 4
+assert sala_vacia.enemigos.esta_vacia() and sala_vacia.objetos.esta_vacia()
+assert sala_vacia.trampas.esta_vacia()
+fichas = cj.fichas_desde_json({"entidades": [
+    {"id": "e", "clase": "enemigo", "nombre": "E", "vida_max": 5, "ataque": 1,
+     "defensa": 0, "velocidad": 100, "comportamiento": "errante"}]})
+assert fichas.obtener(0).suelta.esta_vacia()
