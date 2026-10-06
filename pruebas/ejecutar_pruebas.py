@@ -21,10 +21,17 @@ PRUEBAS = (
     #"prueba_falso_1_9",         # Todo junto
     #"prueba_real_1_9",          # todo junto real
     #"prueba_2_2",               # Heap Minimo
-    "prueba_2_3",
-    "prueba_4_1",               # ListaDoble
-    "prueba_4_2",               # Pila y PilaAcotada
-    "prueba_4_3",               # ColaAcotada
+    #"prueba_2_3",
+    #"prueba_4_1",               # ListaDoble
+    #"prueba_4_2",               # Pila y PilaAcotada
+    #"prueba_4_3",               # ColaAcotada
+    #"prueba_4_4",               # mediciones de ListaDoble, PilaAcotada y ColaAcotada
+    #"prueba_5_2",               # CacheFichas (LRU)
+    #"prueba_5_3",               # AlmacenLocalDisco
+    #"prueba_5_4",               # EsqueletoCripta y PlanificadorPrecarga
+    #"prueba_5_5",               # ServicioDatos
+    "prueba_6_1",               # Ordenamiento
+
 )
 
 TIEMPO_MAXIMO = 120  # segundos por prueba

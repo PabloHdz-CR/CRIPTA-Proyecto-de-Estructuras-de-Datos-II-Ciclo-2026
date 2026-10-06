@@ -413,3 +413,75 @@ R: Nodos como posiciones que la lista valida (recomendada)
 P: 2. ¿Cómo hacemos la pila con tope de 5?
 R: Pila simple y PilaAcotada, dos clases (recomendada)"
 - **Uso:** implementar las secciones 4.1 (NodoDoble y ListaDoble con nodos como posiciones validadas), 4.2 (Pila y PilaAcotada) y 4.3 (ColaAcotada para la bitácora), con sus pruebas, y preparar las notas D28, D29 y D30 para el Documento de Decisiones.
+
+## Entrada 25
+- **Fecha:** 20/09/2026
+- **Herramienta:** Claude
+- **Prompt:** "P: 1. ¿Qué capacidades medimos en la pila acotada?
+R: 5 y capacidades mayores para ver la tendencia (recomendada)
+
+P: 2. ¿Cómo medimos la memoria de la bitácora?
+R: Contar nodos y tracemalloc como complemento (recomendada)"
+- **Uso:** implementar la sección 4.4 (mediciones de ListaDoble, PilaAcotada y ColaAcotada con sus alternativas descartadas, prueba de la sección y benchTodo), ampliar la prueba de reglas para detectar diccionarios, actualizar el verificador de versiones y preparar la evidencia de D27 a D30 para el Documento de Decisiones.
+
+## Entrada 26
+- **Fecha:** 6/10/2026
+- **Herramienta:** Claude
+- **Prompt:** "P: 1. ¿Tu compañero ya tiene algo de Partida/Mundo/Sala armado que deba conocer?
+R: No, todavía no empieza esa parte
+
+P: 2. Política de desalojo de la caché de fichas
+R: Implementameos LRU con Lista Doble pero explicamelo mejor en qué consiste
+
+P: 3. ¿Qué guarda AlmacenLocalDisco en esta sección (5.3)?
+R: Solo fichas del catálogo por ahora (recomendada)"
+- **Uso:** explicar en qué consiste la política LRU con un ejemplo concreto antes de implementar CacheFichas, y plantear la tensión entre la pista del enunciado sobre el costo de búsqueda en caché y la política del equipo de no usar dict en el programa.
+
+## Entrada 27
+- **Fecha:** 6/10/2026
+- **Herramienta:** Claude
+- **Prompt:** "P: ¿Cómo buscamos si una ficha ya está en la caché?
+R: Mantener la política sin excepción: búsqueda O(capacidad) en ListaDoble (recomendada)"
+- **Uso:** implementar las secciones 5.1 (puerto AlmacenLocal), 5.2 (CacheFichas con política LRU sobre ListaDoble, incluido el ejemplo A-B-C-A-D) y 5.3 (AlmacenLocalDisco persistiendo solo fichas del catálogo como JSON), con sus pruebas verificadas por mutación, y preparar las notas D31, D32 y D33 para el Documento de Decisiones.
+
+## Entrada 28
+- **Fecha:** 6/10/2026
+- **Herramienta:** Claude
+- **Prompt:** "sigamos con el 5.4 y el 5.5!"
+- **Uso:** implementar las secciones 5.4 (EsqueletoCripta y PlanificadorPrecarga con BFS determinista) y 5.5 (ServicioDatos: arranque de cripta, precarga sin bloquear, contenido bloqueante, resolución de catálogo en lotes y en cadena, persistencia), con sus pruebas verificadas por mutación; se detectó y corrigió un error real (contaminación de estadísticas de aciertos de caché) durante las pruebas, añadiendo CacheFichas.ver(); preparar las notas D34 a D37 para el Documento de Decisiones.
+
+## Entrada 29
+- **Fecha:** 6/10/2026
+- **Herramienta:** Claude
+- **Prompt:** "P: 1. ¿Cómo resolvemos la vista ordenada mientras no existe Ordenamiento (Paso 6)?
+R: Ordenación simple temporal dentro de Inventario, reemplazable después (recomendada)
+
+P: 2. Representación de un objeto dentro del inventario
+R: ObjetoInventario (id_instancia + ficha) (recomendada)
+
+P: 3. ¿El Inventario avisa a CacheFichas cuándo una ficha está en uso?
+R: Sí: Inventario llama fijar/soltar_referencia automáticamente (recomendada)"
+- **Uso:** implementar la sección 5.6 (Inventario: recoger/soltar/usar, navegación en ambos sentidos, equipar con sustitución, vista ordenada temporal, integración automática con CacheFichas) con sus pruebas verificadas por mutación; preparar las notas D38, D39 y D40 para el Documento de Decisiones.
+
+## Entrada 30
+- **Fecha:** 6/10/2026
+- **Herramienta:** Claude
+- **Prompt:** "P: 1. ¿Qué patrón de acceso usamos para medir la caché?
+R: Desigual (80/20), muestra mejor la ventaja de LRU (recomendada)
+
+P: 2. ¿Medimos LRU contra FIFO de verdad?
+R: Sí, implementar CacheFichasFIFO solo para medir (recomendada)
+
+P: 3. ¿Medimos la búsqueda del esqueleto contra una alternativa indexada?
+R: No, dejamos D32 solo con el argumento razonado"
+- **Uso:** implementar la sección 5.7 (CacheFichasFIFO como alternativa descartada, benchmark de la caché con patrón de acceso 80/20) con sus pruebas verificadas por mutación; se detectó y corrigió un hueco real en la prueba (no verificaba la reproducibilidad de tasa_de_acierto con semilla explícita); cerrar formalmente el Paso 5 con la evidencia agregada a D31.
+
+## Entrada 31
+- **Fecha:** 20/09/2026
+- **Herramienta:** Claude
+- **Prompt:** "P: 1. ¿Qué dos algoritmos de ordenamiento implementamos?
+R: Inserción + Mezcla (recomendada)
+
+P: 2. ¿Con qué criterio decide el selector automático?
+R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
+- **Uso:** implementar la sección 6.1 (módulo Ordenamiento: inserción y mezcla estables sobre Nodo, ClaveOrden para ordenar por clave calculada, selector automático con inversiones_adyacentes y casi_ordenada) con sus pruebas verificadas por mutación, incluida la estabilidad; preparar las notas D41 y D42 para el Documento de Decisiones.

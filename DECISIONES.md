@@ -288,8 +288,9 @@ Problema: el inventario se recorre hacia adelante y hacia atrás desde la posici
 Alternativas: (a) ListaEnlazada simple: eliminar un nodo exige llegar a su anterior, O(n), y no se puede retroceder. (b) ListaDoble con un cursor interno: interfaz simple, pero la estructura carga con un estado de navegación, admite un solo cursor y es menos reutilizable.
 Decisión: ListaDoble cuyos métodos devuelven y reciben NodoDoble como "posición". Cada nodo recuerda su lista y la lista lo valida (ValueError con nodos ajenos o eliminados). El dato del nodo es de solo lectura. mover_al_inicio conserva el mismo nodo, así quien lo guardó no pierde su lugar.
 Complejidad: agregar en los extremos, eliminar por nodo, insertar antes o después, mover al inicio y navegar son O(1). obtener(i) es O(mín(i, n − i)). Buscar, vaciar y recorrer son O(n).
-Evidencia: prueba aleatoria de 3 000 operaciones contra un modelo, revisando tras cada una los dos sentidos y los punteros; 6 fallas provocadas en la lista detectadas. Falta (4.4): tiempo de soltar un objeto en el medio con 10² a 10⁵ elementos, ListaDoble contra ListaEnlazada.
-Límites: guardar una posición exige actualizarla si ese objeto se elimina (el inventario debe tomar el siguiente antes de soltar). Cada nodo guarda dos punteros más que en una lista simple. No es segura entre hilos. Buscar por valor sigue siendo O(n).
+Evidencia: tabla 1 y 2 de benchListaDoble. Con ListaDoble, soltar un objeto cuesta lo mismo al inicio, en el medio y al final (0.35, 0.33 y 0.33 µs con 100 000 objetos, peor caso 1.1 veces el mejor), y con la lista simple por índice pasa de 0.19 µs al inicio a 937 µs en el medio y 1 805 µs al final (hasta 5 512 veces más lento). Equipar un objeto del medio: 0.29 µs contra 879 µs. Ambas estructuras dejan el inventario idéntico (verificado antes de medir). Prueba aleatoria de 3 000 operaciones y 6 fallas provocadas detectadas.
+Límites: al inicio de la lista, la lista simple es más rápida (unos 0.1 µs); la ListaDoble gana cuando la posición no es la primera. Guardar una posición exige actualizarla si ese objeto se elimina. Cada nodo guarda dos punteros más. No es segura entre hilos. Buscar por valor sigue siendo O(n).
+
 D29. Pila y PilaAcotada como dos clases
 
 (§2.11 y §4.6, historial reversible.)
@@ -298,8 +299,9 @@ Problema: revertir los cambios de una acción en orden inverso, y conservar como
 Alternativas: (a) una sola Pila con capacidad opcional (mezcla dos comportamientos y la versión simple pagaría una lista doble sin necesitarla); (b) PilaAcotada sobre lista simple (descartar el fondo cuesta O(n)); (c) copias completas del estado (prohibido por el enunciado).
 Decisión: Pila sobre ListaEnlazada para los cambios de cada acción, y PilaAcotada sobre ListaDoble para las 5 acciones. Apilar en una pila llena devuelve el elemento descartado, y no se admite None.
 Complejidad: apilar, desapilar, ver el tope y descartar el fondo son O(1).
-Evidencia: escenario de 8 acciones donde quedan las 5 últimas y se deshacen en el orden correcto; prueba aleatoria de 3 000 operaciones contra un modelo; 2 fallas provocadas detectadas. Falta (4.4): medir con capacidades de 5 a 10⁴, lista simple contra lista doble.
-Límites: con capacidad 5 la diferencia entre lista simple y doble es mínima (5 saltos): la ventaja aparece con capacidades grandes. Devolver el descartado no libera nada por sí solo. None no se admite en la versión acotada.
+Evidencia: tabla de benchHistorial. Con la capacidad real (5) la diferencia es de 1.1 veces, es decir, no hay ventaja práctica. Con capacidad 500 la lista doble es 13 veces más rápida; con 5 000, 120 veces; con 50 000, 1 182 veces. La lista doble mantiene su costo casi constante (de 0.55 a 0.74 µs). Ambas pilas devuelven y descartan exactamente lo mismo (verificado con 2 000 operaciones aleatorias por capacidad).
+Límites: con las 5 acciones del juego, la elección de lista doble o simple no afecta el rendimiento; se justifica porque la ListaDoble se necesita de todos modos para el inventario y porque la ventaja crecería si la capacidad aumentara. Devolver el descartado no libera nada por sí solo. None no se admite.
+
 D30. ColaAcotada para la bitácora en pantalla
 
 (§4.8.)
@@ -308,5 +310,90 @@ Problema: mostrar solo los últimos 20 mensajes, con memoria constante durante t
 Alternativas: (a) lista con pop(0) (desplaza todos los elementos y usa la lista de Python, prohibida); (b) buffer circular sobre un arreglo (no permitido); (c) cola sin tope que se recorta al mostrar (la memoria crece con la partida).
 Decisión: ColaAcotada sobre Cola: al llenarse, se descarta el más antiguo. La capacidad la define quien la crea.
 Complejidad: encolar y desencolar son O(1). Recorrer es O(capacidad).
-Evidencia: prueba con 500 mensajes: nunca hay más de 20 nodos, quedan del 481 al 500 en orden y sin huecos, y se descartan 480; modelo aleatorio de 3 000 operaciones; 1 falla provocada detectada. Falta (4.4): memoria y tiempo frente a la alternativa (c) al crecer los mensajes.
-Límites: cada nodo tiene una sobrecarga fija, aunque con 20 es despreciable. Las cifras dependen de que quien la use respete el None como señal de "no se descartó nada".
+Evidencia: tablas 1 a 3 de benchBitacora. Mostrar los últimos 20 cuesta unos 5.4 a 5.9 µs con ColaAcotada sin importar cuántos mensajes se hayan generado, mientras que con la cola sin tope crece linealmente (4 489 µs con 100 000 mensajes, 755 veces más). La ColaAcotada nunca pasa de 20 nodos (1.9 KiB); la cola sin tope crece hasta 100 000 nodos (7 813 KiB). Ambas muestran exactamente los mismos mensajes (verificado).
+Límites: agregar un mensaje cuesta unas 2.7 veces más que en la cola sin tope (0.61 µs contra 0.23 µs) por el control de capacidad. El 20 lo define quien la crea, y None no se admite.
+
+D31. Caché LRU implementada sobre ListaDoble
+Problema: la caché de fichas recibe muchas más lecturas que inserciones (§4.4), tiene capacidad acotada (25 por defecto, configurable con --cache-size), y las fichas en uso no pueden desalojarse.
+Alternativas: (a) FIFO (más simple, pero desaloja fichas que siguen consultándose seguido solo porque entraron primero); (b) sin política, limpiar todo al llenarse (pierde el beneficio del caché).
+Decisión: LRU sobre ListaDoble: cada acierto mueve la entrada al frente en O(1); el desalojo busca desde el fondo la primera entrada sin referencias activas.
+Complejidad: obtener/insertar son O(capacidad) por la búsqueda lineal (ver D32); mover al frente y desalojar son O(1) una vez localizado el nodo.
+Evidencia: prueba del ejemplo A-B-C-A-D verificando el orden exacto de desalojo; prueba aleatoria de 3000 operaciones que nunca desaloja algo fijado. Falta (5.7): medir aciertos/fallos con un patrón de acceso realista (algunas fichas mucho más frecuentes que otras) contra FIFO.
+Límites: si todas las fichas caben en uso simultáneo, la caché crece sin tope — es una decisión deliberada (preferir correctitud sobre memoria) que se documenta, no un error.
+
+D32. Búsqueda en caché sin dict: O(capacidad), decisión del equipo
+Problema: el enunciado (§4.4) señala explícitamente que el costo de "¿está esta ficha en caché?" importa, lo cual normalmente se resuelve con tabla hash O(1).
+Alternativas: (a) dict como índice interno de la caché (O(1), pero rompe la política D27 del equipo de no usar estructuras de Python en ningún punto del programa).
+Decisión: el equipo mantiene la política sin excepciones: búsqueda lineal en ListaDoble, O(capacidad).
+Complejidad: O(capacidad) por búsqueda; con 25 (o incluso cientos) es insignificante frente al costo real del sistema (una solicitud HTTP tarda ~400 ms).
+Evidencia: falta (5.7) — medir el tiempo de obtener/contiene con capacidades crecientes (25, 100, 500) para mostrar numéricamente que sigue siendo despreciable frente a la latencia de red.
+Límites: si --cache-size se configurara en varios miles, esta decisión dejaría de ser trivial y convendría revisarla; con los valores esperados del proyecto no es un problema.
+
+D33. AlmacenLocalDisco: un archivo JSON por ficha
+Problema: persistir fichas entre ejecuciones (§4.4), validando por versión del catálogo, sin que un archivo corrupto haga caer el programa.
+Alternativas: (a) un único archivo con todas las fichas (más compacto, pero obliga a leer/escribir todo el archivo por cada ficha nueva); (b) una base de datos embebida (fuera del alcance permitido por el enunciado, que pide persistencia en archivo propio).
+Decisión: un archivo JSON por ficha, nombrado por su id (saneado). Reutiliza la jerarquía de clases de dto.py para la conversión, con if/elif en vez de un diccionario de funciones (§7).
+Complejidad: guardar/cargar una ficha es O(1) en cantidad de archivos tocados (no depende de cuántas otras fichas haya guardadas).
+Evidencia: 9 clases de ficha guardadas y recuperadas con sus campos exactos, incluidos campos None; prueba explícita de versión desactualizada tratada como "no encontrada"; archivo corrupto no detiene el programa; sobrevive a reabrir el almacén.
+Límites: muchos archivos pequeños pueden ser más lentos en discos mecánicos por la sobrecarga del sistema de archivos (no medido); se acepta dict/list de Python como excepción documentada, solo para empaquetar hacia json.dump/json.load de la biblioteca estándar — mismo criterio que la excepción ya existente en clienteHttp.py.
+
+D34. Planificación de precarga con BFS determinista
+Problema: anticipar qué salas pedir antes de que el jugador las necesite, sin desperdiciar solicitudes, con un orden que no dependa de la latencia de la red (§2.4, §4.2).
+Alternativas: (a) pedir solo al entrar a una sala (lo que el enunciado dice explícitamente que hay que evitar); (b) precargar toda la cripta de una vez al inicio (desperdicia presupuesto en salas que tal vez nunca se visiten).
+Decisión: BFS desde la sala actual sobre el esqueleto ya descargado, siguiendo solo salidas abiertas en el orden fijo N-S-E-O, acotado a lotes de 10.
+Complejidad: O(salas visitadas × búsqueda de vecina) ≈ O(salas² en el peor caso), aceptable a la escala de una cripta.
+Evidencia: prueba con una cripta de 30 salas en pasillo, verificando que el lote son exactamente las 10 más cercanas en orden; 4 fallas provocadas detectadas, incluida una que probaba justo el determinismo.
+Límites: no tiene en cuenta cuáles salas tienen más probabilidad real de visitarse (por ejemplo, el camino hacia la salida); es puramente geográfico.
+D35. ServicioDatos como único punto de acceso a los datos
+Problema: el modelo no debe conocer HTTP, archivos ni la diferencia entre --offline y en línea (§6).
+Decisión: ServicioDatos recibe por inyección la fuente síncrona, la asíncrona, la caché y el almacén, y es la única clase que los toca. El resto del modelo solo llama a sus métodos públicos.
+Evidencia: prueba de integración (prueba_5_5) ejercitando el flujo completo con una fuente falsa, sin que ninguna otra pieza del modelo necesite saber que es falsa.
+Límites: la responsabilidad de esta clase es amplia (arranque, contenido, catálogo, presupuesto); si creciera más, convendría partirla.
+D36. Catálogo "en cadena" vía resolver_ficha_y_dependientes
+Problema: un enemigo puede "soltar" objetos cuyo id de catálogo no se conoce hasta leer la ficha del enemigo (§4.3).
+Decisión: resolver_ficha_y_dependientes resuelve primero la ficha pedida y, si es un enemigo con suelta no vacía, encadena una segunda resolución (que a su vez pasa por caché/disco/red con la misma lógica).
+Evidencia: prueba con una rata que suelta una poción no pedida explícitamente, verificando que ambas llegan resueltas.
+Límites: solo encadena un nivel (lo que suelta un enemigo); si un objeto sólido pudiera a su vez referenciar otro id, haría falta recursión, que el enunciado no exige.
+D37. Corrección de la medición de aciertos/fallos: CacheFichas.ver()
+Problema: al revisar la implementación, se encontró que resolver_fichas consultaba la caché dos veces por ficha, contando como "acierto" una ficha recién insertada en la misma llamada — inflando artificialmente la estadística que pide §4.4.
+Decisión: se separó la consulta real (obtener, que sí afecta estadísticas y orden LRU) de una consulta silenciosa (ver, que no afecta nada), usada solo para leer el valor final de algo que se acaba de resolver.
+Evidencia: prueba específica de ver() verificando que no toca aciertos/fallos ni el orden interno; se mantiene como caso de la autoauditoría del equipo (en la línea de lo que ya pasó con el diccionario olvidado en el Paso 4).
+Límites: este tipo de error (una métrica contaminada por una consulta interna) es fácil de repetir en otras partes; conviene revisar con el mismo criterio cuando se agregue el reporte final de --bench.
+
+D38. ObjetoInventario: instancia separada de la ficha compartida
+Problema: §2.7 exige distinguir instancias del mismo tipo de objeto (dos dagas son dos objetos, aunque compartan ficha).
+Decisión: una clase mínima con id_instancia (autoincremental) y una referencia a la FichaDTO inmutable del catálogo.
+Evidencia: prueba 11 (dos pergaminos distintos, misma ficha, cantidad_pergaminos() == 2).
+Límites: el contador de instancias es por Inventario, no global a la cripta; si se necesitara un id único de instancia en todo el mundo (por ejemplo para el guardado binario del Paso 6), habría que revisar este esquema.
+D39. Inventario fija/suelta referencias en CacheFichas automáticamente
+Problema: un objeto en el inventario del jugador es, por definición, una ficha "en uso" (D31/D32): si se desaloja de la caché mientras el jugador lo lleva encima, se perdería la referencia.
+Alternativas: dejar que quien construya el inventario del jugador llame a fijar/soltar_referencia manualmente (más desacoplado, pero fácil de olvidar).
+Decisión: el propio Inventario llama a cache.fijar en recoger y a cache.soltar_referencia en _quitar_nodo (usado por soltar y usar). Como consecuencia, recoger exige que la ficha ya esté en caché, lo cual documenta el orden correcto de llamadas (resolver antes de recoger).
+Complejidad: O(capacidad de la caché) por cada fijación/suelta (D32), ya asumido.
+Evidencia: pruebas 3, 6, 7, 8 y 10 verifican que esta_en_uso sigue exactamente el ciclo de vida del objeto en el inventario; mutación M1 y M2 confirmaron que, sin esta integración, un objeto quedaría sin protección o con una referencia de equipo colgante.
+Límites: acopla Inventario a CacheFichas; si en el futuro el inventario necesitara existir sin caché (por ejemplo, en una prueba aislada), habría que inyectar una caché "de mentira".
+D40. Ordenación temporal por inserción, con punto único de reemplazo
+Problema: §4.5 exige vistas ordenadas por peso, valor y nombre sin alterar el orden real, pero el Ordenamiento con selector de algoritmos (§4.9) es del Paso 6, que aún no existe.
+Decisión: Inventario._ordenar_insercion implementa inserción directamente, documentada como temporal, sobre una copia (nunca la estructura real). Cuando llegue el Paso 6, se sustituye por una llamada al Ordenamiento definitivo sin tocar el resto de Inventario.
+Complejidad: O(n²) en el peor caso, pero n está acotado por inventario_max (del orden de decenas), así que el costo real es insignificante.
+Evidencia: pruebas con 4 criterios y verificación explícita de que el orden real no cambia tras tres llamadas a vista_ordenada; la mutación M4 (que intentó ordenar la lista real por error) ni siquiera llegó a ejecutarse, porque ListaDoble no tiene los métodos de acceso por índice que usa el ordenamiento — una protección estructural, no solo una prueba.
+Límites: esta es una implementación a reemplazar, no la decisión final; el Documento debe dejarlo explícito para no presentarla como si fuera la solución definitiva de §4.9.
+
+D31 (evidencia agregada)
+Evidencia: con un patrón de acceso 80/20 sobre 100 fichas y capacidad 25, LRU alcanza 67.0–70.5 % de aciertos contra 59.6–62.3 % de FIFO con la misma secuencia exacta de accesos (verificado antes de medir). El tiempo por acceso es equivalente entre ambas (diferencia menor al 20 %), así que la ventaja de LRU en aciertos no tiene costo adicional relevante en velocidad.
+Límites (ampliación): con un patrón de acceso uniforme (sin fichas "populares"), la ventaja de LRU se reduciría o desaparecería — no se midió ese caso, pero es consistente con la teoría de las políticas de reemplazo.
+
+D41. Dos algoritmos sobre listas enlazadas: inserción y mezcla
+Problema: ordenar en varios contextos (tabla de puntajes, vistas del inventario, índices del archivo de guardado, listas del catálogo) con al menos dos algoritmos de características distintas, sin sort()/sorted() ni arreglos de Python (§4.9, §7).
+Alternativas: inserción + rápida (quicksort). Se descarta: sobre listas enlazadas no hay acceso aleatorio barato para elegir un buen pivote, y su peor caso sigue siendo O(n²) — exactamente lo que se busca evitar con el segundo algoritmo.
+Decisión: inserción (construida insertando cada nodo en su lugar dentro de una cadena ya ordenada) y mezcla (técnica clásica de paso lento/paso rápido para dividir, y fusión de dos cadenas ordenadas), ambas trabajando directamente sobre Nodo, ambas estables.
+Complejidad: inserción, O(n) mejor caso / O(n²) peor caso. Mezcla, O(n log n) siempre. Ambas usan O(n) de memoria extra (no modifican la lista de entrada).
+Evidencia: 60 casos aleatorios de 0 a 200 elementos contrastados contra sorted() de Python (solo en la prueba); verificación explícita de estabilidad con claves repetidas; verificación de que ninguna de las dos modifica la lista original. Falta (6.x): medición de tiempo con --bench en los tres escenarios que pide el enunciado (tamaños pequeños, datos casi ordenados, comparaciones costosas).
+Límites: la mezcla usa memoria adicional proporcional a n (no ordena "en el lugar"); con conjuntos muy grandes eso podría importar, aunque los usos previstos (inventario, catálogo, puntajes) son pequeños.
+D42. Selector automático: tamaño O casi ordenado → inserción; si no, mezcla
+Problema: elegir el algoritmo sin "adivinar", basado en propiedades medibles, y sustentado con evidencia (no basta con el argumento teórico de complejidad, según el criterio explícito de §8).
+Alternativas: seleccionar solo por tamaño. Se descarta porque deja fuera justo el caso "datos casi ordenados" que el enunciado pide medir explícitamente: una lista grande pero casi ordenada iría a mezcla cuando inserción sería más rápida ahí.
+Decisión: inversiones_adyacentes cuenta en O(n) cuántos pares consecutivos están fuera de orden (no el conteo completo de inversiones, que sería O(n²)); si esa proporción es baja (≤10%) o el tamaño es pequeño (≤32), se usa inserción; si no, mezcla.
+Complejidad: decidir qué algoritmo usar cuesta O(n), un costo menor comparado con el propio ordenamiento.
+Evidencia: pruebas con una lista grande ordenada, una al revés y una grande con una sola inversión, verificando que el selector elige lo esperado en cada caso. Falta (6.x): medir el tiempo total (selección + ordenamiento) contra usar siempre mezcla, para demostrar la ganancia real del selector en el caso "casi ordenado".
+Límites: los umbrales (32 elementos, 10% de inversiones adyacentes) son valores elegidos por el equipo, no derivados de una fórmula; podrían ajustarse con más mediciones.
