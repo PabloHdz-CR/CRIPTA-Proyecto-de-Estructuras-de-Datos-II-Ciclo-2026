@@ -1,4 +1,4 @@
-"""El jugador (§2.2, §2.7)."""
+
 from __future__ import annotations
 
 from ..nucleo.constantes import ID_JUGADOR

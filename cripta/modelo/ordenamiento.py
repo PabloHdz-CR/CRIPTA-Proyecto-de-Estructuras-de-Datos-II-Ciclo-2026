@@ -12,6 +12,7 @@ en ClaveOrden, que compara solo por 'clave' y guarda el original en 'valor'.
 Ninguna de las dos funciones de ordenamiento modifica la lista que recibe:
 ambas devuelven una ListaEnlazada NUEVA.
 """
+from .estructuras.listaDoble import ListaDoble
 from .estructuras.listaEnlazada import ListaEnlazada
 from .estructuras.nodo import Nodo
 
@@ -43,7 +44,15 @@ def inversiones_adyacentes(lista):
     """Cuenta en O(n) cuántos pares CONSECUTIVOS están fuera de orden
     (elemento[i] > elemento[i+1]). No es el conteo completo de inversiones
     (eso sería O(n²)): es una medida barata y suficiente de qué tan "casi
-    ordenada" está la lista, calculable en una sola pasada."""
+    ordenada" está la lista, calculable en una sola pasada.
+
+    LÍMITE CONOCIDO (D42): esta medida es "local". Pocos elementos que viajan
+    LEJOS de su posición (por ejemplo, intercambios entre posiciones muy
+    separadas) generan solo un par de inversiones adyacentes cada uno, aunque
+    el costo real de moverlos con inserción sea mucho mayor. Medido con
+    --bench (benchOrdenamiento, tabla 7): con pocos intercambios lejanos, el
+    heurístico sigue diciendo "casi ordenada" mientras inserción resulta
+    hasta 35 veces más lenta que mezcla."""
     cuenta = 0
     anterior = None
     hay_anterior = False
@@ -88,38 +97,44 @@ def ordenar(lista):
 
 
 # ---------------------------------------------------------------------------
-# Inserción: O(n) en el mejor caso (ya ordenada), O(n²) en el peor. Estable.
+# Inserción: O(n + inversiones) -- cerca de O(n) con datos casi ordenados,
+# O(n²) en el peor caso (datos al revés). Estable.
 # ---------------------------------------------------------------------------
 
 def insercion(lista):
-    cabeza = _copiar_a_nodos(lista)
-    cabeza = _insercion_nodos(cabeza)
-    return _nodos_a_lista(cabeza)
+    """Se construye sobre una ListaDoble (no una cadena simple), a propósito:
+    cuando el dato que llega NO es mayor o igual que el último insertado (el
+    caso típico con datos ascendentes casi ordenados, que va directo al
+    final en O(1)), hace falta retroceder para encontrar su lugar. Retroceder
+    desde la COLA cuesta solo lo que el elemento esté desplazado de su lugar
+    final; buscar siempre desde el INICIO costaría O(n) cada vez, sin
+    importar qué tan cerca del final estuviera el lugar correcto -- y con eso
+    la inserción perdería su ventaja justo en el caso que se supone que debe
+    aprovechar (§4.9: "datos casi ordenados")."""
+    ordenada = ListaDoble()
+    for dato in lista:
+        _insertar_en_orden(ordenada, dato)
+    resultado = ListaEnlazada()
+    for dato in ordenada:
+        resultado.agregar_al_final(dato)
+    return resultado
 
 
-def _insercion_nodos(cabeza):
-    ordenada = None
-    actual = cabeza
-    while actual is not None:
-        siguiente = actual.siguiente
-        ordenada = _insertar_en_orden(ordenada, actual)
-        actual = siguiente
-    return ordenada
-
-
-def _insertar_en_orden(cabeza, nodo):
-    """Inserta 'nodo' (ya desenlazado de la lista) en su lugar dentro de la
-    cadena ya ordenada que empieza en 'cabeza'. Si hay empate, el nodo nuevo
-    queda DESPUÉS de los iguales (eso es lo que hace estable al algoritmo)."""
-    if cabeza is None or nodo.dato < cabeza.dato:
-        nodo.siguiente = cabeza
-        return nodo
-    actual = cabeza
-    while actual.siguiente is not None and not (nodo.dato < actual.siguiente.dato):
-        actual = actual.siguiente
-    nodo.siguiente = actual.siguiente
-    actual.siguiente = nodo
-    return cabeza
+def _insertar_en_orden(ordenada, dato):
+    """Inserta 'dato' en su lugar dentro de 'ordenada' (una ListaDoble que ya
+    está ordenada). Primero intenta el atajo O(1) de ir al final; si no,
+    retrocede desde la cola SOLO lo necesario. Si hay empate, 'dato' queda
+    DESPUÉS de los iguales (eso es lo que hace estable al algoritmo)."""
+    cola = ordenada.ultimo()
+    if cola is None or not (dato < cola.dato):
+        ordenada.agregar_al_final(dato)
+        return
+    nodo = cola
+    anterior = ordenada.anterior_de(nodo)
+    while anterior is not None and dato < anterior.dato:
+        nodo = anterior
+        anterior = ordenada.anterior_de(nodo)
+    ordenada.insertar_antes_de(nodo, dato)
 
 
 # ---------------------------------------------------------------------------
@@ -173,7 +188,7 @@ def _fusionar(a, b):
 
 
 # ---------------------------------------------------------------------------
-# Internos compartidos
+# Internos compartidos (solo los usa 'mezcla')
 # ---------------------------------------------------------------------------
 
 def _copiar_a_nodos(lista):

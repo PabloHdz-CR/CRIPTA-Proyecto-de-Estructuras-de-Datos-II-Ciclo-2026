@@ -30,22 +30,7 @@ def _unir_con_comas(elementos):
 
 
 class ClienteHttp(FuenteDatos):
-    """Adaptador de red: implementa FuenteDatos consultando el API por HTTP.
-
-    - Genera UN identificador de cliente al crearse y lo manda en todas las
-      solicitudes, incluidos los reintentos (§ acceso al API).
-    - Antes de cada intento real le pide permiso al ContadorSolicitudes, que
-      lanza PresupuestoAgotado si ya no queda margen.
-    - Ante HTTP 429 espera 'reintentar_en' más un margen y reintenta hasta
-      max_reintentos_429 veces. Cada reintento cuenta como solicitud.
-    - Usa una requests.Session (reutiliza la conexión) protegida por un
-      cerrojo: solo hay una solicitud en vuelo a la vez.
-    - Cualquier falla se traduce a ErrorDeRed con la operación que falló.
-    """
-
-    def __init__(self, base_url, contador, timeout=TIMEOUT_POR_DEFECTO,
-                 max_reintentos_429=REINTENTOS_429_POR_DEFECTO,
-                 margen_espera=MARGEN_ESPERA_POR_DEFECTO):
+    def __init__(self, base_url, contador, timeout=TIMEOUT_POR_DEFECTO,max_reintentos_429=REINTENTOS_429_POR_DEFECTO,margen_espera=MARGEN_ESPERA_POR_DEFECTO):
         self._base_url = base_url.rstrip("/")
         self._contador = contador
         self._timeout = timeout
@@ -57,28 +42,16 @@ class ClienteHttp(FuenteDatos):
         self._cerrojo_http = threading.Lock()
 
     def id_cliente(self):
-        """El UUID de esta ejecución (útil para depurar)."""
         return self._id_cliente
 
     def cerrar(self):
-        """Cierra la sesión de requests. Llamar al terminar el programa."""
         self._sesion.close()
 
-    # ------------------------------------------------------------------
-    # Núcleo: una consulta con reintentos
-    # ------------------------------------------------------------------
-
     def _pedir(self, operacion, ruta, parametros=None):
-        """Hace un GET y devuelve el JSON ya convertido a estructuras de Python.
 
-        El cerrojo se mantiene durante TODO el bucle, incluida la espera del
-        429: mientras el servicio nos pide esperar, ninguna otra solicitud
-        debe salir.
-        """
         with self._cerrojo_http:
             reintentos_hechos = 0
             while True:
-                # Puede lanzar PresupuestoAgotado: en ese caso no se envía nada.
                 self._contador.registrar_intento(operacion)
                 respuesta = self._enviar(operacion, ruta, parametros)
 
@@ -93,7 +66,7 @@ class ClienteHttp(FuenteDatos):
                             f"de {self._max_reintentos} reintentos",
                             429)
                     espera = self._espera_para_reintentar(operacion, respuesta)
-                    time.sleep(espera)   # tiempo REAL: no mueve el reloj virtual
+                    time.sleep(espera)
                     reintentos_hechos += 1
                     continue
 
@@ -101,11 +74,9 @@ class ClienteHttp(FuenteDatos):
                                  respuesta.status_code)
 
     def _enviar(self, operacion, ruta, parametros):
-        """Envía el GET. Traduce las fallas de red a ErrorDeRed."""
         url = self._base_url + ruta
         try:
             return self._sesion.get(url, params=parametros, timeout=self._timeout)
-        # Timeout va primero: ConnectTimeout es a la vez Timeout y ConnectionError.
         except requests.exceptions.Timeout as error:
             raise ErrorDeRed(
                 operacion, f"tiempo de espera agotado ({self._timeout} s)") from error
@@ -122,7 +93,6 @@ class ClienteHttp(FuenteDatos):
                 operacion, "la respuesta no es un JSON válido", 200) from error
 
     def _espera_para_reintentar(self, operacion, respuesta):
-        """Segundos a esperar antes de reintentar un 429 (con margen incluido)."""
         solicitada = ESPERA_POR_DEFECTO_429
         try:
             cuerpo = respuesta.json()
@@ -142,7 +112,6 @@ class ClienteHttp(FuenteDatos):
         return solicitada + self._margen_espera
 
     def _describir_error(self, respuesta):
-        """Texto legible de una respuesta de error (ni 200 ni 429)."""
         try:
             cuerpo = respuesta.json()
         except ValueError:
@@ -153,10 +122,6 @@ class ClienteHttp(FuenteDatos):
             if "detail" in cuerpo:
                 return str(cuerpo["detail"])
         return respuesta.reason or "respuesta inesperada del servicio"
-
-    # ------------------------------------------------------------------
-    # Contrato FuenteDatos
-    # ------------------------------------------------------------------
 
     def listar_criptas(self):
         datos = self._pedir("listar criptas", "/criptas")

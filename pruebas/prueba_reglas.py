@@ -4,10 +4,13 @@ proyecto, leyendo el código como lo lee Python (módulo ast), no como texto:
   - sin lambda (todavía no se domina)
   - sin listas de Python: ni [ ... ], ni list(), ni comprensiones de lista, ni
     .append() .pop() .insert() .extend() .remove(). Donde haga falta una lista
-    se usa nuestra ListaEnlazada.
+    se usa nuestra ListaEnlazada. Excepción: clienteHttp, almacenLocalDisco y
+    fuenteOffline, que arman/leen estructuras planas para hablar con
+    requests/json (empaquetar para la red o el disco, no sustituir una
+    estructura propia del programa).
   - sin diccionarios: ni { ... }, ni dict(), ni comprensiones de diccionario
-    (§7 prohíbe dict como índice o tabla de búsqueda). Excepción: clienteHttp,
-    que arma los parámetros de las solicitudes para la biblioteca requests.
+    (§7 prohíbe dict como índice o tabla de búsqueda). Misma excepción que
+    arriba, por la misma razón.
   - sin sorted() ni .sort() (§4.9 los prohíbe en los ordenamientos evaluados)
   - sin bibliotecas que sustituyen a nuestras estructuras: heapq, bisect,
     queue y collections.deque (§7)
@@ -21,27 +24,39 @@ from pathlib import Path
 
 METODOS_DE_LISTA = ("append", "pop", "insert", "extend", "remove", "sort")
 NOMBRES_PROHIBIDOS = (("list", "list()"), ("sorted", "sorted()"), ("dict", "dict()"))
-ARCHIVOS_CON_DICT_PERMITIDO = ("clientehttp",)     # nombre en minúsculas y sin guiones bajos
+# Archivos (nombre en minúsculas, sin guiones bajos) donde armar/leer un dict o
+# una lista de Python es interactuar con requests/json, no sustituir una
+# estructura propia del programa.
+ARCHIVOS_CON_EXCEPCION = ("clientehttp", "almacenlocaldisco", "fuenteoffline",
+                          "puntajesarchivo", "benchguardado")
 MODULOS_PROHIBIDOS = ("heapq", "bisect", "queue")
 
 
-def problema_en(nodo, dict_permitido):
+def problema_en(nodo, excepcion):
     """Devuelve la descripción de lo prohibido que hay en este nodo, o None."""
     if isinstance(nodo, ast.Lambda):
         return "usa lambda"
-    if isinstance(nodo, (ast.Dict, ast.DictComp)) and not dict_permitido:
+    if isinstance(nodo, (ast.Dict, ast.DictComp)) and not excepcion:
         return "crea un diccionario { ... }"
-    if isinstance(nodo, ast.List):
+    if isinstance(nodo, ast.List) and not excepcion:
         return "usa una lista de Python [ ... ]"
-    if isinstance(nodo, ast.ListComp):
+    if isinstance(nodo, ast.ListComp) and not excepcion:
         return "usa una comprensión de lista"
     if isinstance(nodo, ast.Call):
         funcion = nodo.func
         if isinstance(funcion, ast.Name):
             for nombre, descripcion in NOMBRES_PROHIBIDOS:
-                if funcion.id == nombre and not (nombre == "dict" and dict_permitido):
+                # DECISIÓN: 'list'/'dict' se exceptúan igual que los literales
+                # [...]/{...} en los archivos de ARCHIVOS_CON_EXCEPCION (misma
+                # razón: convertir a algo que json.dumps() entienda, como en
+                # benchGuardado.py con el estado del random). 'sorted' NUNCA
+                # se exceptúa: ninguna interoperación de disco/red lo necesita,
+                # y §4.9 lo prohíbe siempre en los ordenamientos evaluados.
+                si_se_exceptua = nombre in ("dict", "list") and excepcion
+                if funcion.id == nombre and not si_se_exceptua:
                     return f"usa {descripcion}"
-        if isinstance(funcion, ast.Attribute) and funcion.attr in METODOS_DE_LISTA:
+        if (isinstance(funcion, ast.Attribute) and funcion.attr in METODOS_DE_LISTA
+                and not excepcion):
             return f"usa .{funcion.attr}()"
     if isinstance(nodo, ast.Import):
         for alias in nodo.names:
@@ -58,19 +73,19 @@ def problema_en(nodo, dict_permitido):
     return None
 
 
-def revisar(nodo, ruta, encontradas, dict_permitido=False):
+def revisar(nodo, ruta, encontradas, excepcion=False):
     """Recorre el árbol en el orden en que está escrito el código y anota cada
     uso prohibido en 'encontradas'."""
-    descripcion = problema_en(nodo, dict_permitido)
+    descripcion = problema_en(nodo, excepcion)
     if descripcion is not None:
         encontradas.append(f"{ruta}:{nodo.lineno}: {descripcion}")
     for hijo in ast.iter_child_nodes(nodo):
-        revisar(hijo, ruta, encontradas, dict_permitido)
+        revisar(hijo, ruta, encontradas, excepcion)
 
 
-def permite_dict(archivo):
+def tiene_excepcion(archivo):
     nombre = archivo.stem.lower().replace("_", "")
-    return nombre in ARCHIVOS_CON_DICT_PERMITIDO
+    return nombre in ARCHIVOS_CON_EXCEPCION
 
 
 # Autoprueba del detector: (código, ¿debe encontrar algo prohibido?)
@@ -97,22 +112,27 @@ CASOS = (
     ("from collections import namedtuple", False),
 )
 permitidos = []
-revisar(ast.parse("x = {'a': 1}"), "caso", permitidos, True)
-assert len(permitidos) == 0, "la excepción de clienteHttp no funciona"
+revisar(ast.parse(
+    "x = {'a': 1}\ny = [1, 2]\ny.append(3)\nz = list(w)\nv = dict(a=1)"),
+    "caso", permitidos, True)
+assert len(permitidos) == 0, "la excepción de archivos permitidos no funciona"
+exceptuados_pero_prohibidos = []
+revisar(ast.parse("x = sorted(y)"), "caso", exceptuados_pero_prohibidos, True)
+assert len(exceptuados_pero_prohibidos) == 1, "sorted() no debería exceptuarse nunca"
 for codigo, debe_encontrar in CASOS:
     detectadas = []
     revisar(ast.parse(codigo), "caso", detectadas)
     assert (len(detectadas) > 0) == debe_encontrar, (
         f"el detector falló con: {codigo!r} (encontró {detectadas})")
 
-raiz = Path(__file__).resolve().parent.parent
+raiz = Path(__file__).resolve().parent.parent   # la raíz del proyecto (pruebas/ es hija suya, igual que cripta/)
 encontradas = []           # esta lista es solo de la prueba, no del programa
 revisados = 0
 for archivo in raiz.joinpath("cripta").rglob("*.py"):
     revisados += 1
     ruta = archivo.relative_to(raiz).as_posix()
     arbol = ast.parse(archivo.read_text(encoding="utf-8"), filename=ruta)
-    revisar(arbol, ruta, encontradas, permite_dict(archivo))
+    revisar(arbol, ruta, encontradas, tiene_excepcion(archivo))
 
 assert revisados > 0, "no se encontró la carpeta cripta"
 if encontradas:

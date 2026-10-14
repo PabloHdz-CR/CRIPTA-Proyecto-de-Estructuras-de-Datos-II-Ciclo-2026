@@ -98,6 +98,26 @@ class Inventario:
         self._objetos.mover_al_inicio(nodo)
         return indice
 
+    def mover_a_posicion(self, objeto, indice: int) -> None:
+        """Mueve 'objeto' (ya presente) a la posición 'indice'. A diferencia de
+        quitar()+insertar_en(), NO toca la caché: el objeto nunca sale del
+        inventario, solo cambia de lugar. Lo usa el Diario para deshacer un
+        'equipar' (que mueve al frente con mover_al_frente)."""
+        nodo = self._buscar_nodo_de(objeto)
+        if nodo is None:
+            raise ValueError("El objeto no está en el inventario")
+        if nodo is self._actual:
+            vecino = self._objetos.siguiente_de(nodo)
+            self._actual = vecino if vecino is not None else self._objetos.anterior_de(nodo)
+        self._objetos.eliminar_nodo(nodo)
+        referencia = self._nodo_en(indice)
+        if referencia is None:
+            self._objetos.agregar_al_final(objeto)
+        else:
+            self._objetos.insertar_antes_de(referencia, objeto)
+        if self._actual is None:
+            self._actual = self._objetos.primero()
+
     # ------------------------------------------------------------------
     # Búsqueda
     # ------------------------------------------------------------------
