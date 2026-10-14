@@ -1,34 +1,12 @@
-"""Adaptador de persistencia: implementa AlmacenLocal guardando fichas como
-archivos JSON en una carpeta local.
-
-Cada ficha se guarda en su propio archivo: <carpeta>/<id_ficha>.json, con la
-forma {"version_catalogo": "...", "ficha": {...}}. Un archivo por ficha (en
-vez de un único archivo grande) permite leer y escribir una ficha sin tocar
-las demás, y sobrevive al cierre del programa porque es disco, no memoria.
-
-Convierte DTO <-> JSON con las mismas reglas de clase que convertidorJson.py,
-así el formato en disco es consistente con el que llega por red: la caché no
-debe notar la diferencia.
-"""
 import json
 from pathlib import Path
 
 from ..modelo.puertos.almacenLocal import AlmacenLocal
-from ..modelo.puertos.dto import (FichaArmaDTO, FichaArmaduraDTO,
-                                   FichaAntidotoDTO, FichaAntorchaDTO,
-                                   FichaEnemigoDTO, FichaLlaveDTO,
-                                   FichaPergaminoRetrocesoDTO, FichaPocionDTO,
-                                   FichaTrampaDTO)
+from ..modelo.puertos.dto import (FichaArmaDTO, FichaArmaduraDTO, FichaAntidotoDTO, FichaAntorchaDTO, FichaEnemigoDTO, FichaLlaveDTO, FichaPergaminoRetrocesoDTO, FichaPocionDTO, FichaTrampaDTO)
 from ..modelo.estructuras.listaEnlazada import ListaEnlazada
 
 
 def _ficha_a_dict(ficha):
-    """Convierte una ficha (subclase de FichaDTO) a un diccionario plano, listo
-    para json.dump. Es el único lugar de este archivo donde se arma un dict y
-    una lista de Python, porque es la forma natural de hablar con el módulo
-    json de la biblioteca estándar (igual que clienteHttp con requests): no
-    sustituye ninguna estructura propia del programa, solo empaqueta para
-    escribir a disco."""
     base = {"id": ficha.id, "nombre": ficha.nombre, "clase": ficha.clase}
     if isinstance(ficha, FichaEnemigoDTO):
         suelta = []
@@ -39,7 +17,7 @@ def _ficha_a_dict(ficha):
                     comportamiento=ficha.comportamiento, suelta=suelta)
     elif isinstance(ficha, FichaTrampaDTO):
         base.update(dano=ficha.dano, rearme=ficha.rearme)
-    else:   # toda subclase de FichaObjetoDTO comparte peso y valor
+    else:
         base.update(peso=ficha.peso, valor=ficha.valor)
         if isinstance(ficha, FichaArmaDTO):
             base["ataque_bonus"] = ficha.ataque_bonus
@@ -60,49 +38,39 @@ def _ficha_a_dict(ficha):
 
 
 def _dict_a_ficha(datos):
-    """El inverso de _ficha_a_dict. Reutiliza la lógica de clase de dto.py por
-    if/elif (§7: nada de dict como tabla de búsqueda)."""
     clase = datos["clase"]
+
     if clase == "enemigo":
         suelta = ListaEnlazada()
         suelta.agregar_todos(datos.get("suelta", ()))
-        return FichaEnemigoDTO(id=datos["id"], nombre=datos["nombre"],
-                               vida_max=datos["vida_max"], ataque=datos["ataque"],
-                               defensa=datos["defensa"], velocidad=datos["velocidad"],
-                               comportamiento=datos["comportamiento"], suelta=suelta)
+        return FichaEnemigoDTO(id=datos["id"], nombre=datos["nombre"],vida_max=datos["vida_max"], ataque=datos["ataque"],
+                               defensa=datos["defensa"], velocidad=datos["velocidad"],comportamiento=datos["comportamiento"], suelta=suelta)
     if clase == "trampa":
-        return FichaTrampaDTO(id=datos["id"], nombre=datos["nombre"],
-                              dano=datos["dano"], rearme=datos.get("rearme"))
+        return FichaTrampaDTO(id=datos["id"], nombre=datos["nombre"], dano=datos["dano"], rearme=datos.get("rearme"))
+
     peso, valor = datos["peso"], datos["valor"]
     if clase == "arma":
-        return FichaArmaDTO(id=datos["id"], nombre=datos["nombre"], peso=peso,
-                            valor=valor, ataque_bonus=datos["ataque_bonus"])
+        return FichaArmaDTO(id=datos["id"], nombre=datos["nombre"], peso=peso, valor=valor, ataque_bonus=datos["ataque_bonus"])
+
     if clase == "armadura":
-        return FichaArmaduraDTO(id=datos["id"], nombre=datos["nombre"], peso=peso,
-                                valor=valor, defensa_bonus=datos["defensa_bonus"])
+        return FichaArmaduraDTO(id=datos["id"], nombre=datos["nombre"], peso=peso, valor=valor, defensa_bonus=datos["defensa_bonus"])
+
     if clase == "pocion":
-        return FichaPocionDTO(id=datos["id"], nombre=datos["nombre"], peso=peso,
-                              valor=valor, cura=datos.get("cura"),
-                              modificador_velocidad=datos.get("modificador_velocidad"),
-                              duracion=datos.get("duracion"))
+        return FichaPocionDTO(id=datos["id"], nombre=datos["nombre"], peso=peso, valor=valor,
+                              cura=datos.get("cura"), modificador_velocidad=datos.get("modificador_velocidad"), duracion=datos.get("duracion"))
     if clase == "antidoto":
         return FichaAntidotoDTO(id=datos["id"], nombre=datos["nombre"], peso=peso, valor=valor)
+
     if clase == "llave":
-        return FichaLlaveDTO(id=datos["id"], nombre=datos["nombre"], peso=peso,
-                             valor=valor, abre=datos["abre"])
+        return FichaLlaveDTO(id=datos["id"], nombre=datos["nombre"], peso=peso, valor=valor, abre=datos["abre"])
     if clase == "antorcha":
-        return FichaAntorchaDTO(id=datos["id"], nombre=datos["nombre"], peso=peso,
-                                valor=valor, duracion=datos["duracion"])
+        return FichaAntorchaDTO(id=datos["id"], nombre=datos["nombre"], peso=peso, valor=valor, duracion=datos["duracion"])
     if clase == "pergamino_retroceso":
-        return FichaPergaminoRetrocesoDTO(id=datos["id"], nombre=datos["nombre"],
-                                          peso=peso, valor=valor)
+        return FichaPergaminoRetrocesoDTO(id=datos["id"], nombre=datos["nombre"], peso=peso, valor=valor)
     raise ValueError(f"Clase de ficha desconocida al leer de disco: '{clase}'")
 
 
 def _nombre_de_archivo(id_ficha):
-    """Un id de catálogo puede traer cualquier carácter en teoría; se reemplazan
-    los que no son seguros en un nombre de archivo, para no depender de qué
-    sistema operativo lo ejecuta."""
     seguro = ""
     for caracter in id_ficha:
         if caracter.isalnum() or caracter in "-_.":
@@ -113,9 +81,6 @@ def _nombre_de_archivo(id_ficha):
 
 
 class AlmacenLocalDisco(AlmacenLocal):
-    """Guarda fichas como archivos JSON bajo una carpeta. Crea la carpeta si no
-    existe. Un archivo que no se puede leer (corrupto, de otro formato) se
-    trata como si la ficha no existiera, en vez de hacer fallar al programa."""
 
     def __init__(self, carpeta):
         self._carpeta = Path(carpeta)
