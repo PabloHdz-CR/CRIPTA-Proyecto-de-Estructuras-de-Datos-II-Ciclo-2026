@@ -485,3 +485,28 @@ R: Inserción + Mezcla (recomendada)
 P: 2. ¿Con qué criterio decide el selector automático?
 R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 - **Uso:** implementar la sección 6.1 (módulo Ordenamiento: inserción y mezcla estables sobre Nodo, ClaveOrden para ordenar por clave calculada, selector automático con inversiones_adyacentes y casi_ordenada) con sus pruebas verificadas por mutación, incluida la estabilidad; preparar las notas D41 y D42 para el Documento de Decisiones.
+
+## Entrada 32
+- **Fecha:** 14/10/2026
+- **Herramienta:** Claude
+- **Prompt:** "Ayudame a implementar PyArcade dentro del proyecto como vista, explicame brevemente en que consiste, como funciona..."
+- **Uso:** entender en qué consiste PyArcade y cómo se puede integrar dentro del proyecto.
+
+## Entrada 33
+- **Fecha:** 14/10/2026
+- **Herramienta:** Claude
+- **Prompt:** "En base a la estructura del proyecto armemos el esqueleto de lo que tenemos que implementar en vista."
+- **Uso:** Creación de la base para poder implementar la vista con PyArcade.
+
+## Entrada 34
+- **Fecha:** 14/10/2026
+- **Herramienta:** Claude
+- **Prompt:** "Sigamos con la vistaArcade, que es clave para vistaJuego."
+- **Uso:** Implementación de vistaArcade para tener la base de comandos importantes.
+
+## Entrada 35
+- **Fecha:** 14/10/2026
+- **Herramienta:** Claude
+- **Prompt:** "sigamos con la pantalla de juego de los pasos descritos a seguir, ya tengo hecho lo que iba antes."
+- **Uso:** construir la Pantalla Juego (Paso 5a): mostrar sala, salidas, enemigos, objetos, jugador, inventario, efectos y mensajes, y las teclas de mover/esperar.
+
