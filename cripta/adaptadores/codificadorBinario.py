@@ -1,12 +1,4 @@
-"""Primitivas de bajo nivel para el formato binario propio (§4.10): envolver
-struct.pack/unpack para escribir y leer enteros, booleanos, flotantes y
-cadenas con longitud, uno detrás de otro. PartidaBinaria usa esto para
-armar cada registro; aquí no hay reglas del juego, solo bytes.
 
-Todas las cadenas se escriben como UTF-8 con su longitud en bytes por
-delante (4 bytes), para poder leerlas sin separadores ni tener que adivinar
-dónde terminan.
-"""
 import struct
 
 FORMATO_INT64 = "<q"
@@ -17,10 +9,6 @@ FORMATO_BOOL = "<B"
 
 
 class EscritorBinario:
-    """Acumula bytes en memoria (io.BytesIO) y los primitivos de escritura.
-    Se usa un buffer en memoria (no un archivo abierto directamente) porque
-    PartidaBinaria necesita saber la LONGITUD de cada sala antes de decidir
-    dónde empieza la siguiente."""
 
     def __init__(self) -> None:
         self._partes = bytearray()
@@ -56,7 +44,6 @@ class EscritorBinario:
         self._partes += datos
 
     def entero_opcional(self, valor) -> None:
-        """Para campos int que pueden ser None (p. ej. rastro, cierre_automatico)."""
         if valor is None:
             self.booleano(False)
         else:
@@ -64,7 +51,6 @@ class EscritorBinario:
             self.entero(valor)
 
     def flotante_opcional(self, valor) -> None:
-        """Para campos float que pueden ser None (p. ej. gauss_next de Random)."""
         if valor is None:
             self.booleano(False)
         else:
@@ -75,15 +61,10 @@ class EscritorBinario:
         self._partes += datos
 
     def sobrescribir_entero(self, posicion: int, valor: int) -> None:
-        """Reemplaza, en el buffer YA escrito, los 8 bytes de un entero()
-        anterior. Lo usa PartidaBinaria para rellenar, al final, el campo
-        'offset_indice' del encabezado fijo: su valor real (dónde queda el
-        índice de salas) solo se conoce después de escribir todo lo demás."""
         self._partes[posicion:posicion + 8] = struct.pack(FORMATO_INT64, valor)
 
 
 class LectorBinario:
-    """Lee de un bytes/bytearray ya cargado en memoria, avanzando un cursor."""
 
     def __init__(self, datos: bytes, posicion: int = 0) -> None:
         self._datos = datos
