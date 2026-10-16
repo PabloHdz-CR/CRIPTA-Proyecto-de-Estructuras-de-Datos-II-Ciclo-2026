@@ -2,3 +2,9 @@
 __pycache__/
 *.pyc
 .idea/
+
+# Archivos que genera el juego al correr
+guardados/
+partidas/
+puntajes.jsonl
+fichas_guardadas/

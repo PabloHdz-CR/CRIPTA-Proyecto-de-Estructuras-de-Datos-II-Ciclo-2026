@@ -13,9 +13,10 @@ import json
 from pathlib import Path
 
 from ..modelo.nucleo.puntajes import RegistroPuntaje, TablaPuntajes
+from ..modelo.puertos.almacenPuntajes import AlmacenPuntajes
 
 
-class PuntajesArchivo:
+class PuntajesArchivo(AlmacenPuntajes):
 
     def __init__(self, ruta):
         self._ruta = Path(ruta)

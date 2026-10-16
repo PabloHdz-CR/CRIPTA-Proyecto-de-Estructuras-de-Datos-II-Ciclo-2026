@@ -510,3 +510,116 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 - **Prompt:** "sigamos con la pantalla de juego de los pasos descritos a seguir, ya tengo hecho lo que iba antes."
 - **Uso:** construir la Pantalla Juego (Paso 5a): mostrar sala, salidas, enemigos, objetos, jugador, inventario, efectos y mensajes, y las teclas de mover/esperar.
 
+## Entrada 36
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Quiero que me integres uno cambios que te voy a pasar a este proyecto en el que estas, puedes?"
+- **Uso:** preparar la integración de la capa Controlador en la rama.
+
+## Entrada 37
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** se pegó el código completo de la capa Controlador generado en otra conversación (mapaEtiquetas, traductorComandos, constructorEstadoVista, controladorJuego, controladorMenu, gestorGuardado, modoReplay, modoBench, reporteFinal, fabricaAplicacion, main.py y los cambios en servicioDatos, diario, registroArchivo y estadoVista), que empezaba con: "El proyecto ya tiene un verificador de reglas (prueba_reglas.py: sin lambda, sin [], sin dict, sin sorted). Lo corro contra mi código:"
+- **Uso:** integrar el Controlador al proyecto y verificarlo con prueba_reglas, la batería existente, --replay y --bench.
+
+## Entrada 38
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Necesito que el codigo que acabamos de implementar cumpla con esto y si no lo hace, dime que es lo que vas a cambiar [...] Y tiene que estar comentado en el código pq se toma esa decisión de diseño". Se adjuntaron el prompt de reglas del proyecto (arquitectura MVC + adaptadores, TDA permitidos, sin dict ni listas nativas como almacenamiento, ordenamientos propios, sin lambda, justificación con Big O), Cripta_Guia_MVC.md y el enunciado.
+- **Uso:** auditar el Controlador contra las reglas; se encontraron 7 puntos (acceso a disco desde el Controlador, duplicación de pergaminos en el Diario, tipado, comentarios de decisión, print en ReporteFinal, partida nueva o cargada, prueba faltante).
+
+## Entrada 39
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Sí, aplica los 7 cambios (en el punto 5 deja Reporte documentado)."
+- **Uso:** crear los puertos AlmacenPartida, RegistroAcciones/AlmacenRegistros y AlmacenPuntajes con sus adaptadores, corregir el Diario, agregar tipos y comentarios DECISIÓN, "jugar <id> [nueva|cargar]" y prueba_controlador.
+
+## Entrada 40
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Espera, primero reviso los cambios."
+- **Uso:** revisar el diff antes de hacer el commit.
+
+## Entrada 41
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "ahora el codigo cumple con lo que te solicite al 100%?"
+- **Uso:** listar lo que faltaba: entradas en DECISIONES.md y PROMPTS_LLM.md, tipado de puertos, paquete --offline incompatible, teclas pendientes en la Vista.
+
+## Entrada 42
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "pasame el comentario que vas a poner en el commit"
+- **Uso:** redactar el mensaje del commit.
+
+## Entrada 43
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Resuelvelos"
+- **Uso:** regenerar datos_offline/ con guardar_respuestas.py en el formato de FuenteOffline, completar tipos, agregar benchEtiquetas a --bench y escribir D47–D53 en DECISIONES.md.
+
+## Entrada 44
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "como hago para correr el programa o que hace falta?"
+- **Uso:** instalar las dependencias (arcade y requests), correr la batería de pruebas y conocer los modos de ejecución (py main.py, --offline, --replay, --bench).
+
+## Entrada 45
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** se adjuntó una captura de la pantalla de juego con el texto: "Entre al primer nivel y solo me sale esta pantalla y no puedo interactuar con nada"
+- **Uso:** diagnosticar que las flechas sí funcionaban pero la pantalla no lo indicaba, faltaban teclas para recoger, abrir puertas, pergamino, guardar y cargar, y mostrar_error no mostraba nada; agregar esas teclas, la ayuda en pantalla y los avisos en naranja.
+
+## Entrada 46
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Primero lo pruebo yo en la ventana, no hagas commit todavía."
+- **Uso:** probar los cambios a mano antes de hacer el commit.
+
+## Entrada 47
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** se adjuntó una captura de la pantalla de juego con el texto: "Ahora si me puedo mover, pero no hay parte grafica solo texto en la pantalla, a que se debe esto?"
+- **Uso:** entender que la vista era solo de texto por diseño (la guía describe una VistaConsola y los datos no traen imágenes) y qué se podía agregar sin tocar el modelo ni el controlador.
+
+## Entrada 48
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Quiero que me ayudes a implementar la parte visual"
+- **Uso:** crear DibujoSala (sala vista desde arriba con muros, puertas según su estado, enemigos con barra de vida, objetos y jugador), reorganizar PantallaJuego en zonas y agrandar la ventana a 1024x720, respetando prueba_reglas (sin listas, lambda ni dict).
+
+## Entrada 49
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "En la pantalla de Derrota quiero que se vea el resumen de la partida"
+- **Uso:** agregar a ResultadoFinVisible campos opcionales de red y caché que llena ControladorJuego, y mostrar en PantallaFin los recuadros "Tu partida" y "Red y caché"; ReporteFinal sigue imprimiendo en la terminal (§5.1).
+
+## Entrada 50
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Hay alguna manera de mejorar la calidad grafica, siguiendo el reglamento?"
+- **Uso:** comparar tres opciones (animación con figuras, sprites que trae arcade en :resources:, y un paquete externo de pixel art que requiere consultar al profesor).
+
+## Entrada 51
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Haz el 1 y el 2, estoy esperando la respuesta de mi profesor para confirmar si se puede usar recursos externos"
+- **Uso:** crear texturas.py (sprites de Kenney incluidos en arcade, fondo de sala y luz generados con Pillow una vez por sala, ya que ShapeElementList solo se llena con .append, prohibido por prueba_reglas) y animar en DibujoSala la antorcha, el daño, las barras de vida, los enemigos derrotados y el fundido al cambiar de sala.
+
+## Entrada 52
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "ya lo probe haz el commit"
+- **Uso:** hacer el commit de la vista gráfica, las teclas y la pantalla de fin, dejando fuera los archivos que el juego genera al correr.
+
+## Entrada 53
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Sí, agrega guardados/, partidas/, puntajes.jsonl y fichas_guardadas/ al .gitignore."
+- **Uso:** ignorar en git los guardados, logs, puntajes y fichas que el juego crea al correr.
+
+## Entrada 54
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Agrega los prompts de esta sesión por favor"
+- **Uso:** registrar en PROMPTS_LLM.md los prompts de esta sesión.
