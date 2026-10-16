@@ -4,6 +4,7 @@ from __future__ import annotations
 from ..actores.comportamientos import crear_comportamiento
 from ..actores.enemigo import Enemigo
 from ..estructuras.listaEnlazada import ListaEnlazada
+from ..estructuras.tablaHash import TablaHash
 from ..mundo.trampa import Trampa
 from ..objetos.objeto import crear_objeto
 
@@ -54,42 +55,32 @@ class FabricaEntidades:
             _agregar_unico(ids, id_ficha)
         for dto in contenido.trampas:
             _agregar_unico(ids, dto.tipo)
-        # DECISIÓN: ListaEnlazada de pares (id, ficha) y no TablaHash/dict (§7): se
-        # busca linealmente para emparejar cada ficha con su id.
-        fichas = ListaEnlazada()
         self._resolver(ids, fichas)
 
+        # DECISIÓN: segunda fase: se resuelve YA lo que suelta cada enemigo, para que
+        # su muerte nunca dispare una solicitud de red en mitad del combate.
         ids_suelta = ListaEnlazada()
         for dto in contenido.enemigos:
-            for id_ficha in _buscar_ficha(fichas, dto.tipo).suelta:
-                if not _tiene_ficha(fichas, id_ficha):
                     _agregar_unico(ids_suelta, id_ficha)
         self._resolver(ids_suelta, fichas)
 
         enemigos = ListaEnlazada()
         for dto in contenido.enemigos:
-            ficha = _buscar_ficha(fichas, dto.tipo)
             vida = dto.vida if dto.vida is not None else ficha.vida_max
             enemigo = Enemigo(dto.instancia, ficha, vida, id_sala,
                               crear_comportamiento(ficha.comportamiento))
             for id_ficha in ficha.suelta:
-                enemigo.suelta.agregar_al_final(_buscar_ficha(fichas, id_ficha))
             enemigos.agregar_al_final(enemigo)
 
         objetos = ListaEnlazada()
         for id_ficha in contenido.objetos:
-            objetos.agregar_al_final(self.crear_objeto(_buscar_ficha(fichas, id_ficha)))
 
         trampas = ListaEnlazada()
         for dto in contenido.trampas:
-            trampas.agregar_al_final(
-                Trampa(dto.instancia, _buscar_ficha(fichas, dto.tipo), id_sala))
         return enemigos, objetos, trampas
 
-    def _resolver(self, ids: ListaEnlazada, destino: ListaEnlazada) -> None:
         if ids.esta_vacia():
             return
         resueltas = self._servicio.resolver_fichas(ids)   # mismo orden que ids
         iterador = iter(resueltas)
         for id_ficha in ids:
-            destino.agregar_al_final((id_ficha, next(iterador)))
