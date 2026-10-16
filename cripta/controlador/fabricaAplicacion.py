@@ -91,7 +91,7 @@ class FabricaAplicacion:
         # que pyarcade/pyglet siquiera se importen (§6). Verificado.
         from ..vista.vistaArcade import VistaArcade
 
-        vista = VistaArcade(ancho=800, alto=600, titulo="Cripta")
+        vista = VistaArcade(ancho=1024, alto=720, titulo="Cripta")
         controlador = ControladorMenu(
             servicio, vista,
             GestorGuardado(AlmacenPartidaDisco(CARPETA_GUARDADOS_POR_DEFECTO)),

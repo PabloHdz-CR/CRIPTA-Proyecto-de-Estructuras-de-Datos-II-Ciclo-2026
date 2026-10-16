@@ -13,6 +13,7 @@ pueda mutar y que se desincronice con el modelo real.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Optional
 
 from ..modelo.estructuras.listaEnlazada import ListaEnlazada
 
@@ -135,3 +136,9 @@ class ResultadoFinVisible:
     acciones: int
     enemigos_derrotados: int
     tiempo_final: int
+    # Resumen de red y caché (§5.1), el mismo que ReporteFinal imprime en la
+    # terminal. Opcional: --replay arma el resultado sin estos datos.
+    solicitudes_realizadas: Optional[int] = None
+    presupuesto: Optional[int] = None       # None = --offline (sin red)
+    aciertos_cache: Optional[int] = None
+    fallos_cache: Optional[int] = None

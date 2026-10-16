@@ -237,6 +237,10 @@ class ControladorJuego:
             acciones=registro.acciones,
             enemigos_derrotados=registro.enemigos_derrotados,
             tiempo_final=registro.tiempo_final,
+            solicitudes_realizadas=self._servicio.solicitudes_realizadas(),
+            presupuesto=self._servicio.presupuesto(),
+            aciertos_cache=self._servicio.aciertos_cache(),
+            fallos_cache=self._servicio.fallos_cache(),
         ))
         self._reporte_final.imprimir(self._servicio)
         self._terminado = True

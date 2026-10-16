@@ -40,6 +40,7 @@ class VistaArcade(VistaJuego):
         self._comandos = Cola()
         self._ventana = arcade.Window(ancho, alto, titulo, visible=visible)
         self._pantalla_actual = None
+        self._ultimo_estado = None      # para animar lo que cambió entre turnos
 
     @property
     def ventana(self) -> arcade.Window:
@@ -68,28 +69,36 @@ class VistaArcade(VistaJuego):
         return self._comandos.desencolar()
 
     def mostrar_estado(self, estado) -> None:
-        self._mostrar(PantallaJuego(self, estado))
+        self._mostrar(PantallaJuego(self, estado, self._ultimo_estado))
+        self._ultimo_estado = estado
 
     def mostrar_mensajes(self, mensajes) -> None:
         """PantallaJuego ya dibuja estado.mensajes completo en cada
-        mostrar_estado; una notificación incremental aparte no hace falta
-        por ahora."""
+        mostrar_estado; esto solo cubre los avisos que NO traen un estado
+        nuevo detrás (p. ej. "Partida guardada en ...")."""
+        self._avisar(" ".join(mensajes))
 
     def mostrar_menu(self, criptas) -> None:
+        self._ultimo_estado = None
         self._mostrar(PantallaMenu(self, criptas))
 
     def mostrar_puntajes(self, puntajes) -> None:
         self._mostrar(PantallaPuntajes(self, puntajes))
 
     def mostrar_fin(self, resultado) -> None:
+        self._ultimo_estado = None
         self._mostrar(PantallaFin(self, resultado))
 
     def mostrar_error(self, mensaje: str) -> None:
-        """Todavía no hay overlay de error sobre la pantalla actual; el
-        Controlador puede seguir usando esto sin que reviente, simplemente
-        no se ve nada en pantalla por ahora."""
+        """Se dibuja sobre la pantalla actual sin cambiar de pantalla. Solo
+        PantallaJuego tiene dónde mostrarlo; en las demás se ignora."""
+        self._avisar(mensaje)
 
     # -- internos --
+
+    def _avisar(self, texto: str) -> None:
+        if texto and isinstance(self._pantalla_actual, PantallaJuego):
+            self._pantalla_actual.mostrar_aviso(texto)
 
     def _mostrar(self, pantalla: _PantallaCripta) -> None:
         self._pantalla_actual = pantalla
