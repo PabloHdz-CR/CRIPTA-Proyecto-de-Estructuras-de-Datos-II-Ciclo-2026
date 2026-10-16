@@ -510,3 +510,50 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 - **Prompt:** "sigamos con la pantalla de juego de los pasos descritos a seguir, ya tengo hecho lo que iba antes."
 - **Uso:** construir la Pantalla Juego (Paso 5a): mostrar sala, salidas, enemigos, objetos, jugador, inventario, efectos y mensajes, y las teclas de mover/esperar.
 
+## Entrada 36
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Quiero que me integres uno cambios que te voy a pasar a este proyecto en el que estas, puedes?"
+- **Uso:** preparar la integración de la capa Controlador en la rama.
+
+## Entrada 37
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** se pegó el código completo de la capa Controlador generado en otra conversación (mapaEtiquetas, traductorComandos, constructorEstadoVista, controladorJuego, controladorMenu, gestorGuardado, modoReplay, modoBench, reporteFinal, fabricaAplicacion, main.py y los cambios en servicioDatos, diario, registroArchivo y estadoVista), que empezaba con: "El proyecto ya tiene un verificador de reglas (prueba_reglas.py: sin lambda, sin [], sin dict, sin sorted). Lo corro contra mi código:"
+- **Uso:** integrar el Controlador al proyecto y verificarlo con prueba_reglas, la batería existente, --replay y --bench.
+
+## Entrada 38
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Necesito que el codigo que acabamos de implementar cumpla con esto y si no lo hace, dime que es lo que vas a cambiar [...] Y tiene que estar comentado en el código pq se toma esa decisión de diseño". Se adjuntaron el prompt de reglas del proyecto (arquitectura MVC + adaptadores, TDA permitidos, sin dict ni listas nativas como almacenamiento, ordenamientos propios, sin lambda, justificación con Big O), Cripta_Guia_MVC.md y el enunciado.
+- **Uso:** auditar el Controlador contra las reglas; se encontraron 7 puntos (acceso a disco desde el Controlador, duplicación de pergaminos en el Diario, tipado, comentarios de decisión, print en ReporteFinal, partida nueva o cargada, prueba faltante).
+
+## Entrada 39
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Sí, aplica los 7 cambios (en el punto 5 deja Reporte documentado)."
+- **Uso:** crear los puertos AlmacenPartida, RegistroAcciones/AlmacenRegistros y AlmacenPuntajes con sus adaptadores, corregir el Diario, agregar tipos y comentarios DECISIÓN, "jugar <id> [nueva|cargar]" y prueba_controlador.
+
+## Entrada 40
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Espera, primero reviso los cambios."
+- **Uso:** revisar el diff antes de hacer el commit.
+
+## Entrada 41
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "ahora el codigo cumple con lo que te solicite al 100%?"
+- **Uso:** listar lo que faltaba: entradas en DECISIONES.md y PROMPTS_LLM.md, tipado de puertos, paquete --offline incompatible, teclas pendientes en la Vista.
+
+## Entrada 42
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "pasame el comentario que vas a poner en el commit"
+- **Uso:** redactar el mensaje del commit.
+
+## Entrada 43
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Resuelvelos"
+- **Uso:** regenerar datos_offline/ con guardar_respuestas.py en el formato de FuenteOffline, completar tipos, agregar benchEtiquetas a --bench y escribir D47–D53 en DECISIONES.md.

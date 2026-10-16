@@ -16,6 +16,7 @@ from ..estructuras.pilaAcotada import PilaAcotada
 from . import mutador as m
 
 TAMANO_HISTORIAL = 5  # como máximo 5 acciones de retroceso (§2.11)
+CLASE_PERGAMINO = "pergamino_retroceso"
 
 
 class Diario:
@@ -32,12 +33,45 @@ class Diario:
     def __init__(self, tamano: int = TAMANO_HISTORIAL) -> None:
         self._intervalos = PilaAcotada(tamano)
         self._actual = None  # Pila del intervalo abierto, o None
+        # Pergamino que el jugador acaba de sacar del inventario (Soltar), a la
+        # espera del suelo_agregar que lo acompaña. None casi siempre.
+        self._pergamino_soltado: object = None
 
     def abrir_intervalo(self, partida) -> None:
         self._actual = Pila()
+        self._pergamino_soltado = None
 
     def registrar(self, tipo, objetivo, detalle, anterior, nuevo) -> None:
+        # DECISIÓN (§2.11, §4.6, Ap. B): los pergaminos que el JUGADOR recoge o
+        # suelta quedan fuera del estado reversible en ambos sentidos. Se
+        # filtran AQUÍ, al registrar, y no al revertir, porque solo aquí se sabe
+        # si el objeto lo movió el jugador (recoger/soltar) o un enemigo al morir
+        # (suelo_agregar de un objeto nuevo): este último SÍ debe revertirse; si
+        # no, el enemigo revive, el pergamino se queda en el suelo y matarlo otra
+        # vez duplica pergaminos. Costo O(1) por registro (comparar el tope de
+        # la Pila). Alternativa descartada: filtrar todo pergamino al revertir,
+        # que es O(1) pero no distingue ambos casos.
+        if self._es_pergamino_del_jugador(tipo, anterior, nuevo):
+            return
         self._actual.apilar((tipo, objetivo, detalle, anterior, nuevo))
+
+    def _es_pergamino_del_jugador(self, tipo: str, anterior: object, nuevo: object) -> bool:
+        """Partida registra recoger como suelo_quitar + inventario_agregar y
+        soltar como inventario_quitar + suelo_agregar, siempre seguidos."""
+        if tipo == m.INVENTARIO_AGREGAR and _es_pergamino(nuevo):
+            # Recoger: el suelo_quitar del mismo objeto ya está en el tope; se saca.
+            if not self._actual.esta_vacia():
+                tipo_tope, _, _, anterior_tope, _ = self._actual.ver_tope()
+                if tipo_tope == m.SUELO_QUITAR and anterior_tope is nuevo:
+                    self._actual.desapilar()
+            return True
+        if tipo == m.INVENTARIO_QUITAR and _es_pergamino(anterior[0]):
+            self._pergamino_soltado = anterior[0]
+            return True
+        if tipo == m.SUELO_AGREGAR and nuevo is self._pergamino_soltado:
+            self._pergamino_soltado = None
+            return True
+        return False
 
     def cerrar_intervalo(self) -> None:
         # DECISIÓN: un intervalo sin registros (una acción aceptada que no
@@ -82,7 +116,12 @@ class Diario:
             partida.agenda.reactivar(objetivo)
 
         elif tipo == m.SUELO_AGREGAR:
-            objetivo.suelo.eliminar_nodo(objetivo.suelo.buscar(nuevo))
+            nodo = objetivo.suelo.buscar(nuevo)
+            # DECISIÓN: un pergamino que soltó un enemigo y que el jugador ya
+            # recogió en un intervalo posterior está fuera del alcance de la
+            # reversión (§2.11): ya no está en el suelo y se deja donde está.
+            if nodo is not None or not _es_pergamino(nuevo):
+                objetivo.suelo.eliminar_nodo(nodo)
         elif tipo == m.SUELO_QUITAR:
             objetivo.suelo.agregar_al_final(anterior)
 
@@ -120,3 +159,8 @@ class Diario:
 
         else:
             raise ValueError(f"Tipo de mutación desconocido en el diario: {tipo!r}")
+
+
+def _es_pergamino(objeto: object) -> bool:
+    """O(1): compara la clase de la ficha."""
+    return objeto is not None and objeto.clase == CLASE_PERGAMINO

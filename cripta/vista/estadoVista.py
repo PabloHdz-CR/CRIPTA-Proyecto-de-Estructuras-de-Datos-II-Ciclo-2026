@@ -82,6 +82,8 @@ class InventarioVisible:
     indice_actual: int              # -1 si está vacío
     capacidad: int
     cantidad_pergaminos: int
+    criterio_orden: str = None      # None = solo orden real
+    vista_ordenada: ListaEnlazada = None
 
 
 @dataclass(frozen=True)
