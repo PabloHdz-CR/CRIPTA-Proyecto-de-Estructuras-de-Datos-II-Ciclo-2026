@@ -557,3 +557,69 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "Resuelvelos"
 - **Uso:** regenerar datos_offline/ con guardar_respuestas.py en el formato de FuenteOffline, completar tipos, agregar benchEtiquetas a --bench y escribir D47–D53 en DECISIONES.md.
+
+## Entrada 44
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "como hago para correr el programa o que hace falta?"
+- **Uso:** instalar las dependencias (arcade y requests), correr la batería de pruebas y conocer los modos de ejecución (py main.py, --offline, --replay, --bench).
+
+## Entrada 45
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** se adjuntó una captura de la pantalla de juego con el texto: "Entre al primer nivel y solo me sale esta pantalla y no puedo interactuar con nada"
+- **Uso:** diagnosticar que las flechas sí funcionaban pero la pantalla no lo indicaba, faltaban teclas para recoger, abrir puertas, pergamino, guardar y cargar, y mostrar_error no mostraba nada; agregar esas teclas, la ayuda en pantalla y los avisos en naranja.
+
+## Entrada 46
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Primero lo pruebo yo en la ventana, no hagas commit todavía."
+- **Uso:** probar los cambios a mano antes de hacer el commit.
+
+## Entrada 47
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** se adjuntó una captura de la pantalla de juego con el texto: "Ahora si me puedo mover, pero no hay parte grafica solo texto en la pantalla, a que se debe esto?"
+- **Uso:** entender que la vista era solo de texto por diseño (la guía describe una VistaConsola y los datos no traen imágenes) y qué se podía agregar sin tocar el modelo ni el controlador.
+
+## Entrada 48
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Quiero que me ayudes a implementar la parte visual"
+- **Uso:** crear DibujoSala (sala vista desde arriba con muros, puertas según su estado, enemigos con barra de vida, objetos y jugador), reorganizar PantallaJuego en zonas y agrandar la ventana a 1024x720, respetando prueba_reglas (sin listas, lambda ni dict).
+
+## Entrada 49
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "En la pantalla de Derrota quiero que se vea el resumen de la partida"
+- **Uso:** agregar a ResultadoFinVisible campos opcionales de red y caché que llena ControladorJuego, y mostrar en PantallaFin los recuadros "Tu partida" y "Red y caché"; ReporteFinal sigue imprimiendo en la terminal (§5.1).
+
+## Entrada 50
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Hay alguna manera de mejorar la calidad grafica, siguiendo el reglamento?"
+- **Uso:** comparar tres opciones (animación con figuras, sprites que trae arcade en :resources:, y un paquete externo de pixel art que requiere consultar al profesor).
+
+## Entrada 51
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Haz el 1 y el 2, estoy esperando la respuesta de mi profesor para confirmar si se puede usar recursos externos"
+- **Uso:** crear texturas.py (sprites de Kenney incluidos en arcade, fondo de sala y luz generados con Pillow una vez por sala, ya que ShapeElementList solo se llena con .append, prohibido por prueba_reglas) y animar en DibujoSala la antorcha, el daño, las barras de vida, los enemigos derrotados y el fundido al cambiar de sala.
+
+## Entrada 52
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "ya lo probe haz el commit"
+- **Uso:** hacer el commit de la vista gráfica, las teclas y la pantalla de fin, dejando fuera los archivos que el juego genera al correr.
+
+## Entrada 53
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Sí, agrega guardados/, partidas/, puntajes.jsonl y fichas_guardadas/ al .gitignore."
+- **Uso:** ignorar en git los guardados, logs, puntajes y fichas que el juego crea al correr.
+
+## Entrada 54
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Agrega los prompts de esta sesión por favor"
+- **Uso:** registrar en PROMPTS_LLM.md los prompts de esta sesión.
