@@ -225,6 +225,7 @@ try:
     assert vista.estado.replay.paso == 0
     tic(controladorReplay.ESPERA_INICIAL)
     assert vista.estado.replay.paso == 1 and vista.estado.sala.nombre == "Pasillo"
+    foto_paso_1 = vista.estado
 
     # pausa: el tiempo pasa pero no avanza; "paso" avanza de a uno igual
     enviar("replay_pausa")
@@ -233,6 +234,27 @@ try:
     assert vista.estado.replay.paso == 1
     enviar("replay_paso")
     assert vista.estado.replay.paso == 2 and vista.estado.sala.enemigos.esta_vacia()
+
+    # atrás: vuelve EXACTAMENTE al paso 1 (la rata vive de nuevo), en pausa
+    enviar("replay_pausa")                    # continúa...
+    enviar("replay_atras")                    # ...y atrás lo vuelve a pausar
+    atras = vista.estado
+    assert atras.replay.paso == 1 and atras.replay.pausado
+    assert (atras.reloj, atras.jugador.vida, atras.sala.nombre) == (
+        foto_paso_1.reloj, foto_paso_1.jugador.vida, foto_paso_1.sala.nombre)
+    assert [(e.etiqueta, e.vida) for e in atras.sala.enemigos] == [
+        (e.etiqueta, e.vida) for e in foto_paso_1.sala.enemigos], "misma rata, misma vida"
+    tic(10)
+    assert vista.estado.replay.paso == 1, "atrás deja el replay en pausa"
+    enviar("replay_paso")                     # y adelante vuelve a dar lo mismo
+    assert vista.estado.replay.paso == 2 and vista.estado.sala.enemigos.esta_vacia()
+    enviar("replay_atras")
+    enviar("replay_atras")
+    enviar("replay_atras")                    # en el paso 0 no pasa de ahí
+    assert vista.estado.replay.paso == 0 and vista.estado.sala.nombre == "Entrada"
+    enviar("replay_paso")
+    enviar("replay_paso")
+    assert vista.estado.replay.paso == 2
     enviar("replay_pausa")                    # continúa
 
     # velocidad: x2 avanza con la mitad del intervalo; no baja de x1

@@ -701,3 +701,15 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "haz el commit y sube los prompts de esta sesión"
 - **Uso:** registrar los prompts de la sesión en PROMPTS_LLM.md y hacer el commit de todos los cambios.
+
+## Entrada 68
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "el pergamino que es lo que hace, y el antidoto no aparece en los efectos o que es lo que hace?"
+- **Uso:** entender que el pergamino deshace la última acción (máximo 5, no consume tiempo) y que el antídoto cura el veneno, pero que hoy nada en el juego envenena (envenenar() no tiene quién la llame).
+
+## Entrada 69
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "la flecha izquierda en el replay no funciona para devolver la accion"
+- **Uso:** agregar el paso atrás al replay (flecha izquierda), reconstruyendo la partida con la misma semilla hasta el paso anterior, con su prueba (D56).
