@@ -68,8 +68,10 @@ def misma_sala(estado, anterior) -> bool:
 class DibujoSala:
 
     def __init__(self, estado, izquierda: float, abajo: float, lado: float,
-                 anterior=None, escala_pixeles: float = 1.0):
+                 anterior=None, escala_pixeles: float = 1.0,
+                 skin: str = texturas.SKIN_POR_DEFECTO):
         self._estado = estado
+        self._skin = skin
         self._izq = izquierda
         self._abajo = abajo
         self._lado = lado
@@ -196,7 +198,7 @@ class DibujoSala:
         cx, cy = self._centro()
         encendida = self._estado.jugador.antorcha_encendida
         golpeado = self._jugador_herido and t < _DURACION_DESTELLO
-        _dibujar_jugador(cx, cy, self._u, encendida, golpeado, t)
+        _dibujar_jugador(cx, cy, self._u, encendida, golpeado, t, self._skin)
 
         self._dibujar_luz(t, encendida)
 
@@ -465,13 +467,13 @@ def _dibujar_enemigo(etiqueta: str, x: float, y: float, r: float, u: float, t: f
 
 
 def _dibujar_jugador(x: float, y: float, u: float, antorcha: bool, golpeado: bool,
-                     t: float) -> None:
+                     t: float, skin: str = texturas.SKIN_POR_DEFECTO) -> None:
     """El caballero de 0x72 (16x28 px) con su animación de reposo, o el
     cuadro de golpe mientras dura el destello de daño."""
     escala = u * 1.25
     ancho, alto = 16 * escala, 28 * escala
     _dibujar_sombra(x, y - alto * 0.47, ancho * 0.5)
-    arcade.draw_texture_rect(texturas.caballero(t, golpeado), arcade.XYWH(x, y, ancho, alto),
+    arcade.draw_texture_rect(texturas.heroe(skin, t, golpeado), arcade.XYWH(x, y, ancho, alto),
                              pixelated=True)
     if antorcha:
         mano_x = x + ancho * 0.55

@@ -4,8 +4,10 @@ Tres fuentes:
 
 - "16x16 DungeonTileset II" de 0x72 (licencia CC0, ver
   recursos/dungeon_0x72/LICENCIA.txt): piso, muros, estandartes, calaveras,
-  puertas, el caballero (jugador), el esqueleto (guardián óseo), frascos y
-  la espada. Solo se copiaron al proyecto los cuadros que se usan.
+  puertas, las skins del héroe (caballero, caballera, elfa, mago, lagarto,
+  enano), el esqueleto (guardián óseo), frascos, la espada y los corazones.
+  Solo se copiaron al proyecto los cuadros que se usan.
+- Pixel art propio (pixelTigre.py): el tigre humanoide, skin por defecto.
 - "8 bit art pack rat monster" de Imogia Games (licencia CC BY 4.0, ver
   recursos/rata_imogia/LICENCIA.txt): la rata gigante, que 0x72 no trae.
 - Sprites de ":resources:" (Kenney, CC0, vienen DENTRO de arcade): la llave,
@@ -35,6 +37,9 @@ from pathlib import Path
 import arcade
 from PIL import Image
 
+from ..modelo.estructuras.listaEnlazada import ListaEnlazada
+from . import pixelTigre
+
 _RUTA_KENNEY = ":resources:images/"
 _CARPETA_0X72 = Path(__file__).resolve().parent / "recursos" / "dungeon_0x72"
 _TIRA_RATA = (Path(__file__).resolve().parent / "recursos" / "rata_imogia"
@@ -63,8 +68,6 @@ def _cargar_kenney(ruta: str) -> arcade.Texture:
 
 
 class _Sprites:
-    caballero = None          # tupla de 4 cuadros
-    caballero_golpe = None
     esqueleto = None          # tupla de 4 cuadros
     frasco_rojo = None
     frasco_verde = None
@@ -85,13 +88,74 @@ def _cuadro_actual(cuadros, t: float):
     return cuadros[int(t * _CUADROS_POR_SEGUNDO) % len(cuadros)]
 
 
-def caballero(t: float, golpeado: bool) -> arcade.Texture:
-    if _Sprites.caballero is None:
-        _Sprites.caballero = _cuadros("knight_m_idle_anim")
-        _Sprites.caballero_golpe = _cargar_0x72("knight_m_hit_anim_f0")
-    if golpeado:
-        return _Sprites.caballero_golpe
-    return _cuadro_actual(_Sprites.caballero, t)
+# ----------------------------------------------------------------------
+# Skins del héroe
+# ----------------------------------------------------------------------
+
+# (id, nombre visible, prefijo de 0x72). El tigre no tiene prefijo: es
+# pixel art propio (pixelTigre.py). Todas miden 16x28 y tienen 4 cuadros de
+# reposo y uno de golpe, así se dibujan igual.
+SKINS = (
+    ("tigre", "Tigre", None),
+    ("caballero", "Caballero", "knight_m"),
+    ("caballera", "Caballera", "knight_f"),
+    ("elfa", "Elfa", "elf_f"),
+    ("mago", "Mago", "wizzard_m"),
+    ("lagarto", "Lagarto", "lizard_m"),
+    ("enano", "Enano", "dwarf_m"),
+)
+SKIN_POR_DEFECTO = "tigre"
+
+
+class _Heroes:
+    # DECISIÓN: sin dict (§7): una ListaEnlazada de (id, cuadros, golpe)
+    # con las skins ya cargadas. Son 7 a lo sumo: buscar es O(7).
+    cargados = None
+
+
+def nombre_skin(id_skin: str) -> str:
+    for clave, nombre, _ in SKINS:
+        if clave == id_skin:
+            return nombre
+    return id_skin
+
+
+def skin_vecina(id_skin: str, paso: int) -> str:
+    """La skin siguiente (paso 1) o anterior (paso -1), dando la vuelta."""
+    cantidad = len(SKINS)
+    for indice, (clave, _, _) in enumerate(SKINS):
+        if clave == id_skin:
+            return SKINS[(indice + paso) % cantidad][0]
+    return SKIN_POR_DEFECTO
+
+
+def _cargar_heroe(id_skin: str):
+    for clave, _, prefijo in SKINS:
+        if clave != id_skin:
+            continue
+        if prefijo is None:
+            imagenes = pixelTigre.imagenes_reposo()
+            cuadros = tuple(arcade.Texture(imagenes[i], hash=f"cripta-tigre-f{i}")
+                            for i in range(4))
+            golpe = arcade.Texture(pixelTigre.imagen_golpe(), hash="cripta-tigre-golpe")
+        else:
+            cuadros = _cuadros(f"{prefijo}_idle_anim")
+            golpe = _cargar_0x72(f"{prefijo}_hit_anim_f0")
+        return cuadros, golpe
+    return _cargar_heroe(SKIN_POR_DEFECTO)
+
+
+def heroe(id_skin: str, t: float, golpeado: bool) -> arcade.Texture:
+    """El cuadro del héroe con esa skin: el de golpe, o el de reposo que
+    toca según el tiempo. Cada skin se carga la primera vez que se pide."""
+    if _Heroes.cargados is None:
+        _Heroes.cargados = ListaEnlazada()
+    for clave, cuadros, golpe in _Heroes.cargados:
+        if clave == id_skin:
+            return golpe if golpeado else _cuadro_actual(cuadros, t)
+    cuadros, golpe = _cargar_heroe(id_skin)
+    _Heroes.cargados.agregar_al_final((id_skin, cuadros, golpe))
+    return golpe if golpeado else _cuadro_actual(cuadros, t)
 
 
 def esqueleto(t: float) -> arcade.Texture:

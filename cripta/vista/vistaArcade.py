@@ -25,6 +25,7 @@ from __future__ import annotations
 import arcade
 
 from ..modelo.estructuras.cola import Cola
+from . import texturas
 from .pantallaBase import _PantallaCripta
 from .pantallaBenchmark import PantallaBenchmark, PantallaEspera
 from .pantallaFin import PantallaFin
@@ -43,6 +44,10 @@ class VistaArcade(VistaJuego):
         self._pantalla_actual = None
         self._ultimo_estado = None      # para animar lo que cambió entre turnos
         self._nombre_jugador = "Jugador" # lo manda el Controlador; lo muestra el menú
+        # DECISIÓN: la skin del héroe es una preferencia de PRESENTACIÓN: la
+        # elige el jugador en el menú y solo la usa la Vista para dibujar.
+        # El Modelo y el Controlador no la conocen (no cambia el juego).
+        self._skin = texturas.SKIN_POR_DEFECTO
 
     @property
     def ventana(self) -> arcade.Window:
@@ -86,6 +91,14 @@ class VistaArcade(VistaJuego):
 
     def mostrar_nombre_jugador(self, nombre: str) -> None:
         self._nombre_jugador = nombre
+
+    @property
+    def skin(self) -> str:
+        return self._skin
+
+    def cambiar_skin(self, id_skin: str) -> None:
+        """Lo llama el menú (presentación pura, no pasa por la Cola)."""
+        self._skin = id_skin
 
     def mostrar_benchmark(self, resultado) -> None:
         self._mostrar(PantallaBenchmark(self, resultado))

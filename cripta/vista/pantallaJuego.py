@@ -241,7 +241,7 @@ class PantallaJuego(_PantallaCripta):
             # animaciones de la sala.
             self._dibujo = DibujoSala(self._estado, geometria.mapa_izq, geometria.mapa_abajo,
                                       geometria.lado_mapa, self._anterior,
-                                      self.window.get_pixel_ratio())
+                                      self.window.get_pixel_ratio(), self._vista_arcade.skin)
         self._hud = HudJuego(self._estado, self._anterior, geometria, self._modo,
                              self._verbo_objetivo, self._lista_objetivo, self._cursor_objetivo,
                              self._aviso)

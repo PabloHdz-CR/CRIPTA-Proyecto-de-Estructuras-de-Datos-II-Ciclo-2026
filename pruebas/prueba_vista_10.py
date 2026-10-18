@@ -95,6 +95,26 @@ try:
     menu.on_key_press(arcade.key.ENTER, 0)
     assert comandos(vista) == [Comando("cambiar_nombre", ("ana",))]
 
+    # 2b. Skins: la predeterminada es el tigre; flecha derecha/izquierda la
+    #     cambian (dando la vuelta) sin encolar comandos (es presentación)
+    from cripta.vista import texturas
+    assert vista.skin == "tigre" == texturas.SKIN_POR_DEFECTO
+    vaciar(vista)
+    menu.on_key_press(arcade.key.RIGHT, 0)
+    assert vista.skin == "caballero" and comandos(vista) == []
+    menu.on_key_press(arcade.key.LEFT, 0)
+    menu.on_key_press(arcade.key.LEFT, 0)
+    assert vista.skin == texturas.SKINS[-1][0], "desde el primero, izquierda va al último"
+    vista.actualizar()
+    menu.on_key_press(arcade.key.RIGHT, 0)
+    assert vista.skin == "tigre"
+    for clave, _, _ in texturas.SKINS:         # todas tienen 4 cuadros de reposo y golpe
+        for t in (0.0, 0.2, 0.4, 0.6):
+            assert texturas.heroe(clave, t, False).width == 16
+        assert texturas.heroe(clave, 0.0, True).height == 28
+    reposo = [texturas.heroe("tigre", t, False) for t in (0.0, 0.2, 0.4, 0.6)]
+    assert len({id(c) for c in reposo}) == 4, "el tigre tiene 4 cuadros distintos"
+
     # 3. R ya no hace nada en el menú; B pide el benchmark
     vaciar(vista)
     menu.on_key_press(arcade.key.R, 0)

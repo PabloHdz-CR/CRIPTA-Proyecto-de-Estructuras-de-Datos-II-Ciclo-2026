@@ -743,3 +743,15 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "haz el commit y agrega los prompts nuevos"
 - **Uso:** registrar los prompts 71 a 74 y hacer el commit de los ajustes de controles del replay.
+
+## Entrada 75
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Agrega unas skins al héroe, y que la predeterminada sea de un tigre humanoide con muy buen diseño y animaciones"
+- **Uso:** diseñar un tigre humanoide en pixel art propio con el estilo de 0x72 (4 cuadros de reposo con respiración, cola y parpadeo, más un cuadro de golpe), sumar 6 skins de 0x72 y elegirlas en el menú con Flecha izquierda/derecha (D63).
+
+## Entrada 76
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Ya lo revise, haz el commit y añade estos últimos prompts"
+- **Uso:** registrar los últimos prompts y hacer el commit de las skins del héroe y el tigre humanoide.
