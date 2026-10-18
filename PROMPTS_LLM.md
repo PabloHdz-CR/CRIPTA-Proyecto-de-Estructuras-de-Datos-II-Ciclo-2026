@@ -713,3 +713,9 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "la flecha izquierda en el replay no funciona para devolver la accion"
 - **Uso:** agregar el paso atrás al replay (flecha izquierda), reconstruyendo la partida con la misma semilla hasta el paso anterior, con su prueba (D56).
+
+## Entrada 70
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "ya hice el commit, ahora necesito que mejores el apartado visual de la interfaz de sala, vida, ataque y todo ese apartado, para que sea mas amigable con el usuario"
+- **Uso:** rediseñar el HUD de la pantalla de juego en un módulo propio (HudJuego), con encabezado con corazón y barra de vida, tarjetas de estadísticas con diferencias por turno, brújula de salidas, efectos, enemigos con minibarra, inventario con íconos, bitácora coloreada, controles por modo y cartel de avisos; y aislar el assert intermitente de prueba_vista_10 (D62).

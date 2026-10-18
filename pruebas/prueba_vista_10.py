@@ -63,6 +63,7 @@ try:
 
     # 1. N abre la edición; la "n" de la propia tecla no se escribe; las
     #    letras no son atajos (P no pide puntajes); BACKSPACE borra; ENTER confirma.
+    vaciar(vista)
     menu.on_key_press(arcade.key.N, 0)
     assert menu.editando_nombre
     menu.on_text("n")                          # el eco de la tecla N
@@ -70,8 +71,8 @@ try:
     menu.on_key_press(arcade.key.P, 0)         # letra de "Pepa": no es atajo
     menu.on_key_press(arcade.key.BACKSPACE, 0)
     menu.on_text("x")
+    assert comandos(vista) == []               # escribir no produce comandos
     vista.actualizar()
-    assert comandos(vista) == []
     menu.on_key_press(arcade.key.ENTER, 0)
     assert not menu.editando_nombre
     assert comandos(vista) == [Comando("cambiar_nombre", ("Pepx",))]

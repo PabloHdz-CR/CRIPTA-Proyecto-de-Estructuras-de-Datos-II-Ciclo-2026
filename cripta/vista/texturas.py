@@ -254,6 +254,24 @@ def fondo_pantalla(ancho_px: int, alto_px: int, escala: int) -> arcade.Texture:
     return textura
 
 
+class _Corazones:
+    lleno = None
+    medio = None
+    vacio = None
+
+
+def corazon(fraccion: float) -> arcade.Texture:
+    """Corazón de la interfaz de 0x72 según la vida que queda: lleno, medio
+    (menos de la mitad) o vacío (sin vida)."""
+    if _Corazones.lleno is None:
+        _Corazones.lleno = _cargar_0x72("ui_heart_full")
+        _Corazones.medio = _cargar_0x72("ui_heart_half")
+        _Corazones.vacio = _cargar_0x72("ui_heart_empty")
+    if fraccion <= 0:
+        return _Corazones.vacio
+    return _Corazones.medio if fraccion < 0.5 else _Corazones.lleno
+
+
 def calavera() -> arcade.Texture:
     if _Sprites.calavera is None:
         _Sprites.calavera = _cargar_0x72("skull")
