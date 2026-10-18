@@ -450,7 +450,7 @@ class HudJuego:
         return (("Flechas", "Moverse"), ("Shift+Flecha", "Abrir puerta"),
                 ("Espacio", "Esperar"), ("R", "Recoger"), ("A", "Atacar"), ("U", "Usar"),
                 ("Q", "Equipar"), ("S", "Soltar"), ("P", "Pergamino"), ("G / C", "Guardar/Cargar"),
-                ("ESC", "Salir"))
+                ("ESC", "Volver al menú"))
 
     def _armar_controles(self, izq, der, abajo, arriba) -> None:
         controles = self._controles()

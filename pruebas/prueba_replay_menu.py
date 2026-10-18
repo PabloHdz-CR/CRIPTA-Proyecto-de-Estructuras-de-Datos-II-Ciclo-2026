@@ -177,6 +177,17 @@ try:
         ReporteFinal(Reporte(imprimir=False)), semilla_fija=7, modo_bench=BenchFalso(),
         reloj=reloj)
 
+    # --- Pantalla de título (D66): primero la bienvenida, "entrar" al menú -
+    con_titulo = ControladorMenu(
+        nuevo_servicio(), vista, GestorGuardado(AlmacenPartidaDisco(CARPETA / "guardados")),
+        PuntajesArchivo(CARPETA / "puntajes.jsonl"), CarpetaRegistros(CARPETA / "partidas"),
+        ReporteFinal(Reporte(imprimir=False)), con_pantalla_titulo=True)
+    con_titulo.iniciar()
+    assert vista.mostro_titulo and vista.menu is None, "arranca en el título, no en el menú"
+    con_titulo.procesar(Comando("entrar"))
+    assert vista.menu is not None and [c.id for c in vista.menu] == [ID]
+    vista.menu = None
+
     # --- Nombre -----------------------------------------------------------
     menu.iniciar()
     assert vista.nombre == "Jugador"
@@ -374,10 +385,14 @@ try:
     sin_errores()
     reloj_guardado = vista.estado.reloj
     assert guardado.is_file()
-    enviar("salir")                            # cierra el juego con la partida a medias
+    enviar("salir")                            # ESC a mitad de partida: vuelve al menú (D65)
+    assert not menu.terminado()
+    con_error("Tu partida guardada sigue ahí")
+    assert marcas() == [True], "la tarjeta avisa que hay partida guardada"
+    enviar("salir")                            # ESC en el menú: cierra el juego
 
     menu = menu_nuevo()
-    assert marcas() == [True], "la tarjeta avisa que hay partida guardada"
+    assert marcas() == [True], "el guardado sigue ahí al volver a abrir el juego"
 
     # X: partida nueva aunque haya guardado; al ganarla SIN guardar, el
     # guardado viejo no es suyo y no se toca

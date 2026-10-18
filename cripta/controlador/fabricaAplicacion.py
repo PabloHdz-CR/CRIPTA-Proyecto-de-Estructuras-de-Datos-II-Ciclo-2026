@@ -97,7 +97,7 @@ class FabricaAplicacion:
             GestorGuardado(AlmacenPartidaDisco(CARPETA_GUARDADOS_POR_DEFECTO)),
             PuntajesArchivo(ARCHIVO_PUNTAJES_POR_DEFECTO),
             CarpetaRegistros(CARPETA_LOGS_POR_DEFECTO),
-            reporte_final)
+            reporte_final, con_pantalla_titulo=True)
         controlador.iniciar()
         try:
             # DECISIÓN (D44): el Controlador es el dueño del bucle; nunca se

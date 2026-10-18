@@ -246,7 +246,7 @@ class PantallaMenu(_PantallaCripta):
         acciones = (("ENTER", "Jugar (o continuar la guardada)"),
                     ("X", "Partida nueva desde cero"), ("N", "Cambiar tu nombre"),
                     ("Flecha izq/der", "Cambiar de skin"), ("P", "Puntajes y replays"),
-                    ("B", "Benchmark de estructuras"), ("ESC", "Salir"))
+                    ("B", "Benchmark de estructuras"), ("ESC", "Salir del juego"))
         self._teclas = ListaEnlazada()
         y = self._tope_lista - 252
         for tecla, descripcion in acciones:

@@ -773,3 +773,27 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "Ya lo revise, haz el commit y añade estos últimos prompts"
 - **Uso:** registrar los últimos prompts y hacer el commit de las mejoras del guardado.
+
+## Entrada 80
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "cambia que cuando se le de a salir en medio de la partida se devuelva al menú principal y no que se cierre el juego tan abruptamente"
+- **Uso:** hacer que ESC durante la partida vuelva al menú principal con un aviso (partida guardada o descartada) y que solo ESC en el menú cierre el juego (D65).
+
+## Entrada 81
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Lo reviso yo en la ventana y te aviso para el commit."
+- **Uso:** revisar a mano la salida al menú con ESC antes del commit.
+
+## Entrada 82
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Implementa una pantalla principal, que tenga un mensaje  de bienvenida, una frase motivadora, tenga su ambientación respecto a la temática del proyecto y que pida un enter para entrar al menú principal, siempre siguiendo las reglas"
+- **Uso:** crear la pantalla de título con la entrada de la cripta en pixel art de 0x72, antorchas, brasas, el héroe y sus enemigos, bienvenida, frases motivadoras que rotan y ENTER para entrar al menú (D66).
+
+## Entrada 83
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Yo lo revise, haz el commit y la documentación pertinente"
+- **Uso:** completar el README (instalación, comandos, pantallas, controles y archivos que genera el juego) y hacer el commit de la pantalla de título y la salida al menú con ESC.

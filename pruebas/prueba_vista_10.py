@@ -55,6 +55,22 @@ def comandos(vista):
 
 vista = VistaArcade(ancho=400, alto=300, titulo="prueba", visible=False)
 try:
+    # 0. Pantalla de título: ENTER entra al menú, ESC sale, el resto nada
+    from cripta.vista.pantallaTitulo import FRASES, PantallaTitulo
+    vista.mostrar_titulo()
+    titulo = vista._pantalla_actual
+    assert isinstance(titulo, PantallaTitulo)
+    vista.actualizar()
+    vaciar(vista)
+    assert titulo.frase_actual.strip("\u201c\u201d") in FRASES
+    for tecla in (arcade.key.A, arcade.key.SPACE, arcade.key.UP, arcade.key.R):
+        titulo.on_key_press(tecla, 0)
+    assert comandos(vista) == []
+    titulo.on_key_press(arcade.key.ENTER, 0)
+    assert comandos(vista) == [Comando("entrar")]
+    titulo.on_key_press(arcade.key.ESCAPE, 0)
+    assert comandos(vista) == [Comando("salir")]
+
     criptas = lista(CriptaVisible("c1", "Primera", 6, 1), CriptaVisible("c2", "Segunda", 9, 3))
     vista.mostrar_nombre_jugador("Jugador")
     vista.mostrar_menu(criptas)

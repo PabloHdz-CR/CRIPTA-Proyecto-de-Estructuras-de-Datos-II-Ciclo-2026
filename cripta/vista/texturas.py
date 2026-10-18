@@ -318,6 +318,75 @@ def fondo_pantalla(ancho_px: int, alto_px: int, escala: int) -> arcade.Texture:
     return textura
 
 
+class _UltimoFondoTitulo:
+    clave = None
+    textura = None
+
+
+def geometria_titulo(ancho_px: int, alto_px: int, escala: int):
+    """En baldosas: (columnas, filas, fila donde empieza el piso, columna
+    izquierda de la puerta). La comparten el fondo y PantallaTitulo, que
+    pone las antorchas y el héroe en el mismo lugar."""
+    escala = max(1, escala)
+    columnas = ancho_px // (16 * escala) + 1
+    filas = alto_px // (16 * escala) + 1
+    fila_piso = max(3, int(filas * 0.64))
+    columna_puerta = columnas // 2 - 1
+    return columnas, filas, fila_piso, columna_puerta
+
+
+def fondo_titulo(ancho_px: int, alto_px: int, escala: int) -> arcade.Texture:
+    """La entrada de la cripta para la pantalla de título: muro de ladrillo
+    con estandartes y la gran puerta al centro, piso con calaveras, y una
+    sombra que oscurece la parte de arriba. Se genera una vez por tamaño."""
+    escala = max(1, escala)
+    clave = (ancho_px, alto_px, escala)
+    if _UltimoFondoTitulo.clave == clave:
+        return _UltimoFondoTitulo.textura
+    columnas, filas, fila_piso, columna_puerta = geometria_titulo(ancho_px, alto_px, escala)
+    azar = random.Random(7)
+    imagen = Image.new("RGBA", (columnas * 16, filas * 16), (12, 9, 10, 255))
+
+    def poner(nombre: str, columna: int, fila: int) -> None:
+        baldosa = Image.open(_archivo_0x72(nombre)).convert("RGBA")
+        imagen.alpha_composite(baldosa, (columna * 16, fila * 16))
+
+    for fila in range(filas):
+        for columna in range(columnas):
+            if fila < fila_piso:
+                poner("wall_mid", columna, fila)
+            else:
+                poner("floor_1" if azar.random() < 0.8 else f"floor_{azar.randint(2, 8)}",
+                      columna, fila)
+    # La gran puerta de la cripta: la hoja de 0x72 al doble de tamaño
+    # (4x4 baldosas), apoyada en el piso.
+    puerta = Image.open(_archivo_0x72("doors_leaf_closed")).convert("RGBA")
+    puerta = puerta.resize((64, 64), Image.NEAREST)
+    imagen.alpha_composite(puerta, ((columna_puerta - 1) * 16, (fila_piso - 4) * 16))
+    for desplazamiento, color in ((-4, "red"), (5, "red"), (-8, "blue"), (9, "blue")):
+        columna = columna_puerta + desplazamiento
+        if 0 <= columna < columnas:
+            poner(f"wall_banner_{color}", columna, fila_piso - 3)
+    for _ in range(4):
+        poner("skull", azar.randint(0, columnas - 1), azar.randint(fila_piso + 1, filas - 1))
+
+    # Sombra: la parte de arriba del muro se pierde en la oscuridad.
+    sombra = Image.new("RGBA", imagen.size, (0, 0, 0, 0))
+    pixeles = sombra.load()
+    alto_sombra = (fila_piso - 3) * 16
+    for y in range(alto_sombra):
+        alfa = int(230 * (1 - y / alto_sombra) ** 1.4)
+        for x in range(imagen.width):
+            pixeles[x, y] = (6, 4, 6, alfa)
+    imagen = Image.alpha_composite(imagen, sombra)
+    imagen = imagen.resize((imagen.width * escala, imagen.height * escala), Image.NEAREST)
+    imagen = imagen.crop((0, 0, ancho_px, alto_px))
+    textura = arcade.Texture(imagen, hash=f"cripta-fondo-titulo-{ancho_px}-{alto_px}-{escala}")
+    _UltimoFondoTitulo.clave = clave
+    _UltimoFondoTitulo.textura = textura
+    return textura
+
+
 class _Corazones:
     lleno = None
     medio = None

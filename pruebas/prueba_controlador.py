@@ -273,7 +273,11 @@ try:
     enviar("jugar", ID, "nueva")
     sin_errores()
     assert vista.estado.sala.nombre == "Entrada" and vista.estado.reloj == 0
-    enviar("salir")
+    vista.menu = None
+    enviar("salir")                  # ESC en la partida: vuelve al menú, no cierra (D65)
+    assert not menu.terminado() and vista.menu is not None
+    con_error()                      # el aviso "Volviste al menú..."
+    enviar("salir")                  # ESC en el menú: ahora sí cierra
     assert menu.terminado()
 finally:
     os.chdir(RAIZ)

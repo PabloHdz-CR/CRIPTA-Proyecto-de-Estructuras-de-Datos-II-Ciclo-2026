@@ -32,6 +32,7 @@ from .pantallaFin import PantallaFin
 from .pantallaJuego import PantallaJuego
 from .pantallaMenu import PantallaMenu
 from .pantallaPuntajes import PantallaPuntajes
+from .pantallaTitulo import PantallaTitulo
 from .vistaJuego import VistaJuego
 
 
@@ -88,6 +89,10 @@ class VistaArcade(VistaJuego):
     def mostrar_menu(self, criptas) -> None:
         self._ultimo_estado = None
         self._mostrar(PantallaMenu(self, criptas, self._nombre_jugador))
+
+    def mostrar_titulo(self) -> None:
+        self._ultimo_estado = None
+        self._mostrar(PantallaTitulo(self))
 
     def mostrar_nombre_jugador(self, nombre: str) -> None:
         self._nombre_jugador = nombre
