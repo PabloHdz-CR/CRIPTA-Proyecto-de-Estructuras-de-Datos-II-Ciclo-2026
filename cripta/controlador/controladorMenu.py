@@ -8,6 +8,8 @@ Comandos del menú:
     "jugar" (id_cripta, "nueva")   siempre nueva (ignora el guardado)
     "jugar" (id_cripta, "cargar")  solo reanuda; error si no hay guardado
     "ver_puntajes", "volver", "salir"
+    "salir" en el menú cierra el juego; durante la partida vuelve al menú (D65)
+    "entrar" ()                    (desde la pantalla de título) muestra el menú
     "cambiar_nombre" (texto)       nombre con el que se juega y se puntúa
     "ver_replay_partida" (id)      (desde puntajes) reproduce esa partida
     "ver_replay" ()                (desde la pantalla de fin) la partida que
@@ -59,7 +61,8 @@ class ControladorMenu:
                  nombre_jugador: str = NOMBRE_POR_DEFECTO,
                  semilla_fija: Optional[int] = None,
                  modo_bench: Optional[ModoBench] = None,
-                 reloj: Optional[Callable[..., float]] = None) -> None:
+                 reloj: Optional[Callable[..., float]] = None,
+                 con_pantalla_titulo: bool = False) -> None:
         self._servicio = servicio
         self._vista = vista
         self._gestor_guardado = gestor_guardado
@@ -80,6 +83,10 @@ class ControladorMenu:
         self._modo_bench = modo_bench if modo_bench is not None else ModoBench()
         # Reloj real para el ritmo del replay; las pruebas inyectan uno falso.
         self._reloj = reloj if reloj is not None else time.perf_counter
+        # DECISIÓN (D66): la pantalla de título la pide FabricaAplicacion
+        # (el juego real); por defecto no, así quien solo necesita el menú
+        # (las pruebas, otras Vistas) lo recibe directo al iniciar.
+        self._con_pantalla_titulo = con_pantalla_titulo
         # La última partida terminada: su cripta y su resultado, para que
         # "ver_replay" desde la pantalla de fin compruebe que el replay
         # llega al mismo final.
@@ -90,7 +97,10 @@ class ControladorMenu:
         self._terminado = False
 
     def iniciar(self) -> None:
-        self._mostrar_menu()
+        if self._con_pantalla_titulo:
+            self._vista.mostrar_titulo()
+        else:
+            self._mostrar_menu()
 
     def terminado(self) -> bool:
         return self._terminado
@@ -125,7 +135,7 @@ class ControladorMenu:
             self._empezar_partida(argumentos[0], modo)
         elif verbo == "ver_puntajes":
             self._mostrar_puntajes()
-        elif verbo == "volver":
+        elif verbo == "volver" or verbo == "entrar":
             self._mostrar_menu()
         elif verbo == "cambiar_nombre" and len(argumentos) == 1:
             self._cambiar_nombre(argumentos[0])
@@ -141,10 +151,20 @@ class ControladorMenu:
     def _procesar_en_partida(self, comando: "Comando") -> None:
         self._juego.procesar(comando)
         if self._juego.quiere_salir():
-            # §10.2: terminar la sesión de forma controlada (el bucle de
-            # FabricaAplicacion cierra la vista en su finally).
-            self._terminado = True
+            # DECISIÓN (D65): salir en medio de la partida vuelve al menú
+            # principal en vez de cerrar el juego de golpe. La partida se
+            # abandona (sin puntaje); si se guardó con G, ENTER la continúa.
+            # Cerrar el juego queda para ESC en el menú (§10.2: "salir de
+            # forma controlada").
+            guardada = self._gestor_guardado.existe_guardado(self._juego.partida.datos.id)
             self._juego = None
+            self._servicio.reiniciar_sesion()
+            self._mostrar_menu()
+            if guardada:
+                self._vista.mostrar_error("Volviste al menú. Tu partida guardada sigue ahí: "
+                                          "ENTER la continúa.")
+            else:
+                self._vista.mostrar_error("Volviste al menú. La partida sin guardar se descartó.")
         elif self._juego.terminado():
             self._ultimo_registro = self._juego.registro_final
             self._juego = None
@@ -160,7 +180,8 @@ class ControladorMenu:
             self._vista.mostrar_error(f"No se pudo obtener la lista de criptas: {error}")
             return
         self._vista.mostrar_nombre_jugador(self._nombre_jugador)
-        self._vista.mostrar_menu(self._constructor.criptas_visibles(resumenes))
+        self._vista.mostrar_menu(
+            self._constructor.criptas_visibles(resumenes, self._gestor_guardado))
 
     def _mostrar_puntajes(self) -> None:
         tabla = self._almacen_puntajes.cargar()

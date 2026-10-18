@@ -4,8 +4,10 @@ Tres fuentes:
 
 - "16x16 DungeonTileset II" de 0x72 (licencia CC0, ver
   recursos/dungeon_0x72/LICENCIA.txt): piso, muros, estandartes, calaveras,
-  puertas, el caballero (jugador), el esqueleto (guardián óseo), frascos y
-  la espada. Solo se copiaron al proyecto los cuadros que se usan.
+  puertas, las skins del héroe (caballero, caballera, elfa, mago, lagarto,
+  enano), el esqueleto (guardián óseo), frascos, la espada y los corazones.
+  Solo se copiaron al proyecto los cuadros que se usan.
+- Pixel art propio (pixelTigre.py): el tigre humanoide, skin por defecto.
 - "8 bit art pack rat monster" de Imogia Games (licencia CC BY 4.0, ver
   recursos/rata_imogia/LICENCIA.txt): la rata gigante, que 0x72 no trae.
 - Sprites de ":resources:" (Kenney, CC0, vienen DENTRO de arcade): la llave,
@@ -35,6 +37,9 @@ from pathlib import Path
 import arcade
 from PIL import Image
 
+from ..modelo.estructuras.listaEnlazada import ListaEnlazada
+from . import pixelTigre
+
 _RUTA_KENNEY = ":resources:images/"
 _CARPETA_0X72 = Path(__file__).resolve().parent / "recursos" / "dungeon_0x72"
 _TIRA_RATA = (Path(__file__).resolve().parent / "recursos" / "rata_imogia"
@@ -63,8 +68,6 @@ def _cargar_kenney(ruta: str) -> arcade.Texture:
 
 
 class _Sprites:
-    caballero = None          # tupla de 4 cuadros
-    caballero_golpe = None
     esqueleto = None          # tupla de 4 cuadros
     frasco_rojo = None
     frasco_verde = None
@@ -85,13 +88,74 @@ def _cuadro_actual(cuadros, t: float):
     return cuadros[int(t * _CUADROS_POR_SEGUNDO) % len(cuadros)]
 
 
-def caballero(t: float, golpeado: bool) -> arcade.Texture:
-    if _Sprites.caballero is None:
-        _Sprites.caballero = _cuadros("knight_m_idle_anim")
-        _Sprites.caballero_golpe = _cargar_0x72("knight_m_hit_anim_f0")
-    if golpeado:
-        return _Sprites.caballero_golpe
-    return _cuadro_actual(_Sprites.caballero, t)
+# ----------------------------------------------------------------------
+# Skins del héroe
+# ----------------------------------------------------------------------
+
+# (id, nombre visible, prefijo de 0x72). El tigre no tiene prefijo: es
+# pixel art propio (pixelTigre.py). Todas miden 16x28 y tienen 4 cuadros de
+# reposo y uno de golpe, así se dibujan igual.
+SKINS = (
+    ("tigre", "Tigre", None),
+    ("caballero", "Caballero", "knight_m"),
+    ("caballera", "Caballera", "knight_f"),
+    ("elfa", "Elfa", "elf_f"),
+    ("mago", "Mago", "wizzard_m"),
+    ("lagarto", "Lagarto", "lizard_m"),
+    ("enano", "Enano", "dwarf_m"),
+)
+SKIN_POR_DEFECTO = "tigre"
+
+
+class _Heroes:
+    # DECISIÓN: sin dict (§7): una ListaEnlazada de (id, cuadros, golpe)
+    # con las skins ya cargadas. Son 7 a lo sumo: buscar es O(7).
+    cargados = None
+
+
+def nombre_skin(id_skin: str) -> str:
+    for clave, nombre, _ in SKINS:
+        if clave == id_skin:
+            return nombre
+    return id_skin
+
+
+def skin_vecina(id_skin: str, paso: int) -> str:
+    """La skin siguiente (paso 1) o anterior (paso -1), dando la vuelta."""
+    cantidad = len(SKINS)
+    for indice, (clave, _, _) in enumerate(SKINS):
+        if clave == id_skin:
+            return SKINS[(indice + paso) % cantidad][0]
+    return SKIN_POR_DEFECTO
+
+
+def _cargar_heroe(id_skin: str):
+    for clave, _, prefijo in SKINS:
+        if clave != id_skin:
+            continue
+        if prefijo is None:
+            imagenes = pixelTigre.imagenes_reposo()
+            cuadros = tuple(arcade.Texture(imagenes[i], hash=f"cripta-tigre-f{i}")
+                            for i in range(4))
+            golpe = arcade.Texture(pixelTigre.imagen_golpe(), hash="cripta-tigre-golpe")
+        else:
+            cuadros = _cuadros(f"{prefijo}_idle_anim")
+            golpe = _cargar_0x72(f"{prefijo}_hit_anim_f0")
+        return cuadros, golpe
+    return _cargar_heroe(SKIN_POR_DEFECTO)
+
+
+def heroe(id_skin: str, t: float, golpeado: bool) -> arcade.Texture:
+    """El cuadro del héroe con esa skin: el de golpe, o el de reposo que
+    toca según el tiempo. Cada skin se carga la primera vez que se pide."""
+    if _Heroes.cargados is None:
+        _Heroes.cargados = ListaEnlazada()
+    for clave, cuadros, golpe in _Heroes.cargados:
+        if clave == id_skin:
+            return golpe if golpeado else _cuadro_actual(cuadros, t)
+    cuadros, golpe = _cargar_heroe(id_skin)
+    _Heroes.cargados.agregar_al_final((id_skin, cuadros, golpe))
+    return golpe if golpeado else _cuadro_actual(cuadros, t)
 
 
 def esqueleto(t: float) -> arcade.Texture:
@@ -251,6 +315,75 @@ def fondo_pantalla(ancho_px: int, alto_px: int, escala: int) -> arcade.Texture:
     textura = arcade.Texture(imagen, hash=f"cripta-fondo-pantalla-{ancho_px}-{alto_px}-{escala}")
     _UltimoFondoPantalla.clave = clave
     _UltimoFondoPantalla.textura = textura
+    return textura
+
+
+class _UltimoFondoTitulo:
+    clave = None
+    textura = None
+
+
+def geometria_titulo(ancho_px: int, alto_px: int, escala: int):
+    """En baldosas: (columnas, filas, fila donde empieza el piso, columna
+    izquierda de la puerta). La comparten el fondo y PantallaTitulo, que
+    pone las antorchas y el héroe en el mismo lugar."""
+    escala = max(1, escala)
+    columnas = ancho_px // (16 * escala) + 1
+    filas = alto_px // (16 * escala) + 1
+    fila_piso = max(3, int(filas * 0.64))
+    columna_puerta = columnas // 2 - 1
+    return columnas, filas, fila_piso, columna_puerta
+
+
+def fondo_titulo(ancho_px: int, alto_px: int, escala: int) -> arcade.Texture:
+    """La entrada de la cripta para la pantalla de título: muro de ladrillo
+    con estandartes y la gran puerta al centro, piso con calaveras, y una
+    sombra que oscurece la parte de arriba. Se genera una vez por tamaño."""
+    escala = max(1, escala)
+    clave = (ancho_px, alto_px, escala)
+    if _UltimoFondoTitulo.clave == clave:
+        return _UltimoFondoTitulo.textura
+    columnas, filas, fila_piso, columna_puerta = geometria_titulo(ancho_px, alto_px, escala)
+    azar = random.Random(7)
+    imagen = Image.new("RGBA", (columnas * 16, filas * 16), (12, 9, 10, 255))
+
+    def poner(nombre: str, columna: int, fila: int) -> None:
+        baldosa = Image.open(_archivo_0x72(nombre)).convert("RGBA")
+        imagen.alpha_composite(baldosa, (columna * 16, fila * 16))
+
+    for fila in range(filas):
+        for columna in range(columnas):
+            if fila < fila_piso:
+                poner("wall_mid", columna, fila)
+            else:
+                poner("floor_1" if azar.random() < 0.8 else f"floor_{azar.randint(2, 8)}",
+                      columna, fila)
+    # La gran puerta de la cripta: la hoja de 0x72 al doble de tamaño
+    # (4x4 baldosas), apoyada en el piso.
+    puerta = Image.open(_archivo_0x72("doors_leaf_closed")).convert("RGBA")
+    puerta = puerta.resize((64, 64), Image.NEAREST)
+    imagen.alpha_composite(puerta, ((columna_puerta - 1) * 16, (fila_piso - 4) * 16))
+    for desplazamiento, color in ((-4, "red"), (5, "red"), (-8, "blue"), (9, "blue")):
+        columna = columna_puerta + desplazamiento
+        if 0 <= columna < columnas:
+            poner(f"wall_banner_{color}", columna, fila_piso - 3)
+    for _ in range(4):
+        poner("skull", azar.randint(0, columnas - 1), azar.randint(fila_piso + 1, filas - 1))
+
+    # Sombra: la parte de arriba del muro se pierde en la oscuridad.
+    sombra = Image.new("RGBA", imagen.size, (0, 0, 0, 0))
+    pixeles = sombra.load()
+    alto_sombra = (fila_piso - 3) * 16
+    for y in range(alto_sombra):
+        alfa = int(230 * (1 - y / alto_sombra) ** 1.4)
+        for x in range(imagen.width):
+            pixeles[x, y] = (6, 4, 6, alfa)
+    imagen = Image.alpha_composite(imagen, sombra)
+    imagen = imagen.resize((imagen.width * escala, imagen.height * escala), Image.NEAREST)
+    imagen = imagen.crop((0, 0, ancho_px, alto_px))
+    textura = arcade.Texture(imagen, hash=f"cripta-fondo-titulo-{ancho_px}-{alto_px}-{escala}")
+    _UltimoFondoTitulo.clave = clave
+    _UltimoFondoTitulo.textura = textura
     return textura
 
 

@@ -47,6 +47,11 @@ class GestorGuardado:
         registro.restaurar()
         return partida
 
+    def borrar(self, id_cripta: str) -> None:
+        """Al terminar (ganar o morir) la partida que usaba ese guardado:
+        si quedara, el menú reanudaría una partida que ya terminó."""
+        self._almacen.borrar(id_cripta)
+
     def cargar_sala(self, id_cripta: str, id_sala: int,
                     servicio: "ServicioDatos") -> "Sala":
         """Una sola sala sin leer el archivo completo (§4.10)."""

@@ -55,6 +55,22 @@ def comandos(vista):
 
 vista = VistaArcade(ancho=400, alto=300, titulo="prueba", visible=False)
 try:
+    # 0. Pantalla de título: ENTER entra al menú, ESC sale, el resto nada
+    from cripta.vista.pantallaTitulo import FRASES, PantallaTitulo
+    vista.mostrar_titulo()
+    titulo = vista._pantalla_actual
+    assert isinstance(titulo, PantallaTitulo)
+    vista.actualizar()
+    vaciar(vista)
+    assert titulo.frase_actual.strip("\u201c\u201d") in FRASES
+    for tecla in (arcade.key.A, arcade.key.SPACE, arcade.key.UP, arcade.key.R):
+        titulo.on_key_press(tecla, 0)
+    assert comandos(vista) == []
+    titulo.on_key_press(arcade.key.ENTER, 0)
+    assert comandos(vista) == [Comando("entrar")]
+    titulo.on_key_press(arcade.key.ESCAPE, 0)
+    assert comandos(vista) == [Comando("salir")]
+
     criptas = lista(CriptaVisible("c1", "Primera", 6, 1), CriptaVisible("c2", "Segunda", 9, 3))
     vista.mostrar_nombre_jugador("Jugador")
     vista.mostrar_menu(criptas)
@@ -94,6 +110,33 @@ try:
     menu.on_text("a")
     menu.on_key_press(arcade.key.ENTER, 0)
     assert comandos(vista) == [Comando("cambiar_nombre", ("ana",))]
+
+    # 2b. Skins: la predeterminada es el tigre; flecha derecha/izquierda la
+    #     cambian (dando la vuelta) sin encolar comandos (es presentación)
+    from cripta.vista import texturas
+    assert vista.skin == "tigre" == texturas.SKIN_POR_DEFECTO
+    vaciar(vista)
+    menu.on_key_press(arcade.key.RIGHT, 0)
+    assert vista.skin == "caballero" and comandos(vista) == []
+    menu.on_key_press(arcade.key.LEFT, 0)
+    menu.on_key_press(arcade.key.LEFT, 0)
+    assert vista.skin == texturas.SKINS[-1][0], "desde el primero, izquierda va al último"
+    vista.actualizar()
+    menu.on_key_press(arcade.key.RIGHT, 0)
+    assert vista.skin == "tigre"
+    for clave, _, _ in texturas.SKINS:         # todas tienen 4 cuadros de reposo y golpe
+        for t in (0.0, 0.2, 0.4, 0.6):
+            assert texturas.heroe(clave, t, False).width == 16
+        assert texturas.heroe(clave, 0.0, True).height == 28
+    reposo = [texturas.heroe("tigre", t, False) for t in (0.0, 0.2, 0.4, 0.6)]
+    assert len({id(c) for c in reposo}) == 4, "el tigre tiene 4 cuadros distintos"
+
+    # 2c. X pide partida nueva de la cripta elegida (aunque haya guardado)
+    vaciar(vista)
+    menu.on_key_press(arcade.key.X, 0)
+    assert comandos(vista) == [Comando("jugar", ("c1", "nueva"))]
+    menu.on_key_press(arcade.key.ENTER, 0)     # ENTER sigue pidiendo "jugar" sin modo
+    assert comandos(vista) == [Comando("jugar", ("c1",))]
 
     # 3. R ya no hace nada en el menú; B pide el benchmark
     vaciar(vista)
@@ -138,13 +181,18 @@ try:
     juego = vista._pantalla_actual
     vista.actualizar()
     vaciar(vista)
-    for tecla in (arcade.key.SPACE, arcade.key.RIGHT, arcade.key.PLUS, arcade.key.MINUS,
-                  arcade.key.A, arcade.key.LEFT, arcade.key.G):
+    for tecla in (arcade.key.SPACE, arcade.key.RIGHT, arcade.key.LEFT, arcade.key.UP,
+                  arcade.key.DOWN, arcade.key.A, arcade.key.G):
         juego.on_key_press(tecla, 0)
-    assert comandos(vista) == [Comando("replay_pausa"), Comando("replay_paso"),
-                               Comando("replay_velocidad", ("+",)),
-                               Comando("replay_velocidad", ("-",)),
-                               Comando("replay_atras")]          # flecha izquierda
+    assert comandos(vista) == [Comando("replay_pausa"),
+                               Comando("replay_paso"),             # derecha: adelante
+                               Comando("replay_atras"),            # izquierda: atrás
+                               Comando("replay_velocidad", ("+",)),  # arriba: más rápido
+                               Comando("replay_velocidad", ("-",))]  # abajo: más lento
+    for tecla in (arcade.key.PLUS, arcade.key.MINUS):     # +/- siguen sirviendo
+        juego.on_key_press(tecla, 0)
+    assert comandos(vista) == [Comando("replay_velocidad", ("+",)),
+                               Comando("replay_velocidad", ("-",))]
     juego.on_key_press(arcade.key.ESCAPE, 0)
     assert comandos(vista) == [Comando("salir")]
 

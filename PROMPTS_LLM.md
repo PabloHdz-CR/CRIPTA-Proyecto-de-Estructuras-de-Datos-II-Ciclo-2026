@@ -719,3 +719,81 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "ya hice el commit, ahora necesito que mejores el apartado visual de la interfaz de sala, vida, ataque y todo ese apartado, para que sea mas amigable con el usuario"
 - **Uso:** rediseñar el HUD de la pantalla de juego en un módulo propio (HudJuego), con encabezado con corazón y barra de vida, tarjetas de estadísticas con diferencias por turno, brújula de salidas, efectos, enemigos con minibarra, inventario con íconos, bitácora coloreada, controles por modo y cartel de avisos; y aislar el assert intermitente de prueba_vista_10 (D62).
+
+## Entrada 71
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "como funciona guardar y cargar"
+- **Uso:** entender que G guarda la partida en guardados/<cripta>.bin (formato binario con tabla de offsets) y respalda el log al mismo tiempo, que C restaura los dos, y que el menú reanuda solo el guardado de una cripta si existe.
+
+## Entrada 72
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "en el modo replay adelantar y retroceder accion van a ser con las flechas derecha e izquierda, y aumentar y  disminuir la velocidad con la flecha arriba y abajo"
+- **Uso:** dejar la ayuda del replay con las cuatro flechas (derecha adelante, izquierda atrás, arriba más rápido, abajo más lento) y cubrir arriba/abajo en prueba_vista_10.
+
+## Entrada 73
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Ponle Flecha + direccion"
+- **Uso:** nombrar las teclas como "Flecha izquierda/derecha/arriba/abajo" en la ayuda del replay y "Flecha arriba/abajo" en el modo objetivo.
+
+## Entrada 74
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "haz el commit y agrega los prompts nuevos"
+- **Uso:** registrar los prompts 71 a 74 y hacer el commit de los ajustes de controles del replay.
+
+## Entrada 75
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Agrega unas skins al héroe, y que la predeterminada sea de un tigre humanoide con muy buen diseño y animaciones"
+- **Uso:** diseñar un tigre humanoide en pixel art propio con el estilo de 0x72 (4 cuadros de reposo con respiración, cola y parpadeo, más un cuadro de golpe), sumar 6 skins de 0x72 y elegirlas en el menú con Flecha izquierda/derecha (D63).
+
+## Entrada 76
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Ya lo revise, haz el commit y añade estos últimos prompts"
+- **Uso:** registrar los últimos prompts y hacer el commit de las skins del héroe y el tigre humanoide.
+
+## Entrada 77
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "esto que es?" (con una captura de las carpetas fichas_guardadas/ y guardados/)
+- **Uso:** entender que fichas_guardadas/ es la copia en disco del catálogo (caché persistente, D33) y guardados/ las partidas guardadas con G.
+
+## Entrada 78
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "mejorame esto" (pegando la explicación de que el guardado no se borra al terminar y de que el menú no permite elegir partida nueva)
+- **Uso:** marcar en el menú las criptas con partida guardada, agregar X para empezar de cero y borrar el guardado al terminar la partida que lo usó (D64).
+
+## Entrada 79
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Ya lo revise, haz el commit y añade estos últimos prompts"
+- **Uso:** registrar los últimos prompts y hacer el commit de las mejoras del guardado.
+
+## Entrada 80
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "cambia que cuando se le de a salir en medio de la partida se devuelva al menú principal y no que se cierre el juego tan abruptamente"
+- **Uso:** hacer que ESC durante la partida vuelva al menú principal con un aviso (partida guardada o descartada) y que solo ESC en el menú cierre el juego (D65).
+
+## Entrada 81
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Lo reviso yo en la ventana y te aviso para el commit."
+- **Uso:** revisar a mano la salida al menú con ESC antes del commit.
+
+## Entrada 82
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Implementa una pantalla principal, que tenga un mensaje  de bienvenida, una frase motivadora, tenga su ambientación respecto a la temática del proyecto y que pida un enter para entrar al menú principal, siempre siguiendo las reglas"
+- **Uso:** crear la pantalla de título con la entrada de la cripta en pixel art de 0x72, antorchas, brasas, el héroe y sus enemigos, bienvenida, frases motivadoras que rotan y ENTER para entrar al menú (D66).
+
+## Entrada 83
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Yo lo revise, haz el commit y la documentación pertinente"
+- **Uso:** completar el README (instalación, comandos, pantallas, controles y archivos que genera el juego) y hacer el commit de la pantalla de título y la salida al menú con ESC.

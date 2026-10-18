@@ -23,8 +23,8 @@ objeto bajo el cursor se marca también en el dibujo.
 
 Modo replay: si el EstadoVista trae `replay`, la pantalla muestra una
 partida grabada y las teclas cambian: Espacio pausa o continúa, flecha
-derecha avanza un paso, flecha izquierda retrocede uno (y pausa), +/- (o
-flechas arriba/abajo) cambian la velocidad
+derecha avanza un paso, flecha izquierda retrocede uno (y pausa), flecha
+arriba sube la velocidad y flecha abajo la baja (+/- también sirven)
 y ESC vuelve al menú. Las teclas de juego no hacen nada.
 
 Al ser un juego por turnos (no hace falta redibujar muchas veces por
@@ -241,7 +241,7 @@ class PantallaJuego(_PantallaCripta):
             # animaciones de la sala.
             self._dibujo = DibujoSala(self._estado, geometria.mapa_izq, geometria.mapa_abajo,
                                       geometria.lado_mapa, self._anterior,
-                                      self.window.get_pixel_ratio())
+                                      self.window.get_pixel_ratio(), self._vista_arcade.skin)
         self._hud = HudJuego(self._estado, self._anterior, geometria, self._modo,
                              self._verbo_objetivo, self._lista_objetivo, self._cursor_objetivo,
                              self._aviso)

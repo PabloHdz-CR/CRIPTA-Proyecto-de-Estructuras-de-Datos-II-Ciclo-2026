@@ -8,7 +8,9 @@ velocidad; dos partidas en la misma cripta con distinto nombre y tiempo, y
 el replay de la PRIMERA desde puntajes reproduce esa y no la última (log
 archivado por partida), con el nombre de quien la jugó, y vuelve a
 puntajes; un puntaje viejo sin id no tiene replay; un log archivado
-adulterado detiene el replay con un error; y el benchmark desde el menú.
+adulterado detiene el replay con un error; el benchmark desde el menú; y
+el guardado (D64): la tarjeta lo marca, una partida nueva no borra un
+guardado que no usó, ENTER lo continúa y ganarla lo borra.
 """
 import json
 import os
@@ -174,6 +176,17 @@ try:
         PuntajesArchivo(CARPETA / "puntajes.jsonl"), CarpetaRegistros(CARPETA / "partidas"),
         ReporteFinal(Reporte(imprimir=False)), semilla_fija=7, modo_bench=BenchFalso(),
         reloj=reloj)
+
+    # --- Pantalla de título (D66): primero la bienvenida, "entrar" al menú -
+    con_titulo = ControladorMenu(
+        nuevo_servicio(), vista, GestorGuardado(AlmacenPartidaDisco(CARPETA / "guardados")),
+        PuntajesArchivo(CARPETA / "puntajes.jsonl"), CarpetaRegistros(CARPETA / "partidas"),
+        ReporteFinal(Reporte(imprimir=False)), con_pantalla_titulo=True)
+    con_titulo.iniciar()
+    assert vista.mostro_titulo and vista.menu is None, "arranca en el título, no en el menú"
+    con_titulo.procesar(Comando("entrar"))
+    assert vista.menu is not None and [c.id for c in vista.menu] == [ID]
+    vista.menu = None
 
     # --- Nombre -----------------------------------------------------------
     menu.iniciar()
@@ -348,6 +361,63 @@ try:
 
     enviar("salir")
     assert menu.terminado()
+
+    # --- Guardado: marca en el menú, se borra al terminar si era suyo (D64)
+    guardado = CARPETA / "guardados" / f"{ID}.bin"
+
+    def menu_nuevo():
+        otro = ControladorMenu(
+            nuevo_servicio(), vista, GestorGuardado(AlmacenPartidaDisco(CARPETA / "guardados")),
+            PuntajesArchivo(CARPETA / "puntajes.jsonl"), CarpetaRegistros(CARPETA / "partidas"),
+            ReporteFinal(Reporte(imprimir=False)), semilla_fija=7, modo_bench=BenchFalso(),
+            reloj=reloj)
+        otro.iniciar()
+        return otro
+
+    def marcas():
+        return [c.tiene_guardado for c in vista.menu]
+
+    menu = menu_nuevo()
+    assert marcas() == [False]
+    enviar("jugar", ID, "nueva")
+    enviar("mover", "N")
+    enviar("guardar")
+    sin_errores()
+    reloj_guardado = vista.estado.reloj
+    assert guardado.is_file()
+    enviar("salir")                            # ESC a mitad de partida: vuelve al menú (D65)
+    assert not menu.terminado()
+    con_error("Tu partida guardada sigue ahí")
+    assert marcas() == [True], "la tarjeta avisa que hay partida guardada"
+    enviar("salir")                            # ESC en el menú: cierra el juego
+
+    menu = menu_nuevo()
+    assert marcas() == [True], "el guardado sigue ahí al volver a abrir el juego"
+
+    # X: partida nueva aunque haya guardado; al ganarla SIN guardar, el
+    # guardado viejo no es suyo y no se toca
+    final_x = ganar(0)                         # ganar() usa "jugar ID nueva", como la tecla X
+    assert final_x.resultado == "victoria"
+    assert guardado.is_file(), "una partida nueva no borra un guardado que no usó"
+    enviar("volver")
+    assert marcas() == [True]
+
+    # ENTER: continúa el guardado (mismo reloj); al ganarla, el guardado se borra
+    enviar("jugar", ID)
+    sin_errores()
+    assert vista.estado.reloj == reloj_guardado and vista.estado.sala.nombre == "Pasillo"
+    enviar("atacar", "Rata #1")
+    (llave,) = [o.id_objeto for o in vista.estado.sala.objetos]
+    enviar("recoger", llave)
+    enviar("abrir", "E")
+    enviar("mover", "E")
+    sin_errores()
+    assert vista.fin is not None and vista.fin.resultado == "victoria"
+    assert not guardado.exists(), "la partida que usó el guardado lo borra al terminar"
+    enviar("volver")
+    assert marcas() == [False]
+    enviar("jugar", ID)                        # sin guardado: empieza de cero
+    assert vista.estado.reloj == 0 and vista.estado.sala.nombre == "Entrada"
 finally:
     os.chdir(RAIZ)
     shutil.rmtree(CARPETA, ignore_errors=True)

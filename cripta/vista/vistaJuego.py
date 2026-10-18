@@ -67,6 +67,10 @@ class VistaJuego(ABC):
     def mostrar_benchmark(self, resultado) -> None:
         """resultado: BenchmarkVisible (las mediciones de --bench)."""
 
+    def mostrar_titulo(self) -> None:
+        """La pantalla de bienvenida, antes del menú. Su ENTER manda
+        Comando("entrar")."""
+
     def mostrar_nombre_jugador(self, nombre: str) -> None:
         """El nombre con el que se va a jugar, para que el menú lo muestre.
         El Controlador lo manda antes de cada mostrar_menu."""

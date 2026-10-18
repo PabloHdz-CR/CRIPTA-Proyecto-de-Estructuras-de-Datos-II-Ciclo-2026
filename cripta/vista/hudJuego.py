@@ -391,7 +391,7 @@ class HudJuego:
     def _armar_objetivo(self, izq, der, abajo, arriba) -> None:
         if not self._panel(izq, der, abajo, arriba, _titulo_verbo(self._verbo), resaltado=True):
             return
-        self._texto("Arriba/Abajo: elegir   ENTER: confirmar   ESC: cancelar", izq + 14,
+        self._texto("Flecha arriba/abajo: elegir   ENTER: confirmar   ESC: cancelar", izq + 14,
                     abajo + 16, 10, estilo.TEXTO_SUAVE)
         alto_fila = 30
         y = arriba - 46
@@ -442,14 +442,15 @@ class HudJuego:
 
     def _controles(self):
         if self._estado.replay is not None:
-            return (("Espacio", "Pausa / seguir"), ("Izq / Der", "Paso atrás / adelante"),
-                    ("+ / -", "Velocidad"), ("ESC", "Salir del replay"))
+            return (("Espacio", "Pausa / seguir"), ("Flecha izquierda", "Paso atrás"),
+                    ("Flecha derecha", "Paso adelante"), ("Flecha arriba", "Más rápido"),
+                    ("Flecha abajo", "Más lento"), ("ESC", "Salir del replay"))
         if self._modo == "objetivo":
-            return (("Arriba/Abajo", "Elegir"), ("ENTER", "Confirmar"), ("ESC", "Cancelar"))
+            return (("Flecha arriba/abajo", "Elegir"), ("ENTER", "Confirmar"), ("ESC", "Cancelar"))
         return (("Flechas", "Moverse"), ("Shift+Flecha", "Abrir puerta"),
                 ("Espacio", "Esperar"), ("R", "Recoger"), ("A", "Atacar"), ("U", "Usar"),
                 ("Q", "Equipar"), ("S", "Soltar"), ("P", "Pergamino"), ("G / C", "Guardar/Cargar"),
-                ("ESC", "Salir"))
+                ("ESC", "Volver al menú"))
 
     def _armar_controles(self, izq, der, abajo, arriba) -> None:
         controles = self._controles()

@@ -4,7 +4,10 @@ Lo que ControladorMenu necesita de esta pantalla: que el jugador recorra la
 lista de criptas con las flechas y confirme con ENTER, que arma un Comando
 "jugar" con el id de la cripta elegida -- la Vista no decide si eso es una
 partida nueva o una cargada (trabajo de ControladorMenu). Además:
+    X       partida nueva aunque haya una guardada -> "jugar" (id, "nueva")
     N       escribir el nombre (ENTER confirma, ESC cancela) -> "cambiar_nombre"
+    Flecha izquierda/derecha   cambiar la skin del héroe (presentación pura:
+            no es un Comando, se le avisa directo a VistaArcade)
     P       tabla de puntajes (ahí se elige qué partida ver en replay) -> "ver_puntajes"
     B       benchmark rápido                                 -> "benchmark"
     ESC     salir (lo atiende _PantallaCripta)
@@ -62,6 +65,7 @@ class PantallaMenu(_PantallaCripta):
         self._textos_fijos = ListaEnlazada()
         self._tarjetas = ListaEnlazada()   # (izq, der, abajo, arriba, indice, textos)
         self._texto_nombre = None
+        self._texto_skin = None            # nombre de la skin elegida
         self._texto_aviso = None
         self._titulo = None
 
@@ -123,6 +127,11 @@ class PantallaMenu(_PantallaCripta):
         if symbol == arcade.key.B:
             self._vista_arcade._encolar(Comando("benchmark"))
             return
+        if symbol in (arcade.key.LEFT, arcade.key.RIGHT):
+            paso = 1 if symbol == arcade.key.RIGHT else -1
+            self._vista_arcade.cambiar_skin(texturas.skin_vecina(self._vista_arcade.skin, paso))
+            self._refrescar_skin()
+            return
         if self._cantidad == 0:
             return
         if symbol == arcade.key.UP:
@@ -134,6 +143,9 @@ class PantallaMenu(_PantallaCripta):
             self._vista_arcade._encolar(Comando("jugar", (cripta.id,)))
         elif symbol == arcade.key.P:
             self._vista_arcade._encolar(Comando("ver_puntajes"))
+        elif symbol == arcade.key.X:
+            cripta = self._criptas.obtener(self._indice)
+            self._vista_arcade._encolar(Comando("jugar", (cripta.id, "nueva")))
 
     def _tecla_editando(self, symbol) -> None:
         self._esperando_eco = False      # otra tecla: el eco de la N ya pasó
@@ -198,9 +210,20 @@ class PantallaMenu(_PantallaCripta):
                 estilo.DORADO if elegida else estilo.TEXTO, bold=True))
             textos.agregar_al_final(estilo.texto(
                 f"{cripta.salas} salas", izq + 44, abajo + 14, 12, estilo.TEXTO_SUAVE))
-            textos.agregar_al_final(estilo.texto(
-                f"dificultad {cripta.dificultad}", der - 14, abajo + 14, 11,
-                estilo.TEXTO_SUAVE, anchor_x="right"))
+            if cripta.tiene_guardado:
+                # La cripta tiene una partida a medias: se avisa y, si es la
+                # elegida, se explica qué hace cada tecla.
+                textos.agregar_al_final(estilo.texto(
+                    "PARTIDA GUARDADA", der - 14, arriba - 26, 10, estilo.VERDE,
+                    anchor_x="right", bold=True))
+                textos.agregar_al_final(estilo.texto(
+                    "ENTER continúa · X empieza de cero" if elegida else "ENTER la continúa",
+                    der - 14, abajo + 14, 11, estilo.TEXTO if elegida else estilo.TEXTO_SUAVE,
+                    anchor_x="right"))
+            else:
+                textos.agregar_al_final(estilo.texto(
+                    f"dificultad {cripta.dificultad}", der - 14, abajo + 14, 11,
+                    estilo.TEXTO_SUAVE, anchor_x="right"))
             tarjetas.agregar_al_final((izq, der, abajo, arriba, indice, cripta.dificultad, textos))
             arriba = abajo - _SEPARACION
         self._tarjetas = tarjetas
@@ -213,13 +236,17 @@ class PantallaMenu(_PantallaCripta):
         fijos.agregar_al_final(estilo.texto("Tu héroe", centro, self._tope_lista - 26, 13,
                                             estilo.TEXTO_SUAVE, anchor_x="center"))
         self._centro_heroe = (centro, self._tope_lista - 120)
+        self._texto_skin = estilo.texto("", centro, self._tope_lista - 48, 12, estilo.TEXTO,
+                                        anchor_x="center", bold=True)
+        self._refrescar_skin()
         self._texto_nombre = estilo.texto("", centro, self._tope_lista - 200, 18, estilo.DORADO,
                                           anchor_x="center", bold=True)
         self._caja_nombre = (izq + 24, der - 24, self._tope_lista - 214, self._tope_lista - 180)
         self._refrescar_nombre()
-        acciones = (("ENTER", "Jugar la cripta elegida"), ("N", "Cambiar tu nombre"),
-                    ("P", "Puntajes y replays"), ("B", "Benchmark de estructuras"),
-                    ("ESC", "Salir"))
+        acciones = (("ENTER", "Jugar (o continuar la guardada)"),
+                    ("X", "Partida nueva desde cero"), ("N", "Cambiar tu nombre"),
+                    ("Flecha izq/der", "Cambiar de skin"), ("P", "Puntajes y replays"),
+                    ("B", "Benchmark de estructuras"), ("ESC", "Salir del juego"))
         self._teclas = ListaEnlazada()
         y = self._tope_lista - 252
         for tecla, descripcion in acciones:
@@ -231,6 +258,10 @@ class PantallaMenu(_PantallaCripta):
             fijos.agregar_al_final(estilo.texto(descripcion, izq + 30 + ancho_tecla + 14, y, 13,
                                                 estilo.TEXTO, anchor_y="center"))
             y -= 34
+
+    def _refrescar_skin(self) -> None:
+        if self._texto_skin is not None:
+            self._texto_skin.text = texturas.nombre_skin(self._vista_arcade.skin)
 
     def _refrescar_nombre(self) -> None:
         if self._texto_nombre is None:
@@ -277,7 +308,14 @@ class PantallaMenu(_PantallaCripta):
         estilo.dibujar_panel(izq, der, abajo, arriba)
         cx, cy = self._centro_heroe
         arcade.draw_ellipse_filled(cx, cy - 52, 64, 16, (0, 0, 0, 120))
-        arcade.draw_texture_rect(texturas.caballero(t, False), arcade.XYWH(cx, cy, 64, 112),
+        # flechas para cambiar de skin, a los lados del héroe
+        for lado in (-1, 1):
+            x = cx + lado * 70 + math.sin(t * 4) * 2 * lado
+            arcade.draw_triangle_filled(x - lado * 7, cy + 11, x - lado * 7, cy - 11, x + lado * 7,
+                                        cy, estilo.DORADO_OSCURO)
+        self._texto_skin.draw()
+        arcade.draw_texture_rect(texturas.heroe(self._vista_arcade.skin, t, False),
+                                 arcade.XYWH(cx, cy, 64, 112),
                                  pixelated=True)
         caja_izq, caja_der, caja_abajo, caja_arriba = self._caja_nombre
         borde = estilo.DORADO if self._editando else (88, 70, 58)

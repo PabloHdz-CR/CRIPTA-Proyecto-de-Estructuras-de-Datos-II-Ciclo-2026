@@ -45,3 +45,7 @@ class AlmacenPartidaDisco(AlmacenPartida):
     def cargar_sala(self, id_cripta: str, id_sala: int,
                     servicio: "ServicioDatos") -> "Sala":
         return PartidaBinaria.cargar_sala(self._ruta(id_cripta), id_sala, servicio)
+
+    def borrar(self, id_cripta: str) -> None:
+        """O(1). Si no existe, no pasa nada."""
+        self._ruta(id_cripta).unlink(missing_ok=True)
