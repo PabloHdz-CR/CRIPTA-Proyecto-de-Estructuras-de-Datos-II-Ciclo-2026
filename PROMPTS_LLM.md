@@ -755,3 +755,21 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "Ya lo revise, haz el commit y añade estos últimos prompts"
 - **Uso:** registrar los últimos prompts y hacer el commit de las skins del héroe y el tigre humanoide.
+
+## Entrada 77
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "esto que es?" (con una captura de las carpetas fichas_guardadas/ y guardados/)
+- **Uso:** entender que fichas_guardadas/ es la copia en disco del catálogo (caché persistente, D33) y guardados/ las partidas guardadas con G.
+
+## Entrada 78
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "mejorame esto" (pegando la explicación de que el guardado no se borra al terminar y de que el menú no permite elegir partida nueva)
+- **Uso:** marcar en el menú las criptas con partida guardada, agregar X para empezar de cero y borrar el guardado al terminar la partida que lo usó (D64).
+
+## Entrada 79
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Ya lo revise, haz el commit y añade estos últimos prompts"
+- **Uso:** registrar los últimos prompts y hacer el commit de las mejoras del guardado.

@@ -38,3 +38,8 @@ class AlmacenPartida(ABC):
     def cargar_sala(self, id_cripta: str, id_sala: int,
                     servicio: "ServicioDatos") -> "Sala":
         """Una sola sala, sin leer el resto del guardado (§4.10)."""
+
+    def borrar(self, id_cripta: str) -> None:
+        """Elimina el guardado de esa cripta, si lo hay (al terminar la
+        partida que lo usaba). No es abstracto: un almacén que no sepa
+        borrar simplemente lo deja."""

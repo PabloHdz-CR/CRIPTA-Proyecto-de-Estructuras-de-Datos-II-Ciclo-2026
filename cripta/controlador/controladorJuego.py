@@ -79,6 +79,9 @@ class ControladorJuego:
         self._criterio_orden: Optional[str] = None
         self._terminado = False
         self._quiere_salir = False
+        # True si ESTA partida se cargó del guardado o se guardó: solo
+        # entonces el guardado es suyo y se borra al terminar (D64).
+        self._usa_guardado = False
 
     # ------------------------------------------------------------------
     # Arranque
@@ -197,6 +200,7 @@ class ControladorJuego:
         except (OSError, ErrorCripta, ValueError) as error:
             self._vista.mostrar_error(f"No se pudo guardar la partida: {error}")
             return
+        self._usa_guardado = True
         self._vista.mostrar_mensajes(_un_mensaje(f"Partida guardada en {ubicacion}."))
 
     def _cargar(self) -> None:
@@ -215,6 +219,7 @@ class ControladorJuego:
 
     def _cargar_desde_guardado(self, id_cripta: str) -> None:
         self.partida = self._gestor_guardado.cargar(id_cripta, self._servicio, self._registro)
+        self._usa_guardado = True
         # DECISIÓN: el historial de retroceso no se persiste (son referencias
         # a objetos vivos, y §4.6 prohíbe copias completas del estado): una
         # partida cargada empieza con el Diario vacío.
@@ -243,6 +248,16 @@ class ControladorJuego:
             registro = replace(registro, id_partida=id_partida)
         self.registro_final = registro
         self._almacen_puntajes.agregar(registro)
+        # DECISIÓN (D64): una partida terminada no se puede seguir jugando:
+        # si su guardado quedara, el menú la reanudaría. Solo se borra si
+        # el guardado es de ESTA partida (se cargó o se guardó en ella): si
+        # el jugador empezó una nueva con un guardado viejo y nunca guardó,
+        # el viejo no se toca.
+        if self._usa_guardado:
+            try:
+                self._gestor_guardado.borrar(self.partida.datos.id)
+            except OSError:
+                pass        # no poder borrarlo no impide terminar la partida
         self._vista.mostrar_fin(ResultadoFinVisible(
             resultado=registro.resultado,
             acciones=registro.acciones,

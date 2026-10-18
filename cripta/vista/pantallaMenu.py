@@ -4,6 +4,7 @@ Lo que ControladorMenu necesita de esta pantalla: que el jugador recorra la
 lista de criptas con las flechas y confirme con ENTER, que arma un Comando
 "jugar" con el id de la cripta elegida -- la Vista no decide si eso es una
 partida nueva o una cargada (trabajo de ControladorMenu). Además:
+    X       partida nueva aunque haya una guardada -> "jugar" (id, "nueva")
     N       escribir el nombre (ENTER confirma, ESC cancela) -> "cambiar_nombre"
     Flecha izquierda/derecha   cambiar la skin del héroe (presentación pura:
             no es un Comando, se le avisa directo a VistaArcade)
@@ -142,6 +143,9 @@ class PantallaMenu(_PantallaCripta):
             self._vista_arcade._encolar(Comando("jugar", (cripta.id,)))
         elif symbol == arcade.key.P:
             self._vista_arcade._encolar(Comando("ver_puntajes"))
+        elif symbol == arcade.key.X:
+            cripta = self._criptas.obtener(self._indice)
+            self._vista_arcade._encolar(Comando("jugar", (cripta.id, "nueva")))
 
     def _tecla_editando(self, symbol) -> None:
         self._esperando_eco = False      # otra tecla: el eco de la N ya pasó
@@ -206,9 +210,20 @@ class PantallaMenu(_PantallaCripta):
                 estilo.DORADO if elegida else estilo.TEXTO, bold=True))
             textos.agregar_al_final(estilo.texto(
                 f"{cripta.salas} salas", izq + 44, abajo + 14, 12, estilo.TEXTO_SUAVE))
-            textos.agregar_al_final(estilo.texto(
-                f"dificultad {cripta.dificultad}", der - 14, abajo + 14, 11,
-                estilo.TEXTO_SUAVE, anchor_x="right"))
+            if cripta.tiene_guardado:
+                # La cripta tiene una partida a medias: se avisa y, si es la
+                # elegida, se explica qué hace cada tecla.
+                textos.agregar_al_final(estilo.texto(
+                    "PARTIDA GUARDADA", der - 14, arriba - 26, 10, estilo.VERDE,
+                    anchor_x="right", bold=True))
+                textos.agregar_al_final(estilo.texto(
+                    "ENTER continúa · X empieza de cero" if elegida else "ENTER la continúa",
+                    der - 14, abajo + 14, 11, estilo.TEXTO if elegida else estilo.TEXTO_SUAVE,
+                    anchor_x="right"))
+            else:
+                textos.agregar_al_final(estilo.texto(
+                    f"dificultad {cripta.dificultad}", der - 14, abajo + 14, 11,
+                    estilo.TEXTO_SUAVE, anchor_x="right"))
             tarjetas.agregar_al_final((izq, der, abajo, arriba, indice, cripta.dificultad, textos))
             arriba = abajo - _SEPARACION
         self._tarjetas = tarjetas
@@ -228,7 +243,8 @@ class PantallaMenu(_PantallaCripta):
                                           anchor_x="center", bold=True)
         self._caja_nombre = (izq + 24, der - 24, self._tope_lista - 214, self._tope_lista - 180)
         self._refrescar_nombre()
-        acciones = (("ENTER", "Jugar la cripta elegida"), ("N", "Cambiar tu nombre"),
+        acciones = (("ENTER", "Jugar (o continuar la guardada)"),
+                    ("X", "Partida nueva desde cero"), ("N", "Cambiar tu nombre"),
                     ("Flecha izq/der", "Cambiar de skin"), ("P", "Puntajes y replays"),
                     ("B", "Benchmark de estructuras"), ("ESC", "Salir"))
         self._teclas = ListaEnlazada()

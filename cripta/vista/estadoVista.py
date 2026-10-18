@@ -126,6 +126,7 @@ class CriptaVisible:
     nombre: str
     salas: int
     dificultad: int
+    tiene_guardado: bool = False    # hay una partida guardada a medias (ENTER la sigue)
 
 
 @dataclass(frozen=True)

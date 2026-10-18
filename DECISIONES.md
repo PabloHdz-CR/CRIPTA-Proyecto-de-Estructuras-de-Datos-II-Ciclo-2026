@@ -468,7 +468,7 @@ Alternativas: (a) dos verbos distintos ("jugar" y "continuar"): obliga a cambiar
 Decisión: segundo argumento opcional. Sin él se reanuda si hay guardado y, si no, se empieza una partida nueva (lo que hacía la versión anterior, así que la Vista actual no se rompe). "nueva" siempre empieza de cero; "cargar" solo reanuda e informa si no hay guardado o si la carga falla.
 Complejidad: O(1) más la carga o el inicio de la partida.
 Evidencia: prueba_controlador cubre "cargar" sin guardado (error), un modo desconocido (error), el caso sin modo y "nueva" con un guardado existente (reloj en 0, sala inicial).
-Límites: hasta que PantallaMenu mande el segundo argumento, el jugador no puede elegir desde la interfaz.
+Límites: desde la interfaz, ENTER manda "jugar" sin modo (continúa si hay guardado) y X manda "nueva" (D64); "cargar" solo se usa desde las pruebas.
 
 D53. Paquete --offline con la organización de FuenteOffline
 Problema: datos_offline/ tenía archivos planos (cripta-01_general.json...) con el contenido de solo 3 salas de 6 y sin catálogo, mientras que FuenteOffline lee criptas/<id>/general.json, esqueleto/, contenido/<sala>.json y catalogo/<id>.json. --offline no podía iniciar ninguna cripta.
@@ -566,5 +566,13 @@ Decisión: el tigre es pixel art propio (pixelTigre.py), hecho con las reglas de
 Complejidad: generar los 5 cuadros del tigre es O(16x28) por cuadro, una sola vez; buscar una skin ya cargada es O(7).
 Evidencia: capturas del menú (tigre y otra skin) y de la sala con el tigre; prueba_vista_10 comprueba que la predeterminada es el tigre, que las flechas cambian de skin dando la vuelta sin encolar comandos, y que las 7 skins tienen 4 cuadros de reposo y uno de golpe (el tigre, con 4 cuadros distintos); las 12 pruebas y prueba_reglas pasan (116 archivos).
 Límites: la skin no se guarda entre ejecuciones ni en el puntaje, así que un replay muestra la skin elegida ahora, no la que se usó en esa partida.
+
+D64. Partida guardada: marca en el menú, X para empezar de cero, y se borra al terminar
+Problema: el guardado (uno por cripta) nunca se borraba. Si se guardaba, se seguía jugando y se moría, al volver a esa cripta el menú reanudaba el guardado viejo de una partida ya terminada. Además, desde la ventana no había forma de pedir partida nueva si había un guardado, ni de saber que lo había.
+Alternativas: (a) borrar el guardado siempre que termine una partida de esa cripta: si el jugador empezó una nueva con un guardado viejo y la terminó sin guardar, perdería ese guardado viejo sin haberlo usado. (b) borrarlo al empezar una partida nueva: perder el guardado por apretar una tecla es peor que conservarlo.
+Decisión: ControladorJuego recuerda si ESTA partida usó el guardado (se cargó de él o se guardó durante ella), y solo entonces lo borra al ganar o morir. El puerto AlmacenPartida gana borrar(id_cripta), no abstracto (un almacén que no sepa borrar lo deja), y AlmacenPartidaDisco borra el .bin. CriptaVisible gana tiene_guardado (lo llena ConstructorEstadoVista con el GestorGuardado). La tarjeta de la cripta muestra "PARTIDA GUARDADA" y, si está elegida, "ENTER continúa · X empieza de cero". X manda "jugar" con el modo "nueva" (D52). El log y el replay no cambian: cada partida terminada ya tiene su log archivado (D61).
+Complejidad: O(1); saber si una cripta tiene guardado es una consulta al sistema de archivos por cripta.
+Evidencia: prueba_replay_menu guarda a medias y cierra; el menú nuevo marca la cripta; una partida nueva ganada sin guardar no borra el guardado viejo; ENTER retoma el guardado (mismo reloj y sala) y, al ganar, el guardado desaparece y la marca también. Dos mutaciones (borrar siempre y no borrar nunca) fueron detectadas. prueba_vista_10 cubre X y ENTER.
+Límites: sigue habiendo un solo guardado por cripta: guardar una partida nueva reemplaza el anterior.
 
 Nota sobre la llave y la antorcha (no son decisiones nuestras): la llave NO se consume al abrir una puerta, como pide la guía ("La llave no se consume"), así que sigue en el inventario. La antorcha se gasta al usarla y dura 2000 unidades del reloj virtual, no una cantidad de salas: unos 20 movimientos de 100. El texto del efecto ahora lo dice ("quedan N de tiempo (~M movimientos)").

@@ -115,6 +115,13 @@ try:
     reposo = [texturas.heroe("tigre", t, False) for t in (0.0, 0.2, 0.4, 0.6)]
     assert len({id(c) for c in reposo}) == 4, "el tigre tiene 4 cuadros distintos"
 
+    # 2c. X pide partida nueva de la cripta elegida (aunque haya guardado)
+    vaciar(vista)
+    menu.on_key_press(arcade.key.X, 0)
+    assert comandos(vista) == [Comando("jugar", ("c1", "nueva"))]
+    menu.on_key_press(arcade.key.ENTER, 0)     # ENTER sigue pidiendo "jugar" sin modo
+    assert comandos(vista) == [Comando("jugar", ("c1",))]
+
     # 3. R ya no hace nada en el menú; B pide el benchmark
     vaciar(vista)
     menu.on_key_press(arcade.key.R, 0)

@@ -43,6 +43,7 @@ if TYPE_CHECKING:
     from ..modelo.nucleo.puntajes import TablaPuntajes
     from ..modelo.objetos.objeto import Objeto
     from ..modelo.puertos.registroAcciones import AlmacenRegistros
+    from .gestorGuardado import GestorGuardado
     from ..modelo.reloj.efecto import Efecto
 
 
@@ -224,13 +225,18 @@ class ConstructorEstadoVista:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def criptas_visibles(resumenes: ListaEnlazada) -> ListaEnlazada:
-        """resumenes: ListaEnlazada de ResumenCriptaDTO. O(c)."""
+    def criptas_visibles(resumenes: ListaEnlazada,
+                         gestor_guardado: Optional["GestorGuardado"] = None) -> ListaEnlazada:
+        """resumenes: ListaEnlazada de ResumenCriptaDTO. O(c). Con
+        gestor_guardado, marca las criptas que tienen una partida guardada."""
         criptas = ListaEnlazada()
         for resumen in resumenes:
+            tiene_guardado = (gestor_guardado is not None
+                              and gestor_guardado.existe_guardado(resumen.id))
             criptas.agregar_al_final(CriptaVisible(
                 id=resumen.id, nombre=resumen.nombre,
-                salas=resumen.salas, dificultad=resumen.dificultad))
+                salas=resumen.salas, dificultad=resumen.dificultad,
+                tiene_guardado=tiene_guardado))
         return criptas
 
     @staticmethod

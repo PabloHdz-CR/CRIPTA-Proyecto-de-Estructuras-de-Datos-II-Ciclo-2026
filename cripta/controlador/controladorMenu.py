@@ -160,7 +160,8 @@ class ControladorMenu:
             self._vista.mostrar_error(f"No se pudo obtener la lista de criptas: {error}")
             return
         self._vista.mostrar_nombre_jugador(self._nombre_jugador)
-        self._vista.mostrar_menu(self._constructor.criptas_visibles(resumenes))
+        self._vista.mostrar_menu(
+            self._constructor.criptas_visibles(resumenes, self._gestor_guardado))
 
     def _mostrar_puntajes(self) -> None:
         tabla = self._almacen_puntajes.cargar()
