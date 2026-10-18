@@ -21,7 +21,8 @@ el cursor se marca también en el dibujo.
 
 Modo replay: si el EstadoVista trae `replay`, la pantalla muestra una
 partida grabada y las teclas cambian: Espacio pausa o continúa, flecha
-derecha avanza un paso, +/- (o flechas arriba/abajo) cambian la velocidad
+derecha avanza un paso, flecha izquierda retrocede uno (y pausa), +/- (o
+flechas arriba/abajo) cambian la velocidad
 y ESC vuelve al menú. Las teclas de juego no hacen nada.
 
 Al ser un juego por turnos (no hace falta redibujar muchas veces por
@@ -158,6 +159,8 @@ class PantallaJuego(_PantallaCripta):
             self._vista_arcade._encolar(Comando("replay_pausa"))
         elif symbol == arcade.key.RIGHT:
             self._vista_arcade._encolar(Comando("replay_paso"))
+        elif symbol == arcade.key.LEFT:
+            self._vista_arcade._encolar(Comando("replay_atras"))
         elif symbol in (arcade.key.PLUS, arcade.key.EQUAL, arcade.key.NUM_ADD, arcade.key.UP):
             self._vista_arcade._encolar(Comando("replay_velocidad", ("+",)))
         elif symbol in (arcade.key.MINUS, arcade.key.NUM_SUBTRACT, arcade.key.DOWN):
@@ -373,8 +376,8 @@ class PantallaJuego(_PantallaCripta):
                 self._agregar(textos, mensaje, _MARGEN, y, 12)
                 y -= 18
         if self._estado.replay is not None:
-            self._agregar(textos, "Espacio: pausa / continuar   Flecha derecha: un paso   "
-                          "+/- o flechas arriba/abajo: velocidad", _MARGEN, 46, 11)
+            self._agregar(textos, "Espacio: pausa / continuar   Flechas izquierda/derecha: "
+                          "paso atrás / adelante   +/- o arriba/abajo: velocidad", _MARGEN, 46, 11)
             self._agregar(textos, "ESC: salir del replay", _MARGEN, 26, 11)
             return
         self._agregar(textos, "Flechas: moverse   Shift+flecha: abrir puerta   "

@@ -5,6 +5,7 @@ paso, para analizarla (§4.11). Es la contraparte visual de ModoReplay
 Comandos mientras se reproduce:
     "replay_pausa"               pausa / continúa
     "replay_paso"                avanza una acción (también en pausa)
+    "replay_atras"               retrocede una acción y queda en pausa
     "replay_velocidad" ("+"|"-") duplica o reduce a la mitad la velocidad
     "salir" / "volver"           deja el replay y vuelve al menú
 Al terminar se muestra la pantalla de fin del replay; ahí "ver_replay" lo
@@ -24,8 +25,18 @@ defecto) y no el reloj virtual del juego: solo decide CUÁNDO mostrar la
 siguiente acción; el resultado no depende de él. Las pruebas inyectan un
 reloj falso.
 
+DECISIÓN: retroceder un paso RECONSTRUYE la partida: una Partida nueva con
+la misma semilla que vuelve a aplicar las primeras k-1 acciones. Como la
+partida es determinista (§2.6), llega exactamente al estado del paso k-1.
+Alternativa descartada: Diario.deshacer (el del pergamino), que solo
+recuerda 5 acciones, excluye los pergaminos que puede traer el log y
+mezclaría el retroceso del jugador con el del visor. Otra descartada:
+guardar una foto del estado en cada paso, que es una copia del estado
+(prohibida por §4.6).
+
 Complejidad: leer el log es O(A); cada paso es una acción del modelo (un
-ciclo de eventos, < 20 ms por §5.2) más armar la foto. Memoria O(A).
+ciclo de eventos, < 20 ms por §5.2) más armar la foto; retroceder desde el
+paso k cuesta O(k) acciones. Memoria O(A).
 """
 from __future__ import annotations
 
@@ -72,7 +83,9 @@ class ControladorReplay:
         self._constructor = ConstructorEstadoVista(MapaEtiquetas())
 
         self.partida: Optional[Partida] = None
-        self._acciones = None            # iterador sobre la ListaEnlazada de Accion
+        self._encabezado = None          # del log: la semilla, para reconstruir
+        self._lista_acciones = None      # ListaEnlazada de Accion del log
+        self._acciones = None            # iterador sobre esa lista (la próxima por aplicar)
         self._total = 0
         self._paso = 0
         self._pausado = False
@@ -99,14 +112,13 @@ class ControladorReplay:
         if motivo is not None:
             return self._no_se_puede(f"No se puede garantizar una reproducción fiel: {motivo}")
 
-        self.partida = Partida(self._servicio)
-        self.partida.conectar_diario(Diario())        # el log puede traer PERGAMINO
+        self._encabezado = encabezado
+        self._lista_acciones = acciones
+        self._total = len(acciones)
         try:
-            self.partida.iniciar(encabezado.semilla)
+            self._reconstruir(0)
         except ErrorCripta as error:
             return self._no_se_puede(f"No se pudo iniciar la reproducción: {error}")
-        self._total = len(acciones)
-        self._acciones = iter(acciones)
         self._proximo = self._reloj() + ESPERA_INICIAL
         self._mostrar()
         return True
@@ -145,6 +157,8 @@ class ControladorReplay:
         elif verbo == "replay_paso":
             if not self._detenido:
                 self._avanzar()
+        elif verbo == "replay_atras":
+            self._retroceder()
         elif verbo == "replay_velocidad":
             self._cambiar_velocidad(comando.argumentos)
 
@@ -186,6 +200,38 @@ class ControladorReplay:
                 self._acciones = iter(())
             return
         self._mostrar()
+
+    def _retroceder(self) -> None:
+        """Vuelve al paso anterior y queda en pausa (para mirarlo con calma).
+        En el paso 0 no hace nada. Tras un rechazo, permite volver atrás
+        para ver cómo se llegó ahí."""
+        if self._paso == 0:
+            return
+        try:
+            self._reconstruir(self._paso - 1)
+        except ErrorCripta as error:
+            self._detener(f"No se pudo volver al paso {self._paso - 1}: {error}")
+            return
+        self._pausado = True
+        self._detenido = False
+        self._mostrar()
+
+    def _reconstruir(self, pasos: int) -> None:
+        """Partida nueva con la semilla del log y sus primeras `pasos`
+        acciones aplicadas (ya se aceptaron la primera vez: la partida es
+        determinista). Deja el iterador en la acción siguiente. O(pasos)."""
+        partida = Partida(self._servicio)
+        partida.conectar_diario(Diario())             # el log puede traer PERGAMINO
+        partida.iniciar(self._encabezado.semilla)
+        acciones = iter(self._lista_acciones)
+        for _ in range(pasos):
+            partida.aplicar_accion(next(acciones))
+        self.partida = partida
+        self._acciones = acciones
+        self._paso = pasos
+        # Las etiquetas ("Rata gigante #1") se vuelven a asignar desde cero,
+        # igual que la primera vez que se llegó a este paso.
+        self._constructor = ConstructorEstadoVista(MapaEtiquetas())
 
     def _terminar(self) -> None:
         self._en_fin = True

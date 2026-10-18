@@ -142,7 +142,8 @@ try:
         juego.on_key_press(tecla, 0)
     assert comandos(vista) == [Comando("replay_pausa"), Comando("replay_paso"),
                                Comando("replay_velocidad", ("+",)),
-                               Comando("replay_velocidad", ("-",))]
+                               Comando("replay_velocidad", ("-",)),
+                               Comando("replay_atras")]          # flecha izquierda
     juego.on_key_press(arcade.key.ESCAPE, 0)
     assert comandos(vista) == [Comando("salir")]
 
