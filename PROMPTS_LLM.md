@@ -719,3 +719,27 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "ya hice el commit, ahora necesito que mejores el apartado visual de la interfaz de sala, vida, ataque y todo ese apartado, para que sea mas amigable con el usuario"
 - **Uso:** rediseñar el HUD de la pantalla de juego en un módulo propio (HudJuego), con encabezado con corazón y barra de vida, tarjetas de estadísticas con diferencias por turno, brújula de salidas, efectos, enemigos con minibarra, inventario con íconos, bitácora coloreada, controles por modo y cartel de avisos; y aislar el assert intermitente de prueba_vista_10 (D62).
+
+## Entrada 71
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "como funciona guardar y cargar"
+- **Uso:** entender que G guarda la partida en guardados/<cripta>.bin (formato binario con tabla de offsets) y respalda el log al mismo tiempo, que C restaura los dos, y que el menú reanuda solo el guardado de una cripta si existe.
+
+## Entrada 72
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "en el modo replay adelantar y retroceder accion van a ser con las flechas derecha e izquierda, y aumentar y  disminuir la velocidad con la flecha arriba y abajo"
+- **Uso:** dejar la ayuda del replay con las cuatro flechas (derecha adelante, izquierda atrás, arriba más rápido, abajo más lento) y cubrir arriba/abajo en prueba_vista_10.
+
+## Entrada 73
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Ponle Flecha + direccion"
+- **Uso:** nombrar las teclas como "Flecha izquierda/derecha/arriba/abajo" en la ayuda del replay y "Flecha arriba/abajo" en el modo objetivo.
+
+## Entrada 74
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "haz el commit y agrega los prompts nuevos"
+- **Uso:** registrar los prompts 71 a 74 y hacer el commit de los ajustes de controles del replay.

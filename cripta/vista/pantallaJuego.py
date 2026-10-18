@@ -23,8 +23,8 @@ objeto bajo el cursor se marca también en el dibujo.
 
 Modo replay: si el EstadoVista trae `replay`, la pantalla muestra una
 partida grabada y las teclas cambian: Espacio pausa o continúa, flecha
-derecha avanza un paso, flecha izquierda retrocede uno (y pausa), +/- (o
-flechas arriba/abajo) cambian la velocidad
+derecha avanza un paso, flecha izquierda retrocede uno (y pausa), flecha
+arriba sube la velocidad y flecha abajo la baja (+/- también sirven)
 y ESC vuelve al menú. Las teclas de juego no hacen nada.
 
 Al ser un juego por turnos (no hace falta redibujar muchas veces por

@@ -138,13 +138,18 @@ try:
     juego = vista._pantalla_actual
     vista.actualizar()
     vaciar(vista)
-    for tecla in (arcade.key.SPACE, arcade.key.RIGHT, arcade.key.PLUS, arcade.key.MINUS,
-                  arcade.key.A, arcade.key.LEFT, arcade.key.G):
+    for tecla in (arcade.key.SPACE, arcade.key.RIGHT, arcade.key.LEFT, arcade.key.UP,
+                  arcade.key.DOWN, arcade.key.A, arcade.key.G):
         juego.on_key_press(tecla, 0)
-    assert comandos(vista) == [Comando("replay_pausa"), Comando("replay_paso"),
-                               Comando("replay_velocidad", ("+",)),
-                               Comando("replay_velocidad", ("-",)),
-                               Comando("replay_atras")]          # flecha izquierda
+    assert comandos(vista) == [Comando("replay_pausa"),
+                               Comando("replay_paso"),             # derecha: adelante
+                               Comando("replay_atras"),            # izquierda: atrás
+                               Comando("replay_velocidad", ("+",)),  # arriba: más rápido
+                               Comando("replay_velocidad", ("-",))]  # abajo: más lento
+    for tecla in (arcade.key.PLUS, arcade.key.MINUS):     # +/- siguen sirviendo
+        juego.on_key_press(tecla, 0)
+    assert comandos(vista) == [Comando("replay_velocidad", ("+",)),
+                               Comando("replay_velocidad", ("-",))]
     juego.on_key_press(arcade.key.ESCAPE, 0)
     assert comandos(vista) == [Comando("salir")]
 
