@@ -16,8 +16,10 @@ disponible ahora.
 from __future__ import annotations
 
 import shutil
+import uuid
+from datetime import datetime
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 from ..modelo.estructuras.listaEnlazada import ListaEnlazada
 from ..modelo.nucleo.accion import (
@@ -142,6 +144,28 @@ class RegistroArchivo(RegistroAcciones):
         shutil.copyfile(respaldo, self._ruta)
         return True
 
+    def archivar(self) -> Optional[str]:
+        """Copia el log a <carpeta>/historial/<id>.log. El id lleva la cripta,
+        la fecha y hora, y 6 caracteres al azar (dos partidas en el mismo
+        segundo no chocan). O(A) en bytes del log, una vez por partida.
+        None si no se pudo copiar: el juego sigue, sin replay de esa partida."""
+        if not self._ruta.exists():
+            return None
+        id_partida = (f"{self._ruta.stem}-{datetime.now():%Y%m%d-%H%M%S}-"
+                      f"{uuid.uuid4().hex[:6]}")
+        try:
+            carpeta = carpeta_historial(self._ruta.parent)
+            carpeta.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(self._ruta, carpeta / f"{id_partida}.log")
+        except OSError:
+            return None
+        return id_partida
+
+
+def carpeta_historial(carpeta_logs: Path) -> Path:
+    """Donde quedan los logs archivados, uno por partida terminada."""
+    return carpeta_logs / "historial"
+
 
 class CarpetaRegistros(AlmacenRegistros):
     """Un log por cripta: `<carpeta>/<id>.log` (y su `.respaldo`)."""
@@ -151,4 +175,19 @@ class CarpetaRegistros(AlmacenRegistros):
 
     def registro_de(self, id_cripta: str) -> RegistroArchivo:
         self._carpeta.mkdir(parents=True, exist_ok=True)
-        return RegistroArchivo(self._carpeta / f"{nombre_seguro(id_cripta)}.log")
+        return RegistroArchivo(self._ruta(id_cripta))
+
+    def registro_archivado(self, id_partida: str) -> Optional[RegistroArchivo]:
+        if not self.existe_archivado(id_partida):
+            return None
+        return RegistroArchivo(self._ruta_archivado(id_partida))
+
+    def existe_archivado(self, id_partida: str) -> bool:
+        """O(1): solo pregunta si el archivo está."""
+        return bool(id_partida) and self._ruta_archivado(id_partida).is_file()
+
+    def _ruta_archivado(self, id_partida: str) -> Path:
+        return carpeta_historial(self._carpeta) / f"{nombre_seguro(id_partida)}.log"
+
+    def _ruta(self, id_cripta: str) -> Path:
+        return self._carpeta / f"{nombre_seguro(id_cripta)}.log"

@@ -98,20 +98,7 @@ class ModoReplay:
 
     def _version_incompatible(self, datos: "DatosCriptaDTO",
                               encabezado: "EncabezadoPartida") -> Optional[str]:
-        """El motivo de incompatibilidad, o None si se puede reproducir. O(1)."""
-        if datos.version != encabezado.version_cripta:
-            return (f"la cripta '{encabezado.id_cripta}' está en la versión "
-                    f"'{datos.version}' y el log se grabó con '{encabezado.version_cripta}'")
-        actual = self._servicio.version_catalogo()
-        grabada = encabezado.version_catalogo
-        # DECISIÓN: "None" en el log = se grabó sin conocer la versión del
-        # catálogo (modo offline sin versión); actual None = hoy no se puede
-        # consultar. En ambos casos no hay con qué comparar y se reproduce:
-        # la versión de la cripta ya coincidió.
-        if grabada not in (None, "None") and actual is not None and actual != grabada:
-            return (f"el catálogo está en la versión '{actual}' y el log se "
-                    f"grabó con '{grabada}'")
-        return None
+        return motivo_version_incompatible(self._servicio, datos, encabezado)
 
     def _resultado_visible(self) -> ResultadoFinVisible:
         registro = self.partida.resultado("replay")
@@ -119,3 +106,23 @@ class ModoReplay:
             resultado=registro.resultado, acciones=registro.acciones,
             enemigos_derrotados=registro.enemigos_derrotados,
             tiempo_final=registro.tiempo_final)
+
+
+def motivo_version_incompatible(servicio: "ServicioDatos", datos: "DatosCriptaDTO",
+                                encabezado: "EncabezadoPartida") -> Optional[str]:
+    """El motivo por el que el log no se puede reproducir fielmente, o None
+    si se puede. O(1). La comparten --replay (ModoReplay) y el replay en la
+    ventana (ControladorReplay): la regla vive en un solo lugar."""
+    if datos.version != encabezado.version_cripta:
+        return (f"la cripta '{encabezado.id_cripta}' está en la versión "
+                f"'{datos.version}' y el log se grabó con '{encabezado.version_cripta}'")
+    actual = servicio.version_catalogo()
+    grabada = encabezado.version_catalogo
+    # DECISIÓN: "None" en el log = se grabó sin conocer la versión del
+    # catálogo (modo offline sin versión); actual None = hoy no se puede
+    # consultar. En ambos casos no hay con qué comparar y se reproduce: la
+    # versión de la cripta ya coincidió.
+    if grabada not in (None, "None") and actual is not None and actual != grabada:
+        return (f"el catálogo está en la versión '{actual}' y el log se "
+                f"grabó con '{grabada}'")
+    return None

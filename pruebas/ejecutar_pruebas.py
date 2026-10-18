@@ -47,7 +47,9 @@ PRUEBAS = (
     "prueba_vista_7",
     "prueba_vista_8",
     "prueba_vista_9",
+    "prueba_vista_10",           # teclas nuevas: nombre, replay, fin, benchmark
     "prueba_controlador",        # Controlador de punta a punta (offline)
+    "prueba_replay_menu",        # replay en la ventana, nombre y benchmark (offline)
 
 )
 

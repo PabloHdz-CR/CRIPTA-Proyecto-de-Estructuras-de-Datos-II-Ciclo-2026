@@ -26,6 +26,7 @@ import arcade
 
 from ..modelo.estructuras.cola import Cola
 from .pantallaBase import _PantallaCripta
+from .pantallaBenchmark import PantallaBenchmark, PantallaEspera
 from .pantallaFin import PantallaFin
 from .pantallaJuego import PantallaJuego
 from .pantallaMenu import PantallaMenu
@@ -41,6 +42,7 @@ class VistaArcade(VistaJuego):
         self._ventana = arcade.Window(ancho, alto, titulo, visible=visible)
         self._pantalla_actual = None
         self._ultimo_estado = None      # para animar lo que cambió entre turnos
+        self._nombre_jugador = "Jugador" # lo manda el Controlador; lo muestra el menú
 
     @property
     def ventana(self) -> arcade.Window:
@@ -80,7 +82,16 @@ class VistaArcade(VistaJuego):
 
     def mostrar_menu(self, criptas) -> None:
         self._ultimo_estado = None
-        self._mostrar(PantallaMenu(self, criptas))
+        self._mostrar(PantallaMenu(self, criptas, self._nombre_jugador))
+
+    def mostrar_nombre_jugador(self, nombre: str) -> None:
+        self._nombre_jugador = nombre
+
+    def mostrar_benchmark(self, resultado) -> None:
+        self._mostrar(PantallaBenchmark(self, resultado))
+
+    def mostrar_espera(self, texto: str) -> None:
+        self._mostrar(PantallaEspera(self, texto))
 
     def mostrar_puntajes(self, puntajes) -> None:
         self._mostrar(PantallaPuntajes(self, puntajes))
@@ -90,14 +101,15 @@ class VistaArcade(VistaJuego):
         self._mostrar(PantallaFin(self, resultado))
 
     def mostrar_error(self, mensaje: str) -> None:
-        """Se dibuja sobre la pantalla actual sin cambiar de pantalla. Solo
-        PantallaJuego tiene dónde mostrarlo; en las demás se ignora."""
+        """Se dibuja sobre la pantalla actual sin cambiar de pantalla. Las
+        pantallas que tienen dónde mostrarlo (juego y menú) definen
+        mostrar_aviso; en las demás se ignora."""
         self._avisar(mensaje)
 
     # -- internos --
 
     def _avisar(self, texto: str) -> None:
-        if texto and isinstance(self._pantalla_actual, PantallaJuego):
+        if texto and isinstance(self._pantalla_actual, (PantallaJuego, PantallaMenu)):
             self._pantalla_actual.mostrar_aviso(texto)
 
     def _mostrar(self, pantalla: _PantallaCripta) -> None:

@@ -623,3 +623,81 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "Agrega los prompts de esta sesión por favor"
 - **Uso:** registrar en PROMPTS_LLM.md los prompts de esta sesión.
+
+## Entrada 55
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Mi profesor acaba de confirmar que  si se puede usar recursos externos, busca pixel arts para el proyecto y yo escojo cual implementar"
+- **Uso:** comparar paquetes CC0 de pixel art (0x72 DungeonTileset II, Dungeon Crawl 32x32, Kenney Tiny Dungeon + Tiny Creatures) y elegir 0x72.
+
+## Entrada 56
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Ya descargué 0x72_DungeonTilesetII_v1.7.zip, está en mi carpeta Descargas."
+- **Uso:** revisar el paquete, copiar al proyecto solo los 37 cuadros usados con su licencia, armar el fondo de cada sala con sus baldosas y usar el caballero, el esqueleto, las puertas, los frascos y la espada (D55).
+
+## Entrada 57
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Lo pruebo yo en la ventana y te digo qué ajustar."
+- **Uso:** probar a mano el pixel art antes del commit.
+
+## Entrada 58
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Creo que hay unos bugs, de momento las llaves no se gastan cuando se abre una puerta, y cuantas habitaciones/usos tiene la antorcha? Cuando se acaba la partida y se pone la pantalla de derrota o victoria podria aparecer el modo replay, para analizar la partida y ver que si funcione replay. Hay que hacer que ese menu sea mas visually appealing y mas amigable con el usuario, que tenga una opcion de Name, y que esa nametag aparezca debajo del jugador, y que salgan las opciones para hacer replay a las partidas y para hacer el benchmark, y cambiale el art a la rata gigante, busca uno en especifico o dame opciones y yo lo elijo, recuerda seguir las reglas"
+- **Uso:** aclarar que la llave no se consume por regla de la guía y que la antorcha dura 2000 de tiempo (~20 movimientos); crear ControladorReplay (replay paso a paso en la ventana que verifica el final), el menú nuevo con nombre, replay y benchmark, el nombre bajo el jugador, y las pruebas prueba_replay_menu y prueba_vista_10 (D56, D57).
+
+## Entrada 59
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** Se eligió la opción "Imogia 8-bit rat" entre cuatro sprites de rata propuestos.
+- **Uso:** elegir la rata de Imogia Games (CC BY 4.0) entre las opciones encontradas.
+
+## Entrada 60
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Lo vuelvo a descargar a Descargas y te aviso."
+- **Uso:** volver a descargar el paquete de la rata, que no había quedado guardado.
+
+## Entrada 61
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Ya descargué la rata de Imogia, está en mi carpeta Descargas."
+- **Uso:** copiar la variante 04 de la rata con su licencia y crédito, y usarla animada en la sala (D58).
+
+## Entrada 62
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Lo pruebo yo en la ventana y te digo qué ajustar."
+- **Uso:** probar a mano el menú, el replay, el benchmark y la rata nueva.
+
+## Entrada 63
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Soluciona el fallo de prueba_4_4 y prueba_vista_10, los dos commits anteriores yo les hice el push manualmente, y dale un retoque estético a la tabla de puntajes"
+- **Uso:** corregir el conteo de tablas de prueba_4_4 (faltaba benchEtiquetas), quitar la dependencia del reloj en la edición del nombre y aislar los asserts de prueba_vista_10, poner las victorias primero en la tabla de puntajes (D59) y rediseñar la pantalla de puntajes (D60).
+
+## Entrada 64
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Que seria mejor en el mapa seleccionar la partida que se quiere hacer el replay o en puntaje seleccionar la partida a la cual se le quiere hacer replay? Pq ahorita mismo cuando hago el replay de cualquiera cripta no se cual partida es en la ocurriendo el replay"
+- **Uso:** comparar elegir el replay desde el menú o desde la tabla de puntajes, y decidir por puntajes con un log archivado por partida.
+
+## Entrada 65
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "hazlo todo junto, reviso que todo funcione y haces el commit"
+- **Uso:** archivar el log de cada partida terminada, guardar su id en el puntaje, elegir el replay con cursor y R en la tabla de puntajes, mostrar en el HUD qué partida es y quitar el replay por cripta del menú (D61).
+
+## Entrada 66
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Lo reviso yo en la ventana y te aviso para el commit."
+- **Uso:** revisar a mano el replay por partida desde la tabla de puntajes antes del commit.
+
+## Entrada 67
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "haz el commit y sube los prompts de esta sesión"
+- **Uso:** registrar los prompts de la sesión en PROMPTS_LLM.md y hacer el commit de todos los cambios.
