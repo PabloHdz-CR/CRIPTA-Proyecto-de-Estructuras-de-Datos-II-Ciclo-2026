@@ -1,71 +1,141 @@
-"""Texturas de la Vista: sprites que trae arcade y fondos generados (§10.2).
+"""Texturas de la Vista: sprites de pixel art y fondos generados (§10.2).
 
-Dos fuentes, ninguna agrega archivos al repositorio:
+Tres fuentes:
 
-- Sprites de ":resources:" (el paquete de Kenney, licencia CC0, que viene
-  instalado DENTRO de arcade): jugador, rata, guardián y llave.
+- "16x16 DungeonTileset II" de 0x72 (licencia CC0, ver
+  recursos/dungeon_0x72/LICENCIA.txt): piso, muros, estandartes, calaveras,
+  puertas, el caballero (jugador), el esqueleto (guardián óseo), frascos y
+  la espada. Solo se copiaron al proyecto los cuadros que se usan.
+- "8 bit art pack rat monster" de Imogia Games (licencia CC BY 4.0, ver
+  recursos/rata_imogia/LICENCIA.txt): la rata gigante, que 0x72 no trae.
+- Sprites de ":resources:" (Kenney, CC0, vienen DENTRO de arcade): la llave,
+  que tampoco trae 0x72.
 - Imágenes generadas con Pillow (dependencia de arcade): el fondo de cada
-  sala (baldosas de piedra + muros de ladrillo) y las capas de luz de la
-  antorcha.
+  sala armado con las baldosas de 0x72, y las capas de luz de la antorcha.
 
-DECISIÓN: el fondo de la sala se genera UNA vez por sala y se dibuja como
-una sola textura por cuadro, en vez de ~100 figuras sueltas. Alternativa
-descartada: arcade.shape_list.ShapeElementList, que solo se llena con
-.append (prohibido por prueba_reglas, D27).
+DECISIÓN: el fondo de la sala se arma UNA vez por sala (12x12 baldosas de
+16 px) y se dibuja como una sola textura por cuadro, en vez de 144 sprites
+sueltos. Alternativa descartada: arcade.shape_list.ShapeElementList o
+SpriteList, que solo se llenan con .append (prohibido por prueba_reglas,
+D27).
+
+DECISIÓN: el pixel art se escala con vecino más cercano (Image.NEAREST y
+pixelated=True al dibujar) para que no se vea borroso.
 
 DECISIÓN: sin dict como caché (§7). Los sprites se guardan en atributos de
-una clase (_Sprites), cargados la primera vez que se piden; los fondos
-recuerdan solo el último generado (una sala a la vez): si se vuelve a pedir
-el mismo, no se regenera. arcade.load_texture ya evita cargar dos veces el
-mismo archivo.
+una clase (_Sprites), cargados la primera vez que se piden; las animaciones
+son tuplas de cuadros (inmutables, permitidas). Los fondos recuerdan solo el
+último generado (una sala a la vez).
 """
 from __future__ import annotations
 
 import random
+from pathlib import Path
 
 import arcade
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image
 
-_RUTA = ":resources:images/"
+_RUTA_KENNEY = ":resources:images/"
+_CARPETA_0X72 = Path(__file__).resolve().parent / "recursos" / "dungeon_0x72"
+_TIRA_RATA = (Path(__file__).resolve().parent / "recursos" / "rata_imogia"
+              / "MOB-8Bit-Rat-Var-04-byImogiaGames.png")
+
+# Geometría del fondo en baldosas de 16 px (también la usa DibujoSala para
+# saber dónde terminan los muros).
+BALDOSAS = 12
+PIXELES_FONDO = BALDOSAS * 16
+FRACCION_NORTE = 32 / PIXELES_FONDO     # dos filas: borde superior + cara de ladrillo
+FRACCION_SUR = 4 / PIXELES_FONDO        # el reborde inferior mide 4 px
+FRACCION_LATERAL = 4 / PIXELES_FONDO    # los bordes laterales miden 4 px
+_CUADROS_POR_SEGUNDO = 6
+
+
+def _archivo_0x72(nombre: str) -> Path:
+    return _CARPETA_0X72 / f"{nombre}.png"
+
+
+def _cargar_0x72(nombre: str) -> arcade.Texture:
+    return arcade.load_texture(_archivo_0x72(nombre))
+
+
+def _cargar_kenney(ruta: str) -> arcade.Texture:
+    return arcade.load_texture(_RUTA_KENNEY + ruta)
 
 
 class _Sprites:
-    jugador = None
-    jugador_paso = None
-    rata = None
-    guardian = None
-    guardian_paso = None
+    caballero = None          # tupla de 4 cuadros
+    caballero_golpe = None
+    esqueleto = None          # tupla de 4 cuadros
+    frasco_rojo = None
+    frasco_verde = None
+    espada = None
+    puerta_cerrada = None
+    puerta_abierta = None
+    rata = None               # tupla de 2 cuadros (de costado)
     llave = None
+    calavera = None
 
 
-def _cargar(ruta: str) -> arcade.Texture:
-    return arcade.load_texture(_RUTA + ruta)
+def _cuadros(prefijo: str):
+    return (_cargar_0x72(f"{prefijo}_f0"), _cargar_0x72(f"{prefijo}_f1"),
+            _cargar_0x72(f"{prefijo}_f2"), _cargar_0x72(f"{prefijo}_f3"))
 
 
-def jugador(paso: bool) -> arcade.Texture:
-    if _Sprites.jugador is None:
-        _Sprites.jugador = _cargar("animated_characters/male_adventurer/maleAdventurer_idle.png")
-        _Sprites.jugador_paso = _cargar(
-            "animated_characters/male_adventurer/maleAdventurer_walk1.png")
-    return _Sprites.jugador_paso if paso else _Sprites.jugador
+def _cuadro_actual(cuadros, t: float):
+    return cuadros[int(t * _CUADROS_POR_SEGUNDO) % len(cuadros)]
 
 
-def rata() -> arcade.Texture:
+def caballero(t: float, golpeado: bool) -> arcade.Texture:
+    if _Sprites.caballero is None:
+        _Sprites.caballero = _cuadros("knight_m_idle_anim")
+        _Sprites.caballero_golpe = _cargar_0x72("knight_m_hit_anim_f0")
+    if golpeado:
+        return _Sprites.caballero_golpe
+    return _cuadro_actual(_Sprites.caballero, t)
+
+
+def esqueleto(t: float) -> arcade.Texture:
+    if _Sprites.esqueleto is None:
+        _Sprites.esqueleto = _cuadros("skelet_idle_anim")
+    return _cuadro_actual(_Sprites.esqueleto, t)
+
+
+def frasco(rojo: bool) -> arcade.Texture:
+    if _Sprites.frasco_rojo is None:
+        _Sprites.frasco_rojo = _cargar_0x72("flask_red")
+        _Sprites.frasco_verde = _cargar_0x72("flask_green")
+    return _Sprites.frasco_rojo if rojo else _Sprites.frasco_verde
+
+
+def espada() -> arcade.Texture:
+    if _Sprites.espada is None:
+        _Sprites.espada = _cargar_0x72("weapon_rusty_sword")
+    return _Sprites.espada
+
+
+def puerta(abierta: bool) -> arcade.Texture:
+    if _Sprites.puerta_cerrada is None:
+        _Sprites.puerta_cerrada = _cargar_0x72("doors_leaf_closed")
+        _Sprites.puerta_abierta = _cargar_0x72("doors_leaf_open")
+    return _Sprites.puerta_abierta if abierta else _Sprites.puerta_cerrada
+
+
+def rata(t: float) -> arcade.Texture:
+    """La tira de Imogia trae 4 cuadros de 16x16: los dos primeros son la
+    rata de costado (los que combinan con la perspectiva de 0x72), los dos
+    últimos vista desde arriba. Se recortan al cargar; el archivo no se toca."""
     if _Sprites.rata is None:
-        _Sprites.rata = _cargar("enemies/mouse.png")
-    return _Sprites.rata
-
-
-def guardian(paso: bool) -> arcade.Texture:
-    if _Sprites.guardian is None:
-        _Sprites.guardian = _cargar("animated_characters/zombie/zombie_idle.png")
-        _Sprites.guardian_paso = _cargar("animated_characters/zombie/zombie_walk1.png")
-    return _Sprites.guardian_paso if paso else _Sprites.guardian
+        tira = Image.open(_TIRA_RATA).convert("RGBA")
+        _Sprites.rata = (
+            arcade.Texture(tira.crop((0, 0, 16, 16)), hash="cripta-rata-imogia-f0"),
+            arcade.Texture(tira.crop((16, 0, 32, 16)), hash="cripta-rata-imogia-f1"))
+    # Dos cuadros: se alternan más lento que los de 0x72 (que tienen cuatro).
+    return _Sprites.rata[int(t * _CUADROS_POR_SEGUNDO / 2) % 2]
 
 
 def llave() -> arcade.Texture:
     if _Sprites.llave is None:
-        _Sprites.llave = _cargar("items/keyYellow.png")
+        _Sprites.llave = _cargar_kenney("items/keyYellow.png")
     return _Sprites.llave
 
 
@@ -78,12 +148,12 @@ class _UltimoFondo:
     textura = None
 
 
-def fondo_sala(nombre_sala: str, lado_px: int, muro_px: int,
-               baldosas: int) -> arcade.Texture:
-    """Piso de baldosas irregulares y muros de ladrillo, con sombra en el
-    borde interior. Cada sala tiene su propia variación (semilla = su
-    nombre), pero siempre la misma para la misma sala."""
-    clave = (nombre_sala, lado_px, muro_px, baldosas)
+def fondo_sala(nombre_sala: str, lado_px: int) -> arcade.Texture:
+    """Piso de baldosas, muro norte de ladrillo con estandartes, bordes
+    laterales y reborde sur. Cada sala tiene su propia variación (semilla =
+    su nombre), pero siempre la misma para la misma sala."""
+    escala = max(1, round(lado_px / PIXELES_FONDO))
+    clave = (nombre_sala, escala)
     if _UltimoFondo.clave == clave:
         return _UltimoFondo.textura
 
@@ -94,79 +164,100 @@ def fondo_sala(nombre_sala: str, lado_px: int, muro_px: int,
         semilla = (semilla * 31 + ord(caracter)) % 1000003
     azar = random.Random(semilla)
 
-    imagen = Image.new("RGBA", (lado_px, lado_px), (30, 27, 25, 255))
-    dibujo = ImageDraw.Draw(imagen)
-    _pintar_piso(dibujo, azar, lado_px, muro_px, baldosas)
-    _pintar_muros(imagen, lado_px, muro_px)
-    _pintar_sombra_interior(imagen, lado_px, muro_px)
+    imagen = Image.new("RGBA", (PIXELES_FONDO, PIXELES_FONDO), (12, 9, 10, 255))
+    _armar_sala(imagen, azar)
+    if escala > 1:
+        imagen = imagen.resize((PIXELES_FONDO * escala, PIXELES_FONDO * escala), Image.NEAREST)
 
-    textura = arcade.Texture(imagen, hash=f"cripta-fondo-{semilla}-{lado_px}-{muro_px}")
+    textura = arcade.Texture(imagen, hash=f"cripta-fondo-0x72-{semilla}-{escala}")
     _UltimoFondo.clave = clave
     _UltimoFondo.textura = textura
     return textura
 
 
-def _pintar_piso(dibujo, azar, lado_px, muro_px, baldosas) -> None:
-    interior = lado_px - 2 * muro_px
-    paso = interior / baldosas
-    junta = max(int(paso * 0.06), 1)
-    for fila in range(baldosas):
-        for columna in range(baldosas):
-            x0 = muro_px + columna * paso + junta
-            y0 = muro_px + fila * paso + junta
-            x1 = muro_px + (columna + 1) * paso - junta
-            y1 = muro_px + (fila + 1) * paso - junta
-            base = azar.randint(62, 82)
-            tono = (base, base - 6 + azar.randint(-3, 3), base - 12 + azar.randint(-3, 3), 255)
-            dibujo.rounded_rectangle((x0, y0, x1, y1), radius=max(int(paso * 0.08), 1),
-                                     fill=tono)
-            # brillo arriba-izquierda y sombra abajo-derecha: relieve
-            dibujo.line((x0 + 1, y0 + 1, x1 - 1, y0 + 1), fill=(base + 14, base + 10, base + 4, 255))
-            dibujo.line((x0 + 1, y1 - 1, x1 - 1, y1 - 1), fill=(base - 22, base - 26, base - 30, 255))
-            # manchas y grietas
-            for _ in range(azar.randint(2, 6)):
-                px = azar.uniform(x0 + 2, x1 - 2)
-                py = azar.uniform(y0 + 2, y1 - 2)
-                r = azar.uniform(0.5, paso * 0.05)
-                oscuro = base - azar.randint(10, 22)
-                dibujo.ellipse((px - r, py - r, px + r, py + r),
-                               fill=(oscuro, oscuro - 4, oscuro - 8, 255))
-            if azar.random() < 0.18:
-                px, py = azar.uniform(x0, x1), azar.uniform(y0, y1)
-                for _ in range(3):
-                    nx = px + azar.uniform(-paso * 0.25, paso * 0.25)
-                    ny = py + azar.uniform(-paso * 0.25, paso * 0.25)
-                    dibujo.line((px, py, nx, ny), fill=(base - 30, base - 34, base - 38, 255),
-                                width=1)
-                    px, py = nx, ny
+def _armar_sala(imagen, azar) -> None:
+    ultima = BALDOSAS - 1
+
+    def poner(nombre: str, columna: int, fila: int) -> None:
+        baldosa = Image.open(_archivo_0x72(nombre)).convert("RGBA")
+        imagen.alpha_composite(baldosa, (columna * 16, fila * 16))
+
+    # Piso (también debajo de los bordes, que son transparentes por dentro).
+    for fila in range(2, BALDOSAS):
+        for columna in range(BALDOSAS):
+            if azar.random() < 0.85:
+                poner("floor_1", columna, fila)
+            else:
+                poner(f"floor_{azar.randint(2, 8)}", columna, fila)
+
+    # Muro norte: borde superior + cara de ladrillo.
+    for columna in range(1, ultima):
+        poner("wall_top_mid", columna, 0)
+        poner("wall_mid", columna, 1)
+    poner("wall_top_left", 0, 0)
+    poner("wall_top_right", ultima, 0)
+    poner("wall_left", 0, 1)
+    poner("wall_right", ultima, 1)
+
+    # Estandartes en la cara de ladrillo, lejos del centro (ahí va la
+    # puerta norte, si la hay). Un solo color por sala.
+    colores = ("red", "blue", "green", "yellow")
+    color = colores[azar.randint(0, 3)]
+    for columna in (2, 3, 8, 9):
+        if azar.random() < 0.35:
+            poner(f"wall_banner_{color}", columna, 1)
+
+    # Bordes laterales y reborde sur.
+    for fila in range(2, ultima):
+        poner("wall_edge_mid_left", 0, fila)
+        poner("wall_edge_mid_right", ultima, fila)
+    for columna in range(1, ultima):
+        poner("wall_top_mid", columna, ultima)
+    poner("wall_edge_bottom_left", 0, ultima)
+    poner("wall_edge_bottom_right", ultima, ultima)
+
+    # Alguna calavera en un rincón, como adorno.
+    for _ in range(azar.randint(0, 2)):
+        columna = azar.choice((1, 2, 9, 10))
+        fila = azar.choice((3, 9, 10))
+        poner("skull", columna, fila)
 
 
-def _pintar_muros(imagen, lado_px, muro_px) -> None:
-    ladrillo = Image.open(arcade.resources.resolve(_RUTA + "tiles/brickGrey.png")).convert("RGBA")
-    ladrillo = ladrillo.resize((muro_px, muro_px), Image.LANCZOS)
-    oscurecer = Image.new("RGBA", ladrillo.size, (32, 22, 16, 165))
-    ladrillo = Image.alpha_composite(ladrillo, oscurecer)
-    for i in range(0, lado_px, muro_px):
-        imagen.paste(ladrillo, (i, 0))
-        imagen.paste(ladrillo, (i, lado_px - muro_px))
-        imagen.paste(ladrillo, (0, i))
-        imagen.paste(ladrillo, (lado_px - muro_px, i))
+class _UltimoFondoPantalla:
+    clave = None
+    textura = None
 
 
-def _pintar_sombra_interior(imagen, lado_px, muro_px) -> None:
-    """Sombra que proyectan los muros sobre el piso: un marco negro
-    difuminado justo adentro del muro."""
-    sombra = Image.new("RGBA", (lado_px, lado_px), (0, 0, 0, 0))
-    dibujo = ImageDraw.Draw(sombra)
-    ancho = max(muro_px // 2, 2)
-    dibujo.rectangle((muro_px, muro_px, lado_px - muro_px, lado_px - muro_px),
-                     outline=(0, 0, 0, 170), width=ancho)
-    sombra = sombra.filter(ImageFilter.GaussianBlur(ancho * 0.8))
-    imagen.alpha_composite(sombra)
-    # borde del muro, para separarlo del piso
-    ImageDraw.Draw(imagen).rectangle(
-        (muro_px - 1, muro_px - 1, lado_px - muro_px, lado_px - muro_px),
-        outline=(20, 17, 15, 255), width=2)
+def fondo_pantalla(ancho_px: int, alto_px: int, escala: int) -> arcade.Texture:
+    """Piso de 0x72 cubriendo toda la ventana, oscurecido, para los menús.
+    Siempre la misma semilla: el menú se ve igual en cada visita."""
+    escala = max(1, escala)
+    clave = (ancho_px, alto_px, escala)
+    if _UltimoFondoPantalla.clave == clave:
+        return _UltimoFondoPantalla.textura
+    azar = random.Random(72)
+    columnas = ancho_px // (16 * escala) + 1
+    filas = alto_px // (16 * escala) + 1
+    imagen = Image.new("RGBA", (columnas * 16, filas * 16), (12, 9, 10, 255))
+    for fila in range(filas):
+        for columna in range(columnas):
+            nombre = "floor_1" if azar.random() < 0.8 else f"floor_{azar.randint(2, 8)}"
+            baldosa = Image.open(_archivo_0x72(nombre)).convert("RGBA")
+            imagen.alpha_composite(baldosa, (columna * 16, fila * 16))
+    oscurecer = Image.new("RGBA", imagen.size, (8, 5, 6, 150))
+    imagen = Image.alpha_composite(imagen, oscurecer)
+    imagen = imagen.resize((imagen.width * escala, imagen.height * escala), Image.NEAREST)
+    imagen = imagen.crop((0, 0, ancho_px, alto_px))
+    textura = arcade.Texture(imagen, hash=f"cripta-fondo-pantalla-{ancho_px}-{alto_px}-{escala}")
+    _UltimoFondoPantalla.clave = clave
+    _UltimoFondoPantalla.textura = textura
+    return textura
+
+
+def calavera() -> arcade.Texture:
+    if _Sprites.calavera is None:
+        _Sprites.calavera = _cargar_0x72("skull")
+    return _Sprites.calavera
 
 
 # ----------------------------------------------------------------------

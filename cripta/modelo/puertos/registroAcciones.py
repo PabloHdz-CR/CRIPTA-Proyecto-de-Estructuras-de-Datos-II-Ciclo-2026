@@ -5,6 +5,14 @@ DECISIÓN: EncabezadoPartida vive en el puerto como dato puro (sin formato
 de texto): el Controlador lo arma y ModoReplay lo lee sin saber que el log
 es un archivo de texto. Cómo se escribe en disco lo decide RegistroArchivo.
 
+DECISIÓN: además del log activo (uno por cripta, solo anexado, el que
+continúa una partida cargada), cada partida TERMINADA archiva una copia con
+un id propio (archivar()). El puntaje guarda ese id, y así la tabla de
+puntajes puede reproducir exactamente esa partida aunque después se hayan
+jugado otras en la misma cripta. Alternativa descartada: un log por partida
+desde el inicio: guardar/cargar (respaldar/restaurar) trabajan sobre el log
+de la cripta, y habría que rastrear qué log continúa cada guardado.
+
 DECISIÓN: AlmacenRegistros existe porque el Controlador necesita un log
 POR cripta elegida en el menú; en vez de que ControladorMenu arme rutas
 (lógica de archivos), pide `registro_de(id_cripta)` y el adaptador decide
@@ -56,9 +64,24 @@ class RegistroAcciones(ABC):
         """Reemplaza el log por el último respaldo (al cargar la partida).
         False si no hay respaldo."""
 
+    def archivar(self) -> Optional[str]:
+        """Guarda una copia del log tal como está (al terminar la partida)
+        y devuelve su id, con el que AlmacenRegistros.registro_archivado la
+        vuelve a abrir. No es abstracto: un registro que no sepa archivar
+        devuelve None y esa partida simplemente no tiene replay."""
+        return None
+
 
 class AlmacenRegistros(ABC):
 
     @abstractmethod
     def registro_de(self, id_cripta: str) -> RegistroAcciones:
         """El log asociado a una cripta."""
+
+    def registro_archivado(self, id_partida: str) -> Optional[RegistroAcciones]:
+        """El log archivado de una partida terminada (ver archivar()), o
+        None si no existe. No es abstracto: sin historial, no hay replay."""
+        return None
+
+    def existe_archivado(self, id_partida: str) -> bool:
+        return False

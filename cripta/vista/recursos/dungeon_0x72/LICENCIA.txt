@@ -1,0 +1,10 @@
+16x16 DungeonTileset II, versión 1.7, de 0x72
+https://0x72.itch.io/dungeontileset-ii
+
+Licencia de los gráficos: Creative Commons Zero v1.0 Universal (CC0 1.0),
+dominio público. El autor indica: "You can use this tileset for whatever
+you like." No exige atribución; se da crédito por cortesía.
+
+Esta carpeta contiene solo los cuadros que usa la Vista de Cripta, copiados
+sin modificar de la carpeta frames/ del paquete original.
+Uso del paquete autorizado por el profesor (17/10/2026).

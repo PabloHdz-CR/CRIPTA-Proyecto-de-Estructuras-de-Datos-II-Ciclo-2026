@@ -19,6 +19,11 @@ La sala se dibuja con figuras (DibujoSala): muros, puertas, enemigos,
 objetos del suelo y el jugador. En modo objetivo, el enemigo u objeto bajo
 el cursor se marca también en el dibujo.
 
+Modo replay: si el EstadoVista trae `replay`, la pantalla muestra una
+partida grabada y las teclas cambian: Espacio pausa o continúa, flecha
+derecha avanza un paso, +/- (o flechas arriba/abajo) cambian la velocidad
+y ESC vuelve al menú. Las teclas de juego no hacen nada.
+
 Al ser un juego por turnos (no hace falta redibujar muchas veces por
 segundo sin que nada cambie), VistaArcade arma una PantallaJuego nueva cada
 vez que llega un EstadoVista (igual que con PantallaMenu), en vez de
@@ -71,6 +76,7 @@ class PantallaJuego(_PantallaCripta):
         self._dibujo = None               # DibujoSala, se arma con el layout
         self._iconos = ListaEnlazada()    # de (clase, x, y, radio): íconos del panel
         self._barra_jugador = None        # (izq, abajo, ancho, alto)
+        self._hud_replay = None           # (izq, der, abajo, arriba, avance) en modo replay
 
     def mostrar_aviso(self, texto: str) -> None:
         """Un rechazo o aviso (p. ej. "No hay salida hacia el S") se dibuja
@@ -109,6 +115,13 @@ class PantallaJuego(_PantallaCripta):
                           jugador.vida_max)
         for clase, x, y, radio in self._iconos:
             dibujar_objeto(clase, x, y, radio)
+        if self._hud_replay is not None:
+            izq, der, abajo, arriba, avance = self._hud_replay
+            arcade.draw_lrbt_rectangle_filled(izq, der, abajo, arriba, (40, 28, 10, 220))
+            arcade.draw_lrbt_rectangle_outline(izq, der, abajo, arriba, (255, 200, 90), 2)
+            # barra de avance del replay
+            arcade.draw_lrbt_rectangle_filled(izq + 6, izq + 6 + (der - izq - 12) * avance,
+                                              abajo + 5, abajo + 9, (255, 200, 90))
         for texto in self._textos:
             texto.draw()
 
@@ -140,7 +153,20 @@ class PantallaJuego(_PantallaCripta):
 
     # -- modo normal --
 
+    def _tecla_en_replay(self, symbol) -> None:
+        if symbol == arcade.key.SPACE:
+            self._vista_arcade._encolar(Comando("replay_pausa"))
+        elif symbol == arcade.key.RIGHT:
+            self._vista_arcade._encolar(Comando("replay_paso"))
+        elif symbol in (arcade.key.PLUS, arcade.key.EQUAL, arcade.key.NUM_ADD, arcade.key.UP):
+            self._vista_arcade._encolar(Comando("replay_velocidad", ("+",)))
+        elif symbol in (arcade.key.MINUS, arcade.key.NUM_SUBTRACT, arcade.key.DOWN):
+            self._vista_arcade._encolar(Comando("replay_velocidad", ("-",)))
+
     def _tecla_en_modo_normal(self, symbol, modifiers) -> None:
+        if self._estado.replay is not None:
+            self._tecla_en_replay(symbol)
+            return
         # Shift + flecha abre la puerta en esa dirección (con la llave del
         # inventario); la flecha sola se mueve.
         if modifiers & arcade.key.MOD_SHIFT:
@@ -249,6 +275,7 @@ class PantallaJuego(_PantallaCripta):
         jugador = self._estado.jugador
         self._agregar(textos, f"Vida {jugador.vida}/{jugador.vida_max}",
                       _MARGEN + self._barra_jugador[2] + 12, alto - 46, 13, arcade.color.WHITE)
+        self._armar_hud_replay(textos, ancho, alto)
 
         x_panel = izq_mapa + lado + 30
         if self._modo == "objetivo":
@@ -257,6 +284,30 @@ class PantallaJuego(_PantallaCripta):
             self._armar_panel_normal(textos, x_panel, arriba_contenido)
         self._armar_zona_inferior(textos, alto_inferior)
         self._textos = textos
+
+    def _armar_hud_replay(self, textos, ancho, alto) -> None:
+        """Arriba a la derecha: REPLAY, el paso, la velocidad, si está en
+        pausa y, debajo, qué partida es (quién, cripta, resultado, tiempo)."""
+        replay = self._estado.replay
+        self._hud_replay = None
+        if replay is None:
+            return
+        estado = "en pausa" if replay.pausado else f"velocidad x{replay.velocidad}"
+        contenido = f"REPLAY   paso {replay.paso}/{replay.total}   {estado}"
+        derecha = ancho - _MARGEN - 12
+        texto = arcade.Text(contenido, derecha, alto - 20, (255, 220, 120), 14,
+                            anchor_x="right", anchor_y="top", bold=True)
+        textos.agregar_al_final(texto)
+        ancho_hud = texto.content_width
+        abajo = alto - 60
+        if replay.titulo:
+            subtitulo = arcade.Text(replay.titulo, derecha, alto - 44, (235, 215, 170), 11,
+                                    anchor_x="right", anchor_y="top")
+            textos.agregar_al_final(subtitulo)
+            ancho_hud = max(ancho_hud, subtitulo.content_width)
+            abajo = alto - 76
+        self._hud_replay = (ancho - _MARGEN - ancho_hud - 24, ancho - _MARGEN, abajo,
+                            alto - 10, replay.paso / replay.total if replay.total else 1.0)
 
     def _agregar(self, textos, texto_str, x, y, tamano=13, color=arcade.color.LIGHT_GRAY,
                  bold=False) -> None:
@@ -321,6 +372,11 @@ class PantallaJuego(_PantallaCripta):
             if indice >= omitir:
                 self._agregar(textos, mensaje, _MARGEN, y, 12)
                 y -= 18
+        if self._estado.replay is not None:
+            self._agregar(textos, "Espacio: pausa / continuar   Flecha derecha: un paso   "
+                          "+/- o flechas arriba/abajo: velocidad", _MARGEN, 46, 11)
+            self._agregar(textos, "ESC: salir del replay", _MARGEN, 26, 11)
+            return
         self._agregar(textos, "Flechas: moverse   Shift+flecha: abrir puerta   "
                       "Espacio: esperar   R: recoger   A: atacar", _MARGEN, 46, 11)
         self._agregar(textos, "U: usar   Q: equipar   S: soltar   P: pergamino   "

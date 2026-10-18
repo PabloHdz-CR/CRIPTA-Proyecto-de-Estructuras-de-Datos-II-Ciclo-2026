@@ -24,12 +24,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 from ..modelo.estructuras.listaEnlazada import ListaEnlazada
+from ..modelo.nucleo.constantes import COSTO_MOVER
 from ..modelo.objetos.inventario import CRITERIOS_ORDEN
 from ..modelo.puertos.dto import DIRECCIONES
 from ..modelo.reloj.efecto import (
     EfectoAntorcha, EfectoRegeneracion, EfectoVelocidad, EfectoVeneno)
 from ..vista.estadoVista import (
-    ActorVisible, CriptaVisible, EfectoVisible, EstadoVista,
+    ActorVisible, CriptaVisible, EfectoVisible, EstadoVista, InfoReplay,
     InventarioVisible, JugadorVisible, ObjetoVisible, PuntajeVisible,
     SalaVisible, SalidaVisible, SALIDA_ABIERTA, SALIDA_CERRADA_CON_LLAVE,
     SALIDA_SIN_SALIDA)
@@ -41,6 +42,7 @@ if TYPE_CHECKING:
     from ..modelo.nucleo.partida import Partida
     from ..modelo.nucleo.puntajes import TablaPuntajes
     from ..modelo.objetos.objeto import Objeto
+    from ..modelo.puertos.registroAcciones import AlmacenRegistros
     from ..modelo.reloj.efecto import Efecto
 
 
@@ -56,8 +58,12 @@ class ConstructorEstadoVista:
     # ------------------------------------------------------------------
 
     def construir(self, partida: "Partida",
-                  criterio_orden: Optional[str] = None) -> EstadoVista:
-        """criterio_orden: None (solo orden real) o uno de CRITERIOS_ORDEN."""
+                  criterio_orden: Optional[str] = None,
+                  nombre_jugador: Optional[str] = None,
+                  replay: Optional[InfoReplay] = None) -> EstadoVista:
+        """criterio_orden: None (solo orden real) o uno de CRITERIOS_ORDEN.
+        nombre_jugador y replay pasan tal cual: son de la sesión, no del
+        modelo (la Partida no sabe cómo se llama el jugador)."""
         jugador = partida.jugador
         sala = partida.mundo.sala(jugador.sala)
         return EstadoVista(
@@ -71,6 +77,8 @@ class ConstructorEstadoVista:
             efectos=self._efectos_visibles(jugador, partida.reloj),
             inventario=self._inventario_visible(jugador, criterio_orden),
             mensajes=self._mensajes_visibles(partida),
+            nombre_jugador=nombre_jugador,
+            replay=replay,
         )
 
     def _jugador_visible(self, jugador: "Jugador") -> JugadorVisible:
@@ -139,7 +147,10 @@ class ConstructorEstadoVista:
         if efecto.TIPO == EfectoVelocidad.TIPO:
             return f"velocidad {efecto.modificador:+d} ({restante} restantes)"
         if efecto.TIPO == EfectoAntorcha.TIPO:
-            return f"antorcha ({restante} restantes)"
+            # El tiempo es el del reloj virtual, no salas: se traduce a
+            # movimientos (cada uno cuesta COSTO_MOVER) para que se entienda.
+            return (f"antorcha: quedan {restante} de tiempo "
+                    f"(~{restante // COSTO_MOVER} movimientos)")
         if efecto.TIPO == EfectoRegeneracion.TIPO:
             return f"regeneración +{efecto.cantidad}"
         return efecto.TIPO
@@ -223,11 +234,14 @@ class ConstructorEstadoVista:
         return criptas
 
     @staticmethod
-    def puntajes_visibles(tabla_puntajes: "TablaPuntajes",
-                          criterio: str = "tiempo") -> ListaEnlazada:
+    def puntajes_visibles(tabla_puntajes: "TablaPuntajes", criterio: str = "tiempo",
+                          almacen_registros: Optional["AlmacenRegistros"] = None
+                          ) -> ListaEnlazada:
         """El orden lo decide TablaPuntajes.vista_ordenada con el selector
         automático de §4.9 (inserción si son pocos o casi ordenados, mezcla si
-        son muchos): O(p log p) en el peor caso, p = puntajes guardados."""
+        son muchos): O(p log p) en el peor caso, p = puntajes guardados.
+        Con almacen_registros, marca cuáles tienen su log archivado (replay):
+        O(1) por puntaje."""
         puntajes = ListaEnlazada()
         for registro in tabla_puntajes.vista_ordenada(criterio):
             puntajes.agregar_al_final(PuntajeVisible(
@@ -238,5 +252,8 @@ class ConstructorEstadoVista:
                 enemigos_derrotados=registro.enemigos_derrotados,
                 tiempo_final=registro.tiempo_final,
                 resultado=registro.resultado,
+                id_partida=registro.id_partida,
+                tiene_replay=(almacen_registros is not None
+                              and almacen_registros.existe_archivado(registro.id_partida)),
             ))
         return puntajes

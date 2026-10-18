@@ -30,6 +30,7 @@ class PuntajesArchivo(AlmacenPuntajes):
             "enemigos_derrotados": registro.enemigos_derrotados,
             "tiempo_final": registro.tiempo_final,
             "resultado": registro.resultado,
+            "id_partida": registro.id_partida,
         }
         with open(self._ruta, "a", encoding="utf-8") as archivo:
             archivo.write(json.dumps(linea, ensure_ascii=False))
@@ -57,6 +58,8 @@ class PuntajesArchivo(AlmacenPuntajes):
                         enemigos_derrotados=datos["enemigos_derrotados"],
                         tiempo_final=datos["tiempo_final"],
                         resultado=datos["resultado"],
+                        # .get: los puntajes viejos no tienen este campo.
+                        id_partida=datos.get("id_partida"),
                     )
                 except (json.JSONDecodeError, KeyError, TypeError):
                     continue

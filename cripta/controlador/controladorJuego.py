@@ -25,6 +25,7 @@ Verbos de SESIÓN (no consumen reloj virtual ni son acciones del jugador):
 """
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import TYPE_CHECKING, Optional
 
 from ..modelo.estructuras.listaEnlazada import ListaEnlazada
@@ -72,6 +73,9 @@ class ControladorJuego:
         self._traductor = TraductorComandos(self._mapa_etiquetas)
 
         self.partida: Optional[Partida] = None
+        # Resultado de la partida terminada: ControladorMenu lo usa para
+        # comprobar que el replay llega exactamente al mismo final.
+        self.registro_final: Optional["RegistroPuntaje"] = None
         self._criterio_orden: Optional[str] = None
         self._terminado = False
         self._quiere_salir = False
@@ -224,13 +228,20 @@ class ControladorJuego:
     # ------------------------------------------------------------------
 
     def _mostrar_estado_actual(self) -> None:
-        self._vista.mostrar_estado(
-            self._constructor.construir(self.partida, self._criterio_orden))
+        self._vista.mostrar_estado(self._constructor.construir(
+            self.partida, self._criterio_orden, nombre_jugador=self._nombre_jugador))
 
     def _finalizar(self) -> None:
         """Victoria o derrota (§2.12): puntaje, pantalla de fin y reporte de
         red y caché (§5.1)."""
         registro: "RegistroPuntaje" = self.partida.resultado(self._nombre_jugador)
+        # DECISIÓN: el log de ESTA partida se archiva con un id propio y el
+        # puntaje lo recuerda: así la tabla de puntajes puede reproducirla
+        # aunque después se jueguen otras en la misma cripta.
+        id_partida = self._registro.archivar()
+        if id_partida is not None:
+            registro = replace(registro, id_partida=id_partida)
+        self.registro_final = registro
         self._almacen_puntajes.agregar(registro)
         self._vista.mostrar_fin(ResultadoFinVisible(
             resultado=registro.resultado,
@@ -241,6 +252,7 @@ class ControladorJuego:
             presupuesto=self._servicio.presupuesto(),
             aciertos_cache=self._servicio.aciertos_cache(),
             fallos_cache=self._servicio.fallos_cache(),
+            puede_ver_replay=registro.id_partida is not None,
         ))
         self._reporte_final.imprimir(self._servicio)
         self._terminado = True

@@ -1,9 +1,10 @@
 """DibujoSala: la parte gráfica de PantallaJuego (§10.2).
 
-Dibuja la sala actual vista desde arriba: el fondo (piso de piedra y muros
-de ladrillo, generado una vez por sala en texturas.py), las puertas según
-su estado, los objetos del suelo, los enemigos con su barra de vida y su
-etiqueta ("Rata gigante #1"), el jugador y la luz de la antorcha.
+Dibuja la sala actual vista desde arriba (con el muro norte de frente, como
+en el pixel art de 0x72): el fondo (armado una vez por sala en texturas.py),
+las puertas según su estado, los objetos del suelo, los enemigos con su
+barra de vida y su etiqueta ("Rata gigante #1"), el caballero del jugador
+y la luz de la antorcha.
 
 Animación: dibujar(t) recibe los segundos transcurridos desde que llegó
 este EstadoVista. Comparando con el EstadoVista ANTERIOR (si lo hay) se
@@ -34,14 +35,11 @@ from ..modelo.estructuras.listaEnlazada import ListaEnlazada
 from . import texturas
 from .estadoVista import SALIDA_ABIERTA, SALIDA_CERRADA_CON_LLAVE, SALIDA_SIN_SALIDA
 
-_COLOR_PUERTA_MADERA = (105, 66, 34)
 _COLOR_PUERTA_ABIERTA = (70, 170, 90)
 _COLOR_RESALTE = arcade.color.YELLOW
 _SIN_TINTE = arcade.color.WHITE
 _TINTE_DANO = arcade.types.Color(255, 70, 70)
-_TINTE_RATA = arcade.types.Color(165, 128, 102)    # el sprite de Kenney es casi blanco
 
-_BALDOSAS_POR_LADO = 8
 _MAX_EN_FILA = 6
 
 # Duraciones de las animaciones de cambio, en segundos.
@@ -75,21 +73,25 @@ class DibujoSala:
         self._izq = izquierda
         self._abajo = abajo
         self._lado = lado
-        self._muro = max(lado * 0.06, 4)
+        # Un "pixel" del pixel art (el fondo mide 192 px de 0x72 por lado) y
+        # el grosor de cada muro, tomados del fondo para que todo coincida.
+        self._u = lado / texturas.PIXELES_FONDO
+        self._norte = lado * texturas.FRACCION_NORTE
+        self._sur = lado * texturas.FRACCION_SUR
+        self._muro = lado * texturas.FRACCION_LATERAL
         self._radio = max(lado * 0.055, 6)
         self._sala_nueva = not misma_sala(estado, anterior)
         self._jugador_herido = (anterior is not None
                                 and estado.jugador.vida < anterior.jugador.vida)
 
         lado_px = max(int(lado * escala_pixeles), 16)
-        muro_px = max(int(self._muro * escala_pixeles), 2)
-        self._fondo = texturas.fondo_sala(estado.sala.nombre, lado_px, muro_px,
-                                          _BALDOSAS_POR_LADO)
+        self._fondo = texturas.fondo_sala(estado.sala.nombre, lado_px)
 
         self._vidas_previas = ListaEnlazada()   # vida anterior de cada enemigo (o None)
         self._caidos = ListaEnlazada()          # (etiqueta, x, y) derrotados este turno
         self._numeros = ListaEnlazada()         # (arcade.Text, x, y, color) daño flotante
         self._etiquetas = ListaEnlazada()       # de arcade.Text
+        self._nombre = None                     # arcade.Text del nombre bajo el jugador
         self._comparar_con(anterior)
         self._armar_etiquetas()
 
@@ -132,7 +134,10 @@ class DibujoSala:
     # ------------------------------------------------------------------
 
     def _centro(self):
-        return self._izq + self._lado / 2, self._abajo + self._lado / 2
+        """Centro del piso (entre el muro norte y el reborde sur)."""
+        piso_abajo = self._abajo + self._sur
+        piso_arriba = self._abajo + self._lado - self._norte
+        return self._izq + self._lado / 2, (piso_abajo + piso_arriba) / 2
 
     def _posicion_en_fila(self, indice: int, cantidad: int, altura: float):
         """Reparte `cantidad` elementos en una fila horizontal a `altura`
@@ -158,7 +163,8 @@ class DibujoSala:
     def dibujar(self, t: float, enemigo_resaltado: int = -1, objeto_resaltado: int = -1) -> None:
         r = self._radio
         arcade.draw_texture_rect(self._fondo, arcade.LBWH(self._izq, self._abajo,
-                                                          self._lado, self._lado))
+                                                          self._lado, self._lado),
+                                 pixelated=True)
         self._dibujar_puertas()
 
         for indice, objeto in enumerate(self._estado.sala.objetos):
@@ -172,7 +178,7 @@ class DibujoSala:
         for etiqueta, x, y in self._caidos:
             if t < _DURACION_CAIDA:
                 f = t / _DURACION_CAIDA
-                _dibujar_enemigo(etiqueta, x, y - f * r * 0.6, r, t,
+                _dibujar_enemigo(etiqueta, x, y - f * r * 0.6, r, self._u, t,
                                  int(255 * (1 - f)), _SIN_TINTE)
 
         for indice, (enemigo, vida_previa) in enumerate(
@@ -185,11 +191,12 @@ class DibujoSala:
                 tinte = _TINTE_DANO
             if indice == enemigo_resaltado:
                 _dibujar_resalte(x, y, r * 1.7, t)
-            _dibujar_enemigo(enemigo.etiqueta, x, y, r, t, 255, tinte)
+            _dibujar_enemigo(enemigo.etiqueta, x, y, r, self._u, t, 255, tinte)
 
         cx, cy = self._centro()
         encendida = self._estado.jugador.antorcha_encendida
-        _dibujar_jugador(cx, cy + math.sin(t * 2.0) * r * 0.06, r, encendida, t)
+        golpeado = self._jugador_herido and t < _DURACION_DESTELLO
+        _dibujar_jugador(cx, cy, self._u, encendida, golpeado, t)
 
         self._dibujar_luz(t, encendida)
 
@@ -201,6 +208,7 @@ class DibujoSala:
                           valor_animado(vida_previa, enemigo.vida, t), enemigo.vida_max)
         for texto in self._etiquetas:
             texto.draw()
+        self._dibujar_nombre()
 
         if self._jugador_herido and t < _DURACION_DESTELLO:
             alfa = int(110 * (1 - t / _DURACION_DESTELLO))
@@ -212,9 +220,23 @@ class DibujoSala:
             arcade.draw_lrbt_rectangle_filled(self._izq, self._izq + self._lado, self._abajo,
                                               self._abajo + self._lado, (0, 0, 0, alfa))
 
+    def _dibujar_nombre(self) -> None:
+        """El nombre del jugador en una placa oscura, debajo de sus pies."""
+        if self._nombre is None:
+            return
+        ancho = self._nombre.content_width + 12
+        alto = self._nombre.content_height + 2
+        x, y = self._nombre.x, self._nombre.y
+        arcade.draw_lrbt_rectangle_filled(x - ancho / 2, x + ancho / 2, y - alto / 2,
+                                          y + alto / 2, (10, 8, 8, 190))
+        arcade.draw_lrbt_rectangle_outline(x - ancho / 2, x + ancho / 2, y - alto / 2,
+                                           y + alto / 2, (150, 112, 48), 1)
+        self._nombre.draw()
+
     def _dibujar_luz(self, t: float, encendida: bool) -> None:
-        interior = arcade.LBWH(self._izq + self._muro, self._abajo + self._muro,
-                               self._lado - 2 * self._muro, self._lado - 2 * self._muro)
+        interior = arcade.LBWH(self._izq + self._muro, self._abajo + self._sur,
+                               self._lado - 2 * self._muro,
+                               self._lado - self._norte - self._sur)
         parpadeo = math.sin(t * 9.0) * 0.5 + math.sin(t * 23.0 + 1.3) * 0.3
         alfa = int(max(0, min(255, 225 - parpadeo * 22))) if encendida else 255
         arcade.draw_texture_rect(texturas.oscuridad(encendida), interior, alpha=alfa)
@@ -245,59 +267,56 @@ class DibujoSala:
                 self._dibujar_puerta_cerrada(salida.direccion)
 
     def _rect_puerta(self, direccion: str):
-        """(izq, der, abajo, arriba) del hueco de la puerta en ese muro."""
-        ancho = self._lado * 0.18
-        m = self._muro
+        """(izq, der, abajo, arriba) de la puerta en ese muro. La norte es
+        la hoja de 0x72 completa (32x32 px, ocupa toda la cara de ladrillo);
+        la sur y las laterales son huecos en el reborde, porque ese muro se
+        ve desde arriba."""
+        u = self._u
         cx, cy = self._centro()
         izq, der = self._izq, self._izq + self._lado
         abajo, arriba = self._abajo, self._abajo + self._lado
         if direccion == "N":
-            return cx - ancho / 2, cx + ancho / 2, arriba - m, arriba
+            return cx - 16 * u, cx + 16 * u, arriba - self._norte, arriba
         if direccion == "S":
-            return cx - ancho / 2, cx + ancho / 2, abajo, abajo + m
+            return cx - 16 * u, cx + 16 * u, abajo, abajo + self._sur + 10 * u
         if direccion == "E":
-            return der - m, der, cy - ancho / 2, cy + ancho / 2
-        return izq, izq + m, cy - ancho / 2, cy + ancho / 2
+            return der - self._muro - 8 * u, der, cy - 16 * u, cy + 16 * u
+        return izq, izq + self._muro + 8 * u, cy - 16 * u, cy + 16 * u
 
     def _frente_a_puerta(self, direccion: str):
         izq, der, abajo, arriba = self._rect_puerta(direccion)
         cx, cy = (izq + der) / 2, (abajo + arriba) / 2
-        separacion = self._muro * 1.5
+        u = self._u
         if direccion == "N":
-            return cx, cy - separacion
+            return cx, abajo - 7 * u
         if direccion == "S":
-            return cx, cy + separacion
+            return cx, arriba + 7 * u
         if direccion == "E":
-            return cx - separacion, cy
-        return cx + separacion, cy
+            return izq - 7 * u, cy
+        return der + 7 * u, cy
 
     def _dibujar_puerta_abierta(self, direccion: str) -> None:
         izq, der, abajo, arriba = self._rect_puerta(direccion)
-        # hueco oscuro que se pierde hacia afuera
-        arcade.draw_lrbt_rectangle_filled(izq, der, abajo, arriba, (14, 12, 11))
-        arcade.draw_lrbt_rectangle_outline(izq, der, abajo, arriba, (90, 84, 78), 2)
-        # umbral verde del lado de la sala: "por aquí se puede pasar"
-        if direccion == "N" or direccion == "S":
-            y = abajo if direccion == "N" else arriba
-            arcade.draw_line(izq + 2, y, der - 2, y, _COLOR_PUERTA_ABIERTA, 3)
+        if direccion == "N":
+            arcade.draw_texture_rect(texturas.puerta(True), arcade.LRBT(izq, der, abajo, arriba),
+                                     pixelated=True)
+            return
+        # Hueco oscuro en el reborde, con un umbral verde del lado de la sala.
+        arcade.draw_lrbt_rectangle_filled(izq, der, abajo, arriba, (14, 10, 11))
+        if direccion == "S":
+            arcade.draw_line(izq, arriba, der, arriba, _COLOR_PUERTA_ABIERTA, 2)
         else:
             x = izq if direccion == "E" else der
-            arcade.draw_line(x, abajo + 2, x, arriba - 2, _COLOR_PUERTA_ABIERTA, 3)
+            arcade.draw_line(x, abajo, x, arriba, _COLOR_PUERTA_ABIERTA, 2)
 
     def _dibujar_puerta_cerrada(self, direccion: str) -> None:
+        # La norte se ve de frente; en las demas, la misma hoja de 0x72
+        # aplastada sobre el hueco se lee como una puerta vista de canto.
         izq, der, abajo, arriba = self._rect_puerta(direccion)
-        arcade.draw_lrbt_rectangle_filled(izq, der, abajo, arriba, _COLOR_PUERTA_MADERA)
-        horizontal = direccion == "N" or direccion == "S"
-        for i in range(1, 4):                       # tablones
-            if horizontal:
-                x = izq + (der - izq) * i / 4
-                arcade.draw_line(x, abajo, x, arriba, (70, 42, 20), 1)
-            else:
-                y = abajo + (arriba - abajo) * i / 4
-                arcade.draw_line(izq, y, der, y, (70, 42, 20), 1)
-        arcade.draw_lrbt_rectangle_outline(izq, der, abajo, arriba, (60, 40, 25), 2)
+        arcade.draw_texture_rect(texturas.puerta(False), arcade.LRBT(izq, der, abajo, arriba),
+                                 pixelated=True)
         cx, cy = (izq + der) / 2, (abajo + arriba) / 2
-        lado = self._muro * 1.2
+        lado = 12 * self._u
         arcade.draw_texture_rect(texturas.llave(), arcade.XYWH(cx, cy, lado, lado))
 
     # ------------------------------------------------------------------
@@ -306,6 +325,12 @@ class DibujoSala:
 
     def _armar_etiquetas(self) -> None:
         tamano = max(min(int(self._radio * 0.45), 11), 7)
+        if self._estado.nombre_jugador:
+            cx, cy = self._centro()
+            pies = cy - 28 * self._u * 1.25 / 2          # el caballero mide 28 px de 0x72
+            self._nombre = arcade.Text(self._estado.nombre_jugador, cx, pies - tamano,
+                                       (232, 193, 92), tamano, anchor_x="center",
+                                       anchor_y="center", bold=True)
         for indice, enemigo in enumerate(self._estado.sala.enemigos):
             x, y = self.posicion_enemigo(indice)
             self._etiquetas.agregar_al_final(arcade.Text(
@@ -374,10 +399,9 @@ def _dibujar_resalte(x: float, y: float, radio: float, t: float) -> None:
 def dibujar_objeto(clase: str, x: float, y: float, r: float) -> None:
     """Un ícono por clase de objeto (las clases del catálogo, §2.7)."""
     if clase == "arma":
-        arcade.draw_line(x - r * 0.7, y - r * 0.7, x + r * 0.7, y + r * 0.7, (215, 220, 230), 4)
-        arcade.draw_line(x - r * 0.7, y - r * 0.7, x + r * 0.7, y + r * 0.7, (150, 155, 165), 1)
-        arcade.draw_line(x - r * 0.75, y - r * 0.15, x - r * 0.15, y - r * 0.75, (150, 110, 60), 4)
-        arcade.draw_circle_filled(x - r * 0.75, y - r * 0.75, r * 0.12, (200, 170, 70))
+        alto = r * 2.2               # espada oxidada de 0x72 (10x21 px)
+        arcade.draw_texture_rect(texturas.espada(), arcade.XYWH(x, y, alto * 10 / 21, alto),
+                                 angle=-35, pixelated=True)
     elif clase == "armadura":
         contorno = ((x - r * 0.75, y + r * 0.7), (x + r * 0.75, y + r * 0.7),
                     (x + r * 0.65, y - r * 0.2), (x, y - r * 0.85), (x - r * 0.65, y - r * 0.2))
@@ -385,14 +409,9 @@ def dibujar_objeto(clase: str, x: float, y: float, r: float) -> None:
         arcade.draw_polygon_outline(contorno, (90, 60, 30), 2)
         arcade.draw_line(x, y + r * 0.7, x, y - r * 0.85, (110, 75, 40), 2)
     elif clase == "pocion" or clase == "antidoto":
-        liquido = (210, 50, 60) if clase == "pocion" else (70, 190, 90)
-        arcade.draw_circle_filled(x, y - r * 0.2, r * 0.62, (220, 225, 235, 120))
-        arcade.draw_circle_filled(x, y - r * 0.28, r * 0.52, liquido)
-        arcade.draw_circle_filled(x - r * 0.2, y - r * 0.05, r * 0.14, (255, 255, 255, 150))
-        arcade.draw_lrbt_rectangle_filled(x - r * 0.2, x + r * 0.2, y + r * 0.3, y + r * 0.75,
-                                          (190, 200, 210))
-        arcade.draw_lrbt_rectangle_filled(x - r * 0.25, x + r * 0.25, y + r * 0.75, y + r * 0.9,
-                                          (120, 80, 40))
+        lado = r * 2.0               # frascos de 0x72 (16x16 px)
+        arcade.draw_texture_rect(texturas.frasco(clase == "pocion"), arcade.XYWH(x, y, lado, lado),
+                                 pixelated=True)
     elif clase == "llave":
         lado = r * 1.9
         arcade.draw_texture_rect(texturas.llave(), arcade.XYWH(x, y, lado, lado))
@@ -423,22 +442,21 @@ def _dibujar_llama(x: float, y: float, r: float, t: float) -> None:
     arcade.draw_circle_filled(x, y - r * 0.1, r * 0.42, (255, 225, 110))
 
 
-def _dibujar_enemigo(etiqueta: str, x: float, y: float, r: float, t: float,
+def _dibujar_enemigo(etiqueta: str, x: float, y: float, r: float, u: float, t: float,
                      alfa: int, tinte) -> None:
     nombre = etiqueta.lower()
-    paso = int(t * 2.5) % 2 == 1
     if "rata" in nombre:
-        _dibujar_sombra(x, y - r * 0.55, r * 1.2, alfa)
-        lado = r * 3.0
-        # En mouse.png la rata ocupa la parte de abajo: se sube para centrarla.
-        arcade.draw_texture_rect(texturas.rata(), arcade.XYWH(x, y + r * 0.9, lado, lado),
-                                 color=_TINTE_RATA if tinte is _SIN_TINTE else tinte,
-                                 alpha=alfa)
+        # Rata de Imogia (16x16, de costado): ocupa la mitad de abajo del
+        # cuadro, así que se sube medio cuadro para centrarla en (x, y).
+        lado = 16 * u * 2.0
+        _dibujar_sombra(x, y - lado * 0.22, lado * 0.42, alfa)
+        arcade.draw_texture_rect(texturas.rata(t), arcade.XYWH(x, y + lado * 0.2, lado, lado),
+                                 color=tinte, alpha=alfa, pixelated=True)
     elif "óseo" in nombre or "oseo" in nombre or "esqueleto" in nombre or "guardi" in nombre:
-        _dibujar_sombra(x, y - r * 1.35, r * 1.0, alfa)
-        alto = r * 3.0
-        arcade.draw_texture_rect(texturas.guardian(paso), arcade.XYWH(x, y, alto * 0.75, alto),
-                                 color=tinte, alpha=alfa)
+        lado = 16 * u * 1.7          # el esqueleto de 0x72 mide 16x16
+        _dibujar_sombra(x, y - lado * 0.45, lado * 0.45, alfa)
+        arcade.draw_texture_rect(texturas.esqueleto(t), arcade.XYWH(x, y, lado, lado),
+                                 color=tinte, alpha=alfa, pixelated=True)
     else:
         _dibujar_sombra(x, y - r * 1.0, r * 1.0, alfa)
         arcade.draw_circle_filled(x, y, r, (tinte.r * 170 // 255, 50, 60, alfa))
@@ -446,11 +464,16 @@ def _dibujar_enemigo(etiqueta: str, x: float, y: float, r: float, t: float,
         arcade.draw_circle_filled(x + r * 0.35, y + r * 0.2, r * 0.18, (255, 255, 255, alfa))
 
 
-def _dibujar_jugador(x: float, y: float, r: float, antorcha: bool, t: float) -> None:
-    _dibujar_sombra(x, y - r * 1.25, r * 1.1)
-    alto = r * 2.9
-    arcade.draw_texture_rect(texturas.jugador(False), arcade.XYWH(x, y, alto * 0.75, alto))
+def _dibujar_jugador(x: float, y: float, u: float, antorcha: bool, golpeado: bool,
+                     t: float) -> None:
+    """El caballero de 0x72 (16x28 px) con su animación de reposo, o el
+    cuadro de golpe mientras dura el destello de daño."""
+    escala = u * 1.25
+    ancho, alto = 16 * escala, 28 * escala
+    _dibujar_sombra(x, y - alto * 0.47, ancho * 0.5)
+    arcade.draw_texture_rect(texturas.caballero(t, golpeado), arcade.XYWH(x, y, ancho, alto),
+                             pixelated=True)
     if antorcha:
-        mano_x = x + r * 0.85
-        arcade.draw_line(mano_x, y - r * 0.35, mano_x, y + r * 0.45, (120, 78, 36), 3)
-        _dibujar_llama(mano_x, y + r * 0.6, r * 0.32, t)
+        mano_x = x + ancho * 0.55
+        arcade.draw_line(mano_x, y - alto * 0.15, mano_x, y + alto * 0.12, (120, 78, 36), 3)
+        _dibujar_llama(mano_x, y + alto * 0.17, ancho * 0.22, t)
