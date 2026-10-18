@@ -1,4 +1,3 @@
-Diego
 
 D1. Espera de red: puerto síncrono y FuenteAsincrona con hilo y cola propia
 
@@ -592,3 +591,31 @@ Evidencia: capturas de la pantalla con dos frases distintas; prueba_vista_10 (EN
 Límites: el azar de la primera frase y de las brasas es solo de presentación (random.Random propio de la pantalla) y no afecta la semilla del juego (§2.6).
 
 Nota sobre la llave y la antorcha (no son decisiones nuestras): la llave NO se consume al abrir una puerta, como pide la guía ("La llave no se consume"), así que sigue en el inventario. La antorcha se gasta al usarla y dura 2000 unidades del reloj virtual, no una cantidad de salas: unos 20 movimientos de 100. El texto del efecto ahora lo dice ("quedan N de tiempo (~M movimientos)").
+
+D67. Rastro del jugador: un solo campo por sala, caducidad al consultar
+
+(§4.7, rastro del jugador / comportamiento Rastreador.)
+
+Problema: la decisión de un rastreador debe costar proporcionalmente al número de salidas de SU sala, no al tamaño de la cripta ni a la longitud del recorrido del jugador. Con varios rastreadores, el trabajo total por ciclo no debe crecer más que linealmente con los enemigos que realmente actúan.
+Alternativas:
+(a) Lista de visitas por sala (historial de instantes): descartada porque crece sin límite con la duración de la partida y ya no sería memoria constante por sala.
+(b) Búsqueda del rastro más fresco en todo el mundo (recorrer o hacer BFS sobre todas las salas): descartada porque el costo dependería del tamaño de la cripta, no de las salidas de la sala del rastreador — justo lo que la guía prohíbe.
+Decisión: Sala.rastro guarda un único instante (entero u None), no una lista. Se actualiza al completar un movimiento hacia esa sala. Rastreador.decidir_sin_jugador recorre únicamente vecinas_abiertas() de su propia sala (como mucho 4) y consulta rastro_fresco(reloj) de cada vecina, que es O(1): la caducidad (400 unidades) se detecta al consultar, sin eventos de limpieza.
+Complejidad: decidir cuesta O(salidas de la sala) ≤ O(4) por rastreador que actúa, sin importar el tamaño de la cripta. Memoria O(1) por sala. Con k rastreadores activos en un ciclo, el trabajo total es O(k): lineal solo en los que realmente actúan, nunca en el total de enemigos ni en el tamaño de la cripta.
+Evidencia empírica: medí decidir() de un mismo Rastreador variando el tamaño de la cripta alrededor de su sala (su propia sala siempre con 1 salida abierta): 1.73 µs con 10 salas, 1.22 µs con 100, 1.31 µs
+
+D68. Guardado binario con índice de salas al final del archivo
+
+(§4.10, guardado binario de la partida.)
+
+Problema: el estado se debe guardar en un archivo binario de formato propio; al cargar debe poderse recuperar una sala específica sin leer el archivo completo; debe detectarse incompatibilidad de versión; y hay que comparar tamaño en disco y tiempo de carga contra guardar el mismo estado en JSON.
+Alternativas:
+(a) Guardar cada sala en un archivo separado: descartada porque multiplica la cantidad de archivos a mantener y complica el guardado atómico de una partida.
+(b) Un único bloque secuencial sin índice (leer hasta encontrar la sala buscada): descartada porque recuperar una sala seguiría siendo O(total de salas), igual que JSON.
+Decisión: un solo archivo con un encabezado fijo (firma, versión de formato, offset del índice), el estado lógico de la partida, el jugador, las salas escritas una tras otra, los eventos pendientes de la agenda, y un índice al final (id de sala, offset, longitud) por cada sala. cargar_sala() lee solo el encabezado fijo y el índice, salta directo al offset de la sala pedida y lee únicamente esos bytes. La versión de formato se compara al cargar y lanza VersionIncompatible si no coincide, en vez de intentar leer un formato distinto.
+Complejidad: guardar es O(n) en el tamaño de la partida. Cargar la partida completa es O(n). Cargar una sola sala con cargar_sala() es O(1) respecto al resto del archivo: solo depende del tamaño de esa sala, nunca de cuántas salas tenga la cripta.
+Evidencia empírica (--bench, cripta sintética de N salas, cada una con un enemigo activo, un objeto y una trampa):
+  - Tamaño en disco: con 10 salas, 8 108 bytes binario contra 11 717 JSON (1.45x); con 50 salas, 19 348 contra 28 597 (1.48x) — el binario pesa menos en ambos tamaños.
+  - Tiempo de cargar la partida COMPLETA: con 50 salas, 1.512 ms binario contra 0.313 ms JSON — el parser de json de la biblioteca estándar (en C) le gana al lector binario (en Python puro) para estos tamaños; no se maquilla el resultado.
+  - La ventaja real no es esa, es cargar UNA sola sala: con 50 salas, cargar_sala() tarda 0.130 ms contra 1.512 ms de cargar todo — 11.6x más rápido (5.4x con 10 salas), justo la operación que JSON no puede ofrecer porque no tiene índice.
+Límites: con cripta muy pequeñas (pocas salas) la ventaja de cargar_sala() es menor, porque cargar todo ya es barato. Si el formato lógico de una entidad cambiara sin tocar FORMATO_VERSION, el archivo se leería mal sin que el programa lo detecte: toda la responsabilidad de versionar recae en subir FORMATO_VERSION a mano.
