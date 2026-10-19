@@ -8,7 +8,7 @@ herramientas de IA en `PROMPTS_LLM.md`.
 
 ## Requisitos
 
-- Python 3 (probado con 3.14).
+- Python 3.11 o superior (probado con 3.14 en Windows 11).
 - Dependencias: `arcade` y `requests`.
 
 ```bash
@@ -24,7 +24,7 @@ py -m pip install -r requirements.txt
 | `py main.py --replay partidas/<cripta>.log` | Reproduce un log en la terminal y verifica que sea fiel. |
 | `py main.py --bench` (o `--bench --rapido`) | Mide las estructuras (§5.3). |
 | `py main.py --cache-size N` | Cambia el tope de fichas en memoria (25 por defecto). |
-| `py pruebas/ejecutar_pruebas.py` | Corre la batería de pruebas. |
+| `py pruebas/ejecutar_pruebas.py` | Corre las 36 pruebas sin red. Las `prueba_real_*` usan el API real (gastan presupuesto) y se corren aparte. |
 | `py pruebas/prueba_reglas.py` | Verifica las reglas del proyecto sobre `cripta/`. |
 
 En Windows se usa `py`; `python` puede abrir la Microsoft Store.
@@ -56,8 +56,11 @@ En Windows se usa `py`; `python` puede abrir la Microsoft Store.
 | R | Recoger del suelo |
 | A | Atacar (se elige el enemigo) |
 | U / Q / S | Usar / equipar / soltar (se elige el objeto) |
+| Tab / Shift + Tab | Recorrer el inventario hacia adelante / atrás |
+| O | Cambiar la vista del inventario: real → peso → valor → nombre (el orden real no cambia) |
 | P | Leer un pergamino: deshace tu última acción (máximo 5) |
 | G / C | Guardar / cargar la partida de esa cripta |
+| L | Mostrar / ocultar la bitácora completa (últimos 20 mensajes) |
 | ESC | Volver al menú (lo no guardado se descarta) |
 
 Al elegir objetivo: flecha arriba/abajo, ENTER confirma y ESC cancela.
@@ -73,6 +76,7 @@ Al elegir objetivo: flecha arriba/abajo, ENTER confirma y ESC cancela.
 | Espacio | Pausa / seguir |
 | Flecha derecha / izquierda | Un paso adelante / atrás |
 | Flecha arriba / abajo | Más rápido / más lento |
+| L | Bitácora completa |
 | ESC | Salir del replay |
 
 Al terminar, la pantalla indica si el replay llegó exactamente al mismo final que la partida.

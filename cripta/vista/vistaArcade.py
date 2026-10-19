@@ -49,6 +49,9 @@ class VistaArcade(VistaJuego):
         # elige el jugador en el menú y solo la usa la Vista para dibujar.
         # El Modelo y el Controlador no la conocen (no cambia el juego).
         self._skin = texturas.SKIN_POR_DEFECTO
+        # Si la bitácora se ve completa (últimos 20 mensajes) o resumida: se
+        # mantiene entre turnos (cada turno trae una PantallaJuego nueva).
+        self._bitacora_completa = False
 
     @property
     def ventana(self) -> arcade.Window:
@@ -100,6 +103,13 @@ class VistaArcade(VistaJuego):
     @property
     def skin(self) -> str:
         return self._skin
+
+    @property
+    def bitacora_completa(self) -> bool:
+        return self._bitacora_completa
+
+    def alternar_bitacora(self) -> None:
+        self._bitacora_completa = not self._bitacora_completa
 
     def cambiar_skin(self, id_skin: str) -> None:
         """Lo llama el menú (presentación pura, no pasa por la Cola)."""

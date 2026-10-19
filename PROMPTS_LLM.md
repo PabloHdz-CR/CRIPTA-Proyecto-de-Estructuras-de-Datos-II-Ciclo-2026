@@ -797,3 +797,21 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "Yo lo revise, haz el commit y la documentación pertinente"
 - **Uso:** completar el README (instalación, comandos, pantallas, controles y archivos que genera el juego) y hacer el commit de la pantalla de título y la salida al menú con ESC.
+
+## Entrada 84
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Revisa que el proyecto cumpla con todo lo que dice el pdf, para ya poder entregarlo" (con el enunciado en PDF adjunto)
+- **Uso:** revisar el proyecto contra el enunciado sección por sección y corregir lo que faltaba: recorrer y ordenar el inventario desde la ventana (Tab, Shift+Tab, O) y ver la bitácora completa de 20 mensajes (L), con sus pruebas (§4.5, §4.8, §10.2); medir el rastro con --bench (benchRastro, §4.7) y la búsqueda de la caché según su capacidad (tabla 3 de benchCache, D32); completar el Documento de Decisiones (índice por problema de §4, secciones nuevas D67 a D70 para el rastro, el guardado binario, la interfaz del inventario y la bitácora de partida, quitar las D23/D24 duplicadas y las notas de trabajo, y completar los campos que faltaban); y actualizar el README (Python 3.11 o superior y las teclas nuevas).
+
+## Entrada 85
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Ya cumple con absolutamente todo?"
+- **Uso:** pedir un balance honesto de lo que cumple y de lo que seguía flojo frente al enunciado (§4.2 sin medición con --bench, evidencias de red sin medir, veneno y regeneración sin datos que los activen).
+
+## Entrada 86
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Ya probe Tab, O and L funcionan, si puedes solucionar los que falla o esta flojo hazlo"
+- **Uso:** medir la precarga contra pedir al entrar a cada sala (benchPrecarga, §4.2) y la capa de datos (benchDatos: traducción a DTO, Cola con y sin referencia al final, Session contra requests.get); agregar prueba_errores_red (HTTP 500, JSON inválido, timeout y conexión rechazada, D17); activar todas las pruebas sin red en ejecutar_pruebas (36); y reemplazar todas las "evidencias por medir" del Documento de Decisiones por la evidencia real o por la razón de no medirla.

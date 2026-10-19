@@ -203,6 +203,34 @@ try:
     vista._pantalla_actual.on_key_press(arcade.key.SPACE, 0)
     assert comandos(vista) == [Comando("esperar")]
 
+    # 4b. Inventario (§10.2): Tab / Shift+Tab lo recorren; O pasa por los
+    #     órdenes real -> peso -> valor -> nombre -> real
+    juego = vista._pantalla_actual
+    juego.on_key_press(arcade.key.TAB, 0)
+    juego.on_key_press(arcade.key.TAB, arcade.key.MOD_SHIFT)
+    juego.on_key_press(arcade.key.O, 0)
+    assert comandos(vista) == [Comando("inventario_siguiente"), Comando("inventario_anterior"),
+                               Comando("ordenar_inventario", ("peso",))]
+    from dataclasses import replace
+    por_nombre = replace(estado(), inventario=replace(estado().inventario, criterio_orden="nombre"))
+    vista.mostrar_estado(por_nombre)
+    vista.actualizar()
+    vaciar(vista)
+    vista._pantalla_actual.on_key_press(arcade.key.O, 0)
+    assert comandos(vista) == [Comando("ordenar_inventario", ("real",))], "da la vuelta"
+
+    # 4c. L abre y cierra la bitácora completa (20 mensajes, §4.8); no es
+    #     un Comando, y la preferencia sobrevive al siguiente turno
+    assert not vista.bitacora_completa
+    vista._pantalla_actual.on_key_press(arcade.key.L, 0)
+    vista.actualizar()
+    assert vista.bitacora_completa and comandos(vista) == []
+    vista.mostrar_estado(estado())
+    vista.actualizar()
+    assert vista.bitacora_completa, "sigue abierta en el turno siguiente"
+    vista._pantalla_actual.on_key_press(arcade.key.L, 0)
+    assert not vista.bitacora_completa
+
     # 5. Pantalla de fin: R solo si hay replay
     vista.mostrar_fin(ResultadoFinVisible("derrota", 3, 0, 120, puede_ver_replay=True))
     vista.actualizar()
