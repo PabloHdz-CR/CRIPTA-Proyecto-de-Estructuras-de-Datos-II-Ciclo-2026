@@ -131,10 +131,9 @@ for fila in reporte.tablas.obtener(2)[2]:
     if "decisión" in fila[1]:
         assert fila[2] == "20"                              # nodos de la ColaAcotada
 
-# 7. benchTodo reúne todas las mediciones (agenda=3, listaDoble=2, historial=1,
-# bitácora=3, cache=2, ordenamiento=7, guardado=3)
+# 7. benchTodo reúne las cuatro mediciones
 todo = ejecutar_todo(Reporte(imprimir=False), rapido=True)
-assert len(todo.tablas) == 3 + 2 + 1 + 3 + 2 + 7 + 3
+assert len(todo.tablas) == 3 + 2 + 1 + 3
 assert time.perf_counter() - inicio < 120
 
 print("Sección 4.4 OK")

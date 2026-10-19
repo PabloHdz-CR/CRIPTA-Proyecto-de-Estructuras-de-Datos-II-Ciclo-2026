@@ -25,24 +25,20 @@ from __future__ import annotations
 
 import arcade
 
-from ..modelo.estructuras.listaEnlazada import ListaEnlazada
 from .comando import Comando
 from .estadoVista import SALIDA_ABIERTA, SALIDA_CERRADA_CON_LLAVE
 from .pantallaBase import _PantallaCripta
 
-_MARGEN = 20
 
 
 class PantallaJuego(_PantallaCripta):
 
-    def __init__(self, vista_arcade, estado):
         super().__init__(vista_arcade)
         self._estado = estado
         self._modo = "normal"            # "normal" o "objetivo"
         self._verbo_objetivo = None       # "atacar"/"usar"/"equipar"/"soltar"
         self._lista_objetivo = None       # ListaEnlazada: enemigos o inventario
         self._cursor_objetivo = 0
-        self._textos = ListaEnlazada()    # de arcade.Text, presentación pura
 
     @property
     def modo(self) -> str:
@@ -62,8 +58,6 @@ class PantallaJuego(_PantallaCripta):
 
     def on_draw(self) -> None:
         self.clear()
-        for texto in self._textos:
-            texto.draw()
 
     def on_key_press(self, symbol, modifiers) -> None:
         # En modo objetivo, ESCAPE cancela la selección (vuelve a modo
@@ -83,7 +77,6 @@ class PantallaJuego(_PantallaCripta):
     # -- modo normal --
 
     def _tecla_en_modo_normal(self, symbol, modifiers) -> None:
-        if symbol == arcade.key.SPACE:
             self._vista_arcade._encolar(Comando("esperar"))
         elif symbol == arcade.key.UP:
             self._vista_arcade._encolar(Comando("mover", ("N",)))
@@ -143,74 +136,9 @@ class PantallaJuego(_PantallaCripta):
         self._lista_objetivo = None
         self._armar_textos()
 
-    # -- armado de los textos --
 
     def _armar_textos(self) -> None:
-        if self._modo == "objetivo":
-            self._armar_textos_objetivo()
-        else:
-            self._armar_textos_normal()
 
-    def _armar_textos_normal(self) -> None:
-        estado = self._estado
-        alto = self.window.height
-        textos = ListaEnlazada()
-        y = alto - _MARGEN
-
-        def agregar(texto_str, tamano=14, color=arcade.color.WHITE):
-            nonlocal y
-            textos.agregar_al_final(arcade.Text(texto_str, _MARGEN, y, color, tamano))
-            y -= tamano + 8
-
-        agregar(f"Sala: {estado.sala.nombre}", 20)
-        agregar(self._texto_salidas(), 14, arcade.color.LIGHT_GRAY)
-        agregar(
-            f"Vida: {estado.jugador.vida}/{estado.jugador.vida_max}   "
-            f"Ataque: {estado.jugador.ataque_efectivo}   "
-            f"Defensa: {estado.jugador.defensa_efectiva}   "
-            f"Velocidad: {estado.jugador.velocidad}")
-        antorcha = "encendida" if estado.jugador.antorcha_encendida else "apagada"
-        agregar(
-            f"Antorcha: {antorcha}   Acciones: {estado.jugador.acciones}   "
-            f"Enemigos derrotados: {estado.jugador.enemigos_derrotados}",
-            14, arcade.color.LIGHT_GRAY)
-        agregar(self._texto_efectos(), 14, arcade.color.LIGHT_GRAY)
-        agregar(self._texto_enemigos(), 14, arcade.color.LIGHT_GRAY)
-        agregar(self._texto_objetos_suelo(), 14, arcade.color.LIGHT_GRAY)
-        agregar(self._texto_inventario(), 14, arcade.color.LIGHT_GRAY)
-        agregar("Comandos: A: atacar   U: usar   Q: equipar   S: soltar",
-                12, arcade.color.LIGHT_GRAY)
-        agregar("Mensajes:", 14)
-        for mensaje in estado.mensajes:
-            agregar(mensaje, 12, arcade.color.LIGHT_GRAY)
-
-        self._textos = textos
-
-    def _armar_textos_objetivo(self) -> None:
-        alto = self.window.height
-        textos = ListaEnlazada()
-        y = alto - _MARGEN
-
-        def agregar(texto_str, tamano=14, color=arcade.color.WHITE):
-            nonlocal y
-            textos.agregar_al_final(arcade.Text(texto_str, _MARGEN, y, color, tamano))
-            y -= tamano + 8
-
-        agregar(f"Elegir objetivo para: {self._verbo_objetivo}", 20)
-        agregar("Flechas: elegir   ENTER: confirmar   ESC: cancelar",
-                14, arcade.color.LIGHT_GRAY)
-        for indice in range(len(self._lista_objetivo)):
-            objetivo = self._lista_objetivo.obtener(indice)
-            color = arcade.color.YELLOW if indice == self._cursor_objetivo else arcade.color.WHITE
-            agregar(self._texto_fila_objetivo(objetivo), 16, color)
-
-        self._textos = textos
-
-    def _texto_fila_objetivo(self, objetivo) -> str:
-        if self._verbo_objetivo == "atacar":
-            return f"{objetivo.etiqueta} ({objetivo.vida}/{objetivo.vida_max})"
-        equipado = " [equipado]" if objetivo.equipado else ""
-        return f"{objetivo.nombre}{equipado}"
 
     def _texto_salidas(self) -> str:
         partes = (self._texto_una_salida(s) for s in self._estado.sala.salidas)

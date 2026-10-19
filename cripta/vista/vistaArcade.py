@@ -68,15 +68,11 @@ class VistaArcade(VistaJuego):
         return self._comandos.desencolar()
 
     def mostrar_estado(self, estado) -> None:
-        self._mostrar(PantallaJuego(self, estado))
 
     def mostrar_mensajes(self, mensajes) -> None:
         """PantallaJuego ya dibuja estado.mensajes completo en cada
-        mostrar_estado; una notificación incremental aparte no hace falta
-        por ahora."""
 
     def mostrar_menu(self, criptas) -> None:
-        self._mostrar(PantallaMenu(self, criptas))
 
     def mostrar_puntajes(self, puntajes) -> None:
         self._mostrar(PantallaPuntajes(self, puntajes))
@@ -85,9 +81,6 @@ class VistaArcade(VistaJuego):
         self._mostrar(PantallaFin(self, resultado))
 
     def mostrar_error(self, mensaje: str) -> None:
-        """Todavía no hay overlay de error sobre la pantalla actual; el
-        Controlador puede seguir usando esto sin que reviente, simplemente
-        no se ve nada en pantalla por ahora."""
 
     # -- internos --
 

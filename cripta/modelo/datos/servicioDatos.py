@@ -230,6 +230,11 @@ class ServicioDatos:
     # Presupuesto y cierre
     # ------------------------------------------------------------------
 
+    def version_catalogo(self):
+        """Versión del catálogo de esta sesión (o None sin red). La usa el
+        encabezado del log de partida (§4.11)."""
+        return self._version_catalogo
+
     def solicitudes_realizadas(self):
         return self._sincrona.solicitudes_realizadas()
 

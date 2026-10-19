@@ -37,20 +37,7 @@ class PantallaFin(_PantallaCripta):
         ancho = self.window.width
         resultado = self._resultado
         textos = ListaEnlazada()
-        y = alto - 80
 
-        def agregar(texto_str, tamano=18, color=arcade.color.WHITE):
-            nonlocal y
-            textos.agregar_al_final(
-                arcade.Text(texto_str, ancho / 2, y, color, tamano, anchor_x="center"))
-            y -= tamano + 14
 
-        es_victoria = resultado.resultado == "victoria"
-        agregar("¡VICTORIA!" if es_victoria else "DERROTA", 32,
-                arcade.color.GOLD if es_victoria else arcade.color.RED)
-        agregar(f"Acciones: {resultado.acciones}", 16, arcade.color.LIGHT_GRAY)
-        agregar(f"Enemigos derrotados: {resultado.enemigos_derrotados}", 16, arcade.color.LIGHT_GRAY)
-        agregar(f"Tiempo: {resultado.tiempo_final}", 16, arcade.color.LIGHT_GRAY)
-        agregar("ENTER: volver al menú   ESC: salir", 13, arcade.color.LIGHT_GRAY)
 
         self._textos = textos

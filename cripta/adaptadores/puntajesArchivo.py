@@ -15,7 +15,6 @@ from pathlib import Path
 from ..modelo.nucleo.puntajes import RegistroPuntaje, TablaPuntajes
 
 
-class PuntajesArchivo:
 
     def __init__(self, ruta):
         self._ruta = Path(ruta)

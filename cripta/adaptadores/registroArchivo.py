@@ -26,22 +26,8 @@ from ..modelo.puertos.errores import ErrorCripta
 PREFIJO_ENCABEZADO = "CRIPTA "
 
 
-class EncabezadoPartida:
-    """id de cripta, versión de cripta, versión de catálogo y semilla:
-    el mínimo que exige §4.11 para poder reproducir la partida."""
 
-    def __init__(self, id_cripta, version_cripta, version_catalogo, semilla: int):
-        self.id_cripta = id_cripta
-        self.version_cripta = version_cripta
-        self.version_catalogo = version_catalogo
-        self.semilla = semilla
 
-    def texto(self) -> str:
-        return (f"{PREFIJO_ENCABEZADO}{self.id_cripta} {self.version_cripta} "
-                f"{self.version_catalogo} {self.semilla}")
-
-    @staticmethod
-    def desde_texto(linea: str) -> "EncabezadoPartida":
         if not linea.startswith(PREFIJO_ENCABEZADO):
             raise ErrorCripta(
                 "El archivo de partida no tiene un encabezado válido (falta 'CRIPTA ')")
@@ -86,7 +72,6 @@ def _accion_desde_texto(linea: str):
     raise ErrorCripta(f"Acción desconocida en el log de partida: '{nombre}'")
 
 
-class RegistroArchivo:
     """Escribe y lee el log de una partida (texto plano, solo anexado)."""
 
     def __init__(self, ruta):
@@ -96,7 +81,6 @@ class RegistroArchivo:
         """Crea el archivo (lo trunca si ya existía de una partida anterior
         con el mismo nombre) y escribe el encabezado como primera línea."""
         with open(self._ruta, "w", encoding="utf-8") as archivo:
-            archivo.write(encabezado.texto())
             archivo.write("\n")
 
     def registrar_accion(self, accion) -> None:
@@ -116,7 +100,6 @@ class RegistroArchivo:
             for numero, linea_cruda in enumerate(archivo):
                 linea = linea_cruda.rstrip("\n")
                 if numero == 0:
-                    encabezado = EncabezadoPartida.desde_texto(linea)
                 elif linea:
                     acciones.agregar_al_final(_accion_desde_texto(linea))
         if encabezado is None:

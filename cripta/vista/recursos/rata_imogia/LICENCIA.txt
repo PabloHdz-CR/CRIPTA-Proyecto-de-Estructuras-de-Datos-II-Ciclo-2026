@@ -1,0 +1,14 @@
+8 bit art pack rat monster, de Imogia Games
+https://imogiagames.itch.io/8-bit-art-pack-rat-monster
+
+Licencia: Creative Commons Attribution 4.0 International (CC BY 4.0)
+https://creativecommons.org/licenses/by/4.0/
+
+Crédito (obligatorio por la licencia): rata por Imogia Games.
+
+Esta carpeta contiene solo la variante 04 (MOB-8Bit-Rat-Var-04-byImogiaGames.png),
+copiada SIN modificar del archivo MOB-8bit-RAT-20Var-byImogiaGames-v00.rar.
+El juego la recorta al cargarla en sus dos primeros cuadros de 16x16 (la rata
+vista de costado) y la tiñe de rojo un instante cuando recibe daño; el archivo
+no se altera.
+Uso de recursos externos autorizado por el profesor (17/10/2026).

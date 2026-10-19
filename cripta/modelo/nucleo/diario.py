@@ -82,7 +82,6 @@ class Diario:
             partida.agenda.reactivar(objetivo)
 
         elif tipo == m.SUELO_AGREGAR:
-            objetivo.suelo.eliminar_nodo(objetivo.suelo.buscar(nuevo))
         elif tipo == m.SUELO_QUITAR:
             objetivo.suelo.agregar_al_final(anterior)
 
