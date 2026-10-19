@@ -372,7 +372,7 @@ class HudJuego:
         actual = (objetos.obtener(inventario.indice_actual)
                   if inventario.indice_actual >= 0 else None)
         criterio = inventario.criterio_orden or "real"
-        self._texto(f"orden: {criterio}   (Tab recorre · O ordena)", der - 14, arriba - 14, 10,
+        self._texto(f"orden: {criterio}   (Tab / Shift+Tab · O ordena)", der - 14, arriba - 14, 10,
                     estilo.TEXTO_SUAVE, anchor_x="right")
         if inventario.vista_ordenada is not None:
             objetos = inventario.vista_ordenada
@@ -505,7 +505,7 @@ class HudJuego:
             return (("Flecha arriba/abajo", "Elegir"), ("ENTER", "Confirmar"), ("ESC", "Cancelar"))
         return (("Flechas", "Moverse"), ("Shift+Flecha", "Abrir puerta"),
                 ("Espacio", "Esperar"), ("R", "Recoger"), ("A", "Atacar"),
-                ("U / Q / S", "Usar/equipar/soltar"), ("Tab", "Recorrer inventario"),
+                ("U / Q / S", "Usar/equipar/soltar"), ("Tab / Shift+Tab", "Bajar / subir inventario"),
                 ("O", "Ordenar inventario"), ("P", "Pergamino"), ("G / C", "Guardar/Cargar"),
                 ("L", "Bitácora (20)"), ("ESC", "Volver al menú"))
 

@@ -30,6 +30,7 @@ PRUEBAS = (
     "prueba_4_3",               # ColaAcotada
     "prueba_4_4",               # mediciones de ListaDoble, PilaAcotada y ColaAcotada
     "prueba_4_5",
+    "prueba_cursor_inventario",  # Tab / Shift+Tab: da la vuelta y sigue la vista
     "prueba_5_2",               # CacheFichas (LRU)
     "prueba_5_3",               # AlmacenLocalDisco
     "prueba_5_4",               # EsqueletoCripta y PlanificadorPrecarga

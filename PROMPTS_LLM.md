@@ -815,3 +815,33 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "Ya probe Tab, O and L funcionan, si puedes solucionar los que falla o esta flojo hazlo"
 - **Uso:** medir la precarga contra pedir al entrar a cada sala (benchPrecarga, §4.2) y la capa de datos (benchDatos: traducción a DTO, Cola con y sin referencia al final, Session contra requests.get); agregar prueba_errores_red (HTTP 500, JSON inválido, timeout y conexión rechazada, D17); activar todas las pruebas sin red en ejecutar_pruebas (36); y reemplazar todas las "evidencias por medir" del Documento de Decisiones por la evidencia real o por la razón de no medirla.
+
+## Entrada 87
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Haz el commit"
+- **Uso:** hacer el commit de la revisión contra el enunciado en la rama Pablo.
+
+## Entrada 88
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "hice checkout al main para actualizarlo y cuando hice el merge aperecieron unos issues, revisalos y solucionalos para que todo funcione correctamente"
+- **Uso:** encontrar que el merge de Pablo en main se había quedado con las versiones viejas de 18 archivos, restaurarlos desde Pablo y conservar los cambios de Diego en el Documento de Decisiones.
+
+## Entrada 89
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Haz el commit del arreglo en main"
+- **Uso:** hacer el commit del arreglo del merge en main.
+
+## Entrada 90
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Cuando se usa el Tab, baja el inventario y ya no se puede volver a subir"
+- **Uso:** hacer que el cursor del inventario dé la vuelta en los extremos, que con una vista ordenada Tab siga el orden que se ve, mostrar Shift+Tab en la ayuda y agregar prueba_cursor_inventario.
+
+## Entrada 91
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Ya lo probe, haz la documentación y el commit"
+- **Uso:** dejar documentado el recorrido del inventario (README, D69 y prompts) y hacer el commit.

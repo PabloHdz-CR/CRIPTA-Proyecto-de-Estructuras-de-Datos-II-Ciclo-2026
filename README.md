@@ -56,7 +56,7 @@ En Windows se usa `py`; `python` puede abrir la Microsoft Store.
 | R | Recoger del suelo |
 | A | Atacar (se elige el enemigo) |
 | U / Q / S | Usar / equipar / soltar (se elige el objeto) |
-| Tab / Shift + Tab | Recorrer el inventario hacia adelante / atrás |
+| Tab / Shift + Tab | Bajar / subir en el inventario (da la vuelta en los extremos y sigue la vista ordenada) |
 | O | Cambiar la vista del inventario: real → peso → valor → nombre (el orden real no cambia) |
 | P | Leer un pergamino: deshace tu última acción (máximo 5) |
 | G / C | Guardar / cargar la partida de esa cripta |
