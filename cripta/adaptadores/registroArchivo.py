@@ -15,37 +15,50 @@ disponible ahora.
 """
 from __future__ import annotations
 
+import shutil
+import uuid
+from datetime import datetime
 from pathlib import Path
+from typing import Optional, Union
 
 from ..modelo.estructuras.listaEnlazada import ListaEnlazada
 from ..modelo.nucleo.accion import (
     AbrirPuerta, Atacar, Equipar, Esperar, Mover, Recoger, Soltar, Usar,
     UsarPergamino)
 from ..modelo.puertos.errores import ErrorCripta
+# DECISIÓN: EncabezadoPartida es un dato del PUERTO (el Controlador lo arma sin
+# conocer el formato); se reexporta aquí para quien ya lo importaba de este módulo.
+from ..modelo.puertos.registroAcciones import (
+    AlmacenRegistros, EncabezadoPartida, RegistroAcciones)
+from .nombresArchivo import nombre_seguro
 
 PREFIJO_ENCABEZADO = "CRIPTA "
 
 
+def _texto_encabezado(encabezado: EncabezadoPartida) -> str:
+    return (f"{PREFIJO_ENCABEZADO}{encabezado.id_cripta} {encabezado.version_cripta} "
+            f"{encabezado.version_catalogo} {encabezado.semilla}")
 
 
-        if not linea.startswith(PREFIJO_ENCABEZADO):
-            raise ErrorCripta(
-                "El archivo de partida no tiene un encabezado válido (falta 'CRIPTA ')")
-        # DECISIÓN: .split() arma un contenedor de Python de vida muy corta, igual
-        # que leer un dict de response.json(): se usa una sola vez para separar los
-        # cuatro campos de una línea de texto y se descarta de inmediato; no
-        # sustituye ninguna estructura del programa (nada se guarda en él).
-        partes = linea[len(PREFIJO_ENCABEZADO):].split(" ")
-        if len(partes) != 4:
-            raise ErrorCripta(
-                f"El encabezado de la partida debe tener 4 campos, trae {len(partes)}")
-        id_cripta, version_cripta, version_catalogo, semilla_texto = partes
-        try:
-            semilla = int(semilla_texto)
-        except ValueError as error:
-            raise ErrorCripta(
-                f"La semilla del encabezado no es un entero: '{semilla_texto}'") from error
-        return EncabezadoPartida(id_cripta, version_cripta, version_catalogo, semilla)
+def _encabezado_desde_texto(linea: str) -> EncabezadoPartida:
+    if not linea.startswith(PREFIJO_ENCABEZADO):
+        raise ErrorCripta(
+            "El archivo de partida no tiene un encabezado válido (falta 'CRIPTA ')")
+    # DECISIÓN: .split() arma un contenedor de Python de vida muy corta, igual
+    # que leer un dict de response.json(): se usa una sola vez para separar los
+    # cuatro campos de una línea de texto y se descarta de inmediato; no
+    # sustituye ninguna estructura del programa (nada se guarda en él).
+    partes = linea[len(PREFIJO_ENCABEZADO):].split(" ")
+    if len(partes) != 4:
+        raise ErrorCripta(
+            f"El encabezado de la partida debe tener 4 campos, trae {len(partes)}")
+    id_cripta, version_cripta, version_catalogo, semilla_texto = partes
+    try:
+        semilla = int(semilla_texto)
+    except ValueError as error:
+        raise ErrorCripta(
+            f"La semilla del encabezado no es un entero: '{semilla_texto}'") from error
+    return EncabezadoPartida(id_cripta, version_cripta, version_catalogo, semilla)
 
 
 def _accion_desde_texto(linea: str):
@@ -72,6 +85,7 @@ def _accion_desde_texto(linea: str):
     raise ErrorCripta(f"Acción desconocida en el log de partida: '{nombre}'")
 
 
+class RegistroArchivo(RegistroAcciones):
     """Escribe y lee el log de una partida (texto plano, solo anexado)."""
 
     def __init__(self, ruta):
@@ -81,6 +95,7 @@ def _accion_desde_texto(linea: str):
         """Crea el archivo (lo trunca si ya existía de una partida anterior
         con el mismo nombre) y escribe el encabezado como primera línea."""
         with open(self._ruta, "w", encoding="utf-8") as archivo:
+            archivo.write(_texto_encabezado(encabezado))
             archivo.write("\n")
 
     def registrar_accion(self, accion) -> None:
@@ -100,8 +115,79 @@ def _accion_desde_texto(linea: str):
             for numero, linea_cruda in enumerate(archivo):
                 linea = linea_cruda.rstrip("\n")
                 if numero == 0:
+                    encabezado = _encabezado_desde_texto(linea)
                 elif linea:
                     acciones.agregar_al_final(_accion_desde_texto(linea))
         if encabezado is None:
             raise ErrorCripta("El archivo de partida está vacío")
         return encabezado, acciones
+
+    def _ruta_respaldo(self) -> Path:
+        return self._ruta.with_name(self._ruta.name + ".respaldo")
+
+    def respaldar(self) -> None:
+        """Copia el log tal como está (al guardar partida). O(A) en bytes del
+        log, una sola vez por guardado."""
+        # DECISIÓN: se respalda el log en el MISMO momento que el .bin: si el
+        # jugador guarda, sigue jugando y luego carga, restaurar() quita del log
+        # las acciones que la carga deshizo y --replay sigue siendo fiel (§4.11).
+        # Alternativa descartada: reescribir el log quitando líneas al cargar,
+        # que rompe el "solo anexado" y obliga a contar acciones.
+        if self._ruta.exists():
+            shutil.copyfile(self._ruta, self._ruta_respaldo())
+
+    def restaurar(self) -> bool:
+        """Reemplaza el log activo por el respaldo (al cargar partida)."""
+        respaldo = self._ruta_respaldo()
+        if not respaldo.exists():
+            return False
+        shutil.copyfile(respaldo, self._ruta)
+        return True
+
+    def archivar(self) -> Optional[str]:
+        """Copia el log a <carpeta>/historial/<id>.log. El id lleva la cripta,
+        la fecha y hora, y 6 caracteres al azar (dos partidas en el mismo
+        segundo no chocan). O(A) en bytes del log, una vez por partida.
+        None si no se pudo copiar: el juego sigue, sin replay de esa partida."""
+        if not self._ruta.exists():
+            return None
+        id_partida = (f"{self._ruta.stem}-{datetime.now():%Y%m%d-%H%M%S}-"
+                      f"{uuid.uuid4().hex[:6]}")
+        try:
+            carpeta = carpeta_historial(self._ruta.parent)
+            carpeta.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(self._ruta, carpeta / f"{id_partida}.log")
+        except OSError:
+            return None
+        return id_partida
+
+
+def carpeta_historial(carpeta_logs: Path) -> Path:
+    """Donde quedan los logs archivados, uno por partida terminada."""
+    return carpeta_logs / "historial"
+
+
+class CarpetaRegistros(AlmacenRegistros):
+    """Un log por cripta: `<carpeta>/<id>.log` (y su `.respaldo`)."""
+
+    def __init__(self, carpeta: Union[str, Path]) -> None:
+        self._carpeta = Path(carpeta)
+
+    def registro_de(self, id_cripta: str) -> RegistroArchivo:
+        self._carpeta.mkdir(parents=True, exist_ok=True)
+        return RegistroArchivo(self._ruta(id_cripta))
+
+    def registro_archivado(self, id_partida: str) -> Optional[RegistroArchivo]:
+        if not self.existe_archivado(id_partida):
+            return None
+        return RegistroArchivo(self._ruta_archivado(id_partida))
+
+    def existe_archivado(self, id_partida: str) -> bool:
+        """O(1): solo pregunta si el archivo está."""
+        return bool(id_partida) and self._ruta_archivado(id_partida).is_file()
+
+    def _ruta_archivado(self, id_partida: str) -> Path:
+        return carpeta_historial(self._carpeta) / f"{nombre_seguro(id_partida)}.log"
+
+    def _ruta(self, id_cripta: str) -> Path:
+        return self._carpeta / f"{nombre_seguro(id_cripta)}.log"

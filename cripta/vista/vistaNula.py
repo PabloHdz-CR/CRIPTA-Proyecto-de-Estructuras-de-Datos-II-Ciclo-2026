@@ -24,9 +24,13 @@ class VistaNula(VistaJuego):
         self.ultimos_puntajes = None
         self.ultimo_fin = None
         self.ultimo_error = None
+        self.mostro_titulo = False
 
     def mostrar_estado(self, estado) -> None:
         self.ultimo_estado = estado
+
+    def mostrar_titulo(self) -> None:
+        self.mostro_titulo = True
 
     def mostrar_mensajes(self, mensajes) -> None:
         self.ultimos_mensajes = mensajes

@@ -25,11 +25,14 @@ from __future__ import annotations
 import arcade
 
 from ..modelo.estructuras.cola import Cola
+from . import texturas
 from .pantallaBase import _PantallaCripta
+from .pantallaBenchmark import PantallaBenchmark, PantallaEspera
 from .pantallaFin import PantallaFin
 from .pantallaJuego import PantallaJuego
 from .pantallaMenu import PantallaMenu
 from .pantallaPuntajes import PantallaPuntajes
+from .pantallaTitulo import PantallaTitulo
 from .vistaJuego import VistaJuego
 
 
@@ -40,6 +43,15 @@ class VistaArcade(VistaJuego):
         self._comandos = Cola()
         self._ventana = arcade.Window(ancho, alto, titulo, visible=visible)
         self._pantalla_actual = None
+        self._ultimo_estado = None      # para animar lo que cambió entre turnos
+        self._nombre_jugador = "Jugador" # lo manda el Controlador; lo muestra el menú
+        # DECISIÓN: la skin del héroe es una preferencia de PRESENTACIÓN: la
+        # elige el jugador en el menú y solo la usa la Vista para dibujar.
+        # El Modelo y el Controlador no la conocen (no cambia el juego).
+        self._skin = texturas.SKIN_POR_DEFECTO
+        # Si la bitácora se ve completa (últimos 20 mensajes) o resumida: se
+        # mantiene entre turnos (cada turno trae una PantallaJuego nueva).
+        self._bitacora_completa = False
 
     @property
     def ventana(self) -> arcade.Window:
@@ -68,21 +80,65 @@ class VistaArcade(VistaJuego):
         return self._comandos.desencolar()
 
     def mostrar_estado(self, estado) -> None:
+        self._mostrar(PantallaJuego(self, estado, self._ultimo_estado))
+        self._ultimo_estado = estado
 
     def mostrar_mensajes(self, mensajes) -> None:
         """PantallaJuego ya dibuja estado.mensajes completo en cada
+        mostrar_estado; esto solo cubre los avisos que NO traen un estado
+        nuevo detrás (p. ej. "Partida guardada en ...")."""
+        self._avisar(" ".join(mensajes))
 
     def mostrar_menu(self, criptas) -> None:
+        self._ultimo_estado = None
+        self._mostrar(PantallaMenu(self, criptas, self._nombre_jugador))
+
+    def mostrar_titulo(self) -> None:
+        self._ultimo_estado = None
+        self._mostrar(PantallaTitulo(self))
+
+    def mostrar_nombre_jugador(self, nombre: str) -> None:
+        self._nombre_jugador = nombre
+
+    @property
+    def skin(self) -> str:
+        return self._skin
+
+    @property
+    def bitacora_completa(self) -> bool:
+        return self._bitacora_completa
+
+    def alternar_bitacora(self) -> None:
+        self._bitacora_completa = not self._bitacora_completa
+
+    def cambiar_skin(self, id_skin: str) -> None:
+        """Lo llama el menú (presentación pura, no pasa por la Cola)."""
+        self._skin = id_skin
+
+    def mostrar_benchmark(self, resultado) -> None:
+        self._mostrar(PantallaBenchmark(self, resultado))
+
+    def mostrar_espera(self, texto: str) -> None:
+        self._mostrar(PantallaEspera(self, texto))
 
     def mostrar_puntajes(self, puntajes) -> None:
         self._mostrar(PantallaPuntajes(self, puntajes))
 
     def mostrar_fin(self, resultado) -> None:
+        self._ultimo_estado = None
         self._mostrar(PantallaFin(self, resultado))
 
     def mostrar_error(self, mensaje: str) -> None:
+        """Se dibuja sobre la pantalla actual sin cambiar de pantalla. Las
+        pantallas que tienen dónde mostrarlo (juego y menú) definen
+        mostrar_aviso; en las demás se ignora."""
+        self._avisar(mensaje)
 
     # -- internos --
+
+    def _avisar(self, texto: str) -> None:
+        if texto and isinstance(self._pantalla_actual, (PantallaJuego, PantallaMenu)):
+            self._pantalla_actual.mostrar_aviso(texto)
 
     def _mostrar(self, pantalla: _PantallaCripta) -> None:
         self._pantalla_actual = pantalla

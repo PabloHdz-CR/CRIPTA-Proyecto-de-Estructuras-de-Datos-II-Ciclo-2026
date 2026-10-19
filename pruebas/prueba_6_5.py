@@ -32,6 +32,17 @@ mejores = tabla.vista_ordenada("tiempo")
 primero = mejores.obtener(0)
 assert primero.nombre == "Diego", "la vista ordenada por tiempo no sirvió"
 
+# Las victorias van antes que las derrotas aunque la derrota tenga menos
+# tiempo (D59); dentro de cada grupo manda el criterio.
+from cripta.modelo.nucleo.puntajes import TablaPuntajes
+mixta = TablaPuntajes()
+for nombre, tiempo, resultado in (("muerte_rapida", 207, "derrota"), ("lento", 5400, "victoria"),
+                                  ("rapido", 2890, "victoria"), ("otra", 990, "derrota")):
+    mixta.agregar(RegistroPuntaje(nombre, "c", "v", acciones=1, enemigos_derrotados=0,
+                                  tiempo_final=tiempo, resultado=resultado))
+orden = [r.nombre for r in mixta.vista_ordenada("tiempo")]
+assert orden == ["rapido", "lento", "muerte_rapida", "otra"], orden
+
 with open(ruta_puntajes, "a", encoding="utf-8") as f:
     f.write("esto no es json\n")
     f.write('{"nombre": "Incompleto"}\n')

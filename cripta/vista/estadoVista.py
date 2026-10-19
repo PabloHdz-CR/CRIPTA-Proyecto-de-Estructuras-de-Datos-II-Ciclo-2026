@@ -13,6 +13,7 @@ pueda mutar y que se desincronice con el modelo real.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Optional
 
 from ..modelo.estructuras.listaEnlazada import ListaEnlazada
 
@@ -82,6 +83,19 @@ class InventarioVisible:
     indice_actual: int              # -1 si está vacío
     capacidad: int
     cantidad_pergaminos: int
+    criterio_orden: str = None      # None = solo orden real
+    vista_ordenada: ListaEnlazada = None
+
+
+@dataclass(frozen=True)
+class InfoReplay:
+    """Lo que la pantalla de juego muestra mientras se reproduce un log: en
+    qué paso va, cuántos hay, si está en pausa y a qué velocidad."""
+    paso: int
+    total: int
+    pausado: bool
+    velocidad: int                  # multiplicador: 1, 2, 4...
+    titulo: Optional[str] = None    # qué partida es: "Ana · cripta-02 · victoria · 2890"
 
 
 @dataclass(frozen=True)
@@ -97,6 +111,10 @@ class EstadoVista:
     efectos: ListaEnlazada          # de EfectoVisible (los del jugador)
     inventario: InventarioVisible
     mensajes: ListaEnlazada         # últimos 20 (los entrega Bitacora)
+    # Opcionales: el nombre que se dibuja debajo del jugador, y los datos de
+    # la reproducción cuando la pantalla muestra un replay (None = partida).
+    nombre_jugador: Optional[str] = None
+    replay: Optional[InfoReplay] = None
 
 
 @dataclass(frozen=True)
@@ -108,6 +126,7 @@ class CriptaVisible:
     nombre: str
     salas: int
     dificultad: int
+    tiene_guardado: bool = False    # hay una partida guardada a medias (ENTER la sigue)
 
 
 @dataclass(frozen=True)
@@ -121,6 +140,8 @@ class PuntajeVisible:
     enemigos_derrotados: int
     tiempo_final: int
     resultado: str                  # "victoria" o "derrota"
+    id_partida: Optional[str] = None    # con qué pedir su replay ("ver_replay_partida")
+    tiene_replay: bool = False          # su log archivado existe
 
 
 @dataclass(frozen=True)
@@ -133,3 +154,28 @@ class ResultadoFinVisible:
     acciones: int
     enemigos_derrotados: int
     tiempo_final: int
+    # Resumen de red y caché (§5.1), el mismo que ReporteFinal imprime en la
+    # terminal. Opcional: --replay arma el resultado sin estos datos.
+    solicitudes_realizadas: Optional[int] = None
+    presupuesto: Optional[int] = None       # None = --offline (sin red)
+    aciertos_cache: Optional[int] = None
+    fallos_cache: Optional[int] = None
+    # Replay: puede_ver_replay = hay un log de esta partida para reproducir;
+    # es_replay = este resultado salió de reproducir el log; coincide = el
+    # replay llegó al mismo resultado que la partida original (None si no
+    # hay con qué comparar, p. ej. un replay elegido desde el menú).
+    puede_ver_replay: bool = False
+    es_replay: bool = False
+    coincide: Optional[bool] = None
+
+
+@dataclass(frozen=True)
+class BenchmarkVisible:
+    """Resultados de --bench para mostrarlos en la ventana. tablas:
+    ListaEnlazada de (titulo, encabezados, filas), con encabezados una tupla
+    de textos y filas una ListaEnlazada de tuplas de textos (lo mismo que
+    guarda Reporte). notas: ListaEnlazada de textos."""
+    tablas: ListaEnlazada
+    notas: ListaEnlazada
+    segundos: float
+    rapido: bool

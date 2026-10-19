@@ -485,3 +485,333 @@ R: Inserción + Mezcla (recomendada)
 P: 2. ¿Con qué criterio decide el selector automático?
 R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 - **Uso:** implementar la sección 6.1 (módulo Ordenamiento: inserción y mezcla estables sobre Nodo, ClaveOrden para ordenar por clave calculada, selector automático con inversiones_adyacentes y casi_ordenada) con sus pruebas verificadas por mutación, incluida la estabilidad; preparar las notas D41 y D42 para el Documento de Decisiones.
+
+## Entrada 32
+- **Fecha:** 14/10/2026
+- **Herramienta:** Claude
+- **Prompt:** "Ayudame a implementar PyArcade dentro del proyecto como vista, explicame brevemente en que consiste, como funciona..."
+- **Uso:** entender en qué consiste PyArcade y cómo se puede integrar dentro del proyecto.
+
+## Entrada 33
+- **Fecha:** 14/10/2026
+- **Herramienta:** Claude
+- **Prompt:** "En base a la estructura del proyecto armemos el esqueleto de lo que tenemos que implementar en vista."
+- **Uso:** Creación de la base para poder implementar la vista con PyArcade.
+
+## Entrada 34
+- **Fecha:** 14/10/2026
+- **Herramienta:** Claude
+- **Prompt:** "Sigamos con la vistaArcade, que es clave para vistaJuego."
+- **Uso:** Implementación de vistaArcade para tener la base de comandos importantes.
+
+## Entrada 35
+- **Fecha:** 14/10/2026
+- **Herramienta:** Claude
+- **Prompt:** "sigamos con la pantalla de juego de los pasos descritos a seguir, ya tengo hecho lo que iba antes."
+- **Uso:** construir la Pantalla Juego (Paso 5a): mostrar sala, salidas, enemigos, objetos, jugador, inventario, efectos y mensajes, y las teclas de mover/esperar.
+
+## Entrada 36
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Quiero que me integres uno cambios que te voy a pasar a este proyecto en el que estas, puedes?"
+- **Uso:** preparar la integración de la capa Controlador en la rama.
+
+## Entrada 37
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** se pegó el código completo de la capa Controlador generado en otra conversación (mapaEtiquetas, traductorComandos, constructorEstadoVista, controladorJuego, controladorMenu, gestorGuardado, modoReplay, modoBench, reporteFinal, fabricaAplicacion, main.py y los cambios en servicioDatos, diario, registroArchivo y estadoVista), que empezaba con: "El proyecto ya tiene un verificador de reglas (prueba_reglas.py: sin lambda, sin [], sin dict, sin sorted). Lo corro contra mi código:"
+- **Uso:** integrar el Controlador al proyecto y verificarlo con prueba_reglas, la batería existente, --replay y --bench.
+
+## Entrada 38
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Necesito que el codigo que acabamos de implementar cumpla con esto y si no lo hace, dime que es lo que vas a cambiar [...] Y tiene que estar comentado en el código pq se toma esa decisión de diseño". Se adjuntaron el prompt de reglas del proyecto (arquitectura MVC + adaptadores, TDA permitidos, sin dict ni listas nativas como almacenamiento, ordenamientos propios, sin lambda, justificación con Big O), Cripta_Guia_MVC.md y el enunciado.
+- **Uso:** auditar el Controlador contra las reglas; se encontraron 7 puntos (acceso a disco desde el Controlador, duplicación de pergaminos en el Diario, tipado, comentarios de decisión, print en ReporteFinal, partida nueva o cargada, prueba faltante).
+
+## Entrada 39
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Sí, aplica los 7 cambios (en el punto 5 deja Reporte documentado)."
+- **Uso:** crear los puertos AlmacenPartida, RegistroAcciones/AlmacenRegistros y AlmacenPuntajes con sus adaptadores, corregir el Diario, agregar tipos y comentarios DECISIÓN, "jugar <id> [nueva|cargar]" y prueba_controlador.
+
+## Entrada 40
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Espera, primero reviso los cambios."
+- **Uso:** revisar el diff antes de hacer el commit.
+
+## Entrada 41
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "ahora el codigo cumple con lo que te solicite al 100%?"
+- **Uso:** listar lo que faltaba: entradas en DECISIONES.md y PROMPTS_LLM.md, tipado de puertos, paquete --offline incompatible, teclas pendientes en la Vista.
+
+## Entrada 42
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "pasame el comentario que vas a poner en el commit"
+- **Uso:** redactar el mensaje del commit.
+
+## Entrada 43
+- **Fecha:** 15/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Resuelvelos"
+- **Uso:** regenerar datos_offline/ con guardar_respuestas.py en el formato de FuenteOffline, completar tipos, agregar benchEtiquetas a --bench y escribir D47–D53 en DECISIONES.md.
+
+## Entrada 44
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "como hago para correr el programa o que hace falta?"
+- **Uso:** instalar las dependencias (arcade y requests), correr la batería de pruebas y conocer los modos de ejecución (py main.py, --offline, --replay, --bench).
+
+## Entrada 45
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** se adjuntó una captura de la pantalla de juego con el texto: "Entre al primer nivel y solo me sale esta pantalla y no puedo interactuar con nada"
+- **Uso:** diagnosticar que las flechas sí funcionaban pero la pantalla no lo indicaba, faltaban teclas para recoger, abrir puertas, pergamino, guardar y cargar, y mostrar_error no mostraba nada; agregar esas teclas, la ayuda en pantalla y los avisos en naranja.
+
+## Entrada 46
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Primero lo pruebo yo en la ventana, no hagas commit todavía."
+- **Uso:** probar los cambios a mano antes de hacer el commit.
+
+## Entrada 47
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** se adjuntó una captura de la pantalla de juego con el texto: "Ahora si me puedo mover, pero no hay parte grafica solo texto en la pantalla, a que se debe esto?"
+- **Uso:** entender que la vista era solo de texto por diseño (la guía describe una VistaConsola y los datos no traen imágenes) y qué se podía agregar sin tocar el modelo ni el controlador.
+
+## Entrada 48
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Quiero que me ayudes a implementar la parte visual"
+- **Uso:** crear DibujoSala (sala vista desde arriba con muros, puertas según su estado, enemigos con barra de vida, objetos y jugador), reorganizar PantallaJuego en zonas y agrandar la ventana a 1024x720, respetando prueba_reglas (sin listas, lambda ni dict).
+
+## Entrada 49
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "En la pantalla de Derrota quiero que se vea el resumen de la partida"
+- **Uso:** agregar a ResultadoFinVisible campos opcionales de red y caché que llena ControladorJuego, y mostrar en PantallaFin los recuadros "Tu partida" y "Red y caché"; ReporteFinal sigue imprimiendo en la terminal (§5.1).
+
+## Entrada 50
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Hay alguna manera de mejorar la calidad grafica, siguiendo el reglamento?"
+- **Uso:** comparar tres opciones (animación con figuras, sprites que trae arcade en :resources:, y un paquete externo de pixel art que requiere consultar al profesor).
+
+## Entrada 51
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Haz el 1 y el 2, estoy esperando la respuesta de mi profesor para confirmar si se puede usar recursos externos"
+- **Uso:** crear texturas.py (sprites de Kenney incluidos en arcade, fondo de sala y luz generados con Pillow una vez por sala, ya que ShapeElementList solo se llena con .append, prohibido por prueba_reglas) y animar en DibujoSala la antorcha, el daño, las barras de vida, los enemigos derrotados y el fundido al cambiar de sala.
+
+## Entrada 52
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "ya lo probe haz el commit"
+- **Uso:** hacer el commit de la vista gráfica, las teclas y la pantalla de fin, dejando fuera los archivos que el juego genera al correr.
+
+## Entrada 53
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Sí, agrega guardados/, partidas/, puntajes.jsonl y fichas_guardadas/ al .gitignore."
+- **Uso:** ignorar en git los guardados, logs, puntajes y fichas que el juego crea al correr.
+
+## Entrada 54
+- **Fecha:** 16/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Agrega los prompts de esta sesión por favor"
+- **Uso:** registrar en PROMPTS_LLM.md los prompts de esta sesión.
+
+## Entrada 55
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Mi profesor acaba de confirmar que  si se puede usar recursos externos, busca pixel arts para el proyecto y yo escojo cual implementar"
+- **Uso:** comparar paquetes CC0 de pixel art (0x72 DungeonTileset II, Dungeon Crawl 32x32, Kenney Tiny Dungeon + Tiny Creatures) y elegir 0x72.
+
+## Entrada 56
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Ya descargué 0x72_DungeonTilesetII_v1.7.zip, está en mi carpeta Descargas."
+- **Uso:** revisar el paquete, copiar al proyecto solo los 37 cuadros usados con su licencia, armar el fondo de cada sala con sus baldosas y usar el caballero, el esqueleto, las puertas, los frascos y la espada (D55).
+
+## Entrada 57
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Lo pruebo yo en la ventana y te digo qué ajustar."
+- **Uso:** probar a mano el pixel art antes del commit.
+
+## Entrada 58
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Creo que hay unos bugs, de momento las llaves no se gastan cuando se abre una puerta, y cuantas habitaciones/usos tiene la antorcha? Cuando se acaba la partida y se pone la pantalla de derrota o victoria podria aparecer el modo replay, para analizar la partida y ver que si funcione replay. Hay que hacer que ese menu sea mas visually appealing y mas amigable con el usuario, que tenga una opcion de Name, y que esa nametag aparezca debajo del jugador, y que salgan las opciones para hacer replay a las partidas y para hacer el benchmark, y cambiale el art a la rata gigante, busca uno en especifico o dame opciones y yo lo elijo, recuerda seguir las reglas"
+- **Uso:** aclarar que la llave no se consume por regla de la guía y que la antorcha dura 2000 de tiempo (~20 movimientos); crear ControladorReplay (replay paso a paso en la ventana que verifica el final), el menú nuevo con nombre, replay y benchmark, el nombre bajo el jugador, y las pruebas prueba_replay_menu y prueba_vista_10 (D56, D57).
+
+## Entrada 59
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** Se eligió la opción "Imogia 8-bit rat" entre cuatro sprites de rata propuestos.
+- **Uso:** elegir la rata de Imogia Games (CC BY 4.0) entre las opciones encontradas.
+
+## Entrada 60
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Lo vuelvo a descargar a Descargas y te aviso."
+- **Uso:** volver a descargar el paquete de la rata, que no había quedado guardado.
+
+## Entrada 61
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Ya descargué la rata de Imogia, está en mi carpeta Descargas."
+- **Uso:** copiar la variante 04 de la rata con su licencia y crédito, y usarla animada en la sala (D58).
+
+## Entrada 62
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Lo pruebo yo en la ventana y te digo qué ajustar."
+- **Uso:** probar a mano el menú, el replay, el benchmark y la rata nueva.
+
+## Entrada 63
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Soluciona el fallo de prueba_4_4 y prueba_vista_10, los dos commits anteriores yo les hice el push manualmente, y dale un retoque estético a la tabla de puntajes"
+- **Uso:** corregir el conteo de tablas de prueba_4_4 (faltaba benchEtiquetas), quitar la dependencia del reloj en la edición del nombre y aislar los asserts de prueba_vista_10, poner las victorias primero en la tabla de puntajes (D59) y rediseñar la pantalla de puntajes (D60).
+
+## Entrada 64
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Que seria mejor en el mapa seleccionar la partida que se quiere hacer el replay o en puntaje seleccionar la partida a la cual se le quiere hacer replay? Pq ahorita mismo cuando hago el replay de cualquiera cripta no se cual partida es en la ocurriendo el replay"
+- **Uso:** comparar elegir el replay desde el menú o desde la tabla de puntajes, y decidir por puntajes con un log archivado por partida.
+
+## Entrada 65
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "hazlo todo junto, reviso que todo funcione y haces el commit"
+- **Uso:** archivar el log de cada partida terminada, guardar su id en el puntaje, elegir el replay con cursor y R en la tabla de puntajes, mostrar en el HUD qué partida es y quitar el replay por cripta del menú (D61).
+
+## Entrada 66
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Lo reviso yo en la ventana y te aviso para el commit."
+- **Uso:** revisar a mano el replay por partida desde la tabla de puntajes antes del commit.
+
+## Entrada 67
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "haz el commit y sube los prompts de esta sesión"
+- **Uso:** registrar los prompts de la sesión en PROMPTS_LLM.md y hacer el commit de todos los cambios.
+
+## Entrada 68
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "el pergamino que es lo que hace, y el antidoto no aparece en los efectos o que es lo que hace?"
+- **Uso:** entender que el pergamino deshace la última acción (máximo 5, no consume tiempo) y que el antídoto cura el veneno, pero que hoy nada en el juego envenena (envenenar() no tiene quién la llame).
+
+## Entrada 69
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "la flecha izquierda en el replay no funciona para devolver la accion"
+- **Uso:** agregar el paso atrás al replay (flecha izquierda), reconstruyendo la partida con la misma semilla hasta el paso anterior, con su prueba (D56).
+
+## Entrada 70
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "ya hice el commit, ahora necesito que mejores el apartado visual de la interfaz de sala, vida, ataque y todo ese apartado, para que sea mas amigable con el usuario"
+- **Uso:** rediseñar el HUD de la pantalla de juego en un módulo propio (HudJuego), con encabezado con corazón y barra de vida, tarjetas de estadísticas con diferencias por turno, brújula de salidas, efectos, enemigos con minibarra, inventario con íconos, bitácora coloreada, controles por modo y cartel de avisos; y aislar el assert intermitente de prueba_vista_10 (D62).
+
+## Entrada 71
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "como funciona guardar y cargar"
+- **Uso:** entender que G guarda la partida en guardados/<cripta>.bin (formato binario con tabla de offsets) y respalda el log al mismo tiempo, que C restaura los dos, y que el menú reanuda solo el guardado de una cripta si existe.
+
+## Entrada 72
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "en el modo replay adelantar y retroceder accion van a ser con las flechas derecha e izquierda, y aumentar y  disminuir la velocidad con la flecha arriba y abajo"
+- **Uso:** dejar la ayuda del replay con las cuatro flechas (derecha adelante, izquierda atrás, arriba más rápido, abajo más lento) y cubrir arriba/abajo en prueba_vista_10.
+
+## Entrada 73
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Ponle Flecha + direccion"
+- **Uso:** nombrar las teclas como "Flecha izquierda/derecha/arriba/abajo" en la ayuda del replay y "Flecha arriba/abajo" en el modo objetivo.
+
+## Entrada 74
+- **Fecha:** 17/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "haz el commit y agrega los prompts nuevos"
+- **Uso:** registrar los prompts 71 a 74 y hacer el commit de los ajustes de controles del replay.
+
+## Entrada 75
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Agrega unas skins al héroe, y que la predeterminada sea de un tigre humanoide con muy buen diseño y animaciones"
+- **Uso:** diseñar un tigre humanoide en pixel art propio con el estilo de 0x72 (4 cuadros de reposo con respiración, cola y parpadeo, más un cuadro de golpe), sumar 6 skins de 0x72 y elegirlas en el menú con Flecha izquierda/derecha (D63).
+
+## Entrada 76
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Ya lo revise, haz el commit y añade estos últimos prompts"
+- **Uso:** registrar los últimos prompts y hacer el commit de las skins del héroe y el tigre humanoide.
+
+## Entrada 77
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "esto que es?" (con una captura de las carpetas fichas_guardadas/ y guardados/)
+- **Uso:** entender que fichas_guardadas/ es la copia en disco del catálogo (caché persistente, D33) y guardados/ las partidas guardadas con G.
+
+## Entrada 78
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "mejorame esto" (pegando la explicación de que el guardado no se borra al terminar y de que el menú no permite elegir partida nueva)
+- **Uso:** marcar en el menú las criptas con partida guardada, agregar X para empezar de cero y borrar el guardado al terminar la partida que lo usó (D64).
+
+## Entrada 79
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Ya lo revise, haz el commit y añade estos últimos prompts"
+- **Uso:** registrar los últimos prompts y hacer el commit de las mejoras del guardado.
+
+## Entrada 80
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "cambia que cuando se le de a salir en medio de la partida se devuelva al menú principal y no que se cierre el juego tan abruptamente"
+- **Uso:** hacer que ESC durante la partida vuelva al menú principal con un aviso (partida guardada o descartada) y que solo ESC en el menú cierre el juego (D65).
+
+## Entrada 81
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Lo reviso yo en la ventana y te aviso para el commit."
+- **Uso:** revisar a mano la salida al menú con ESC antes del commit.
+
+## Entrada 82
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Implementa una pantalla principal, que tenga un mensaje  de bienvenida, una frase motivadora, tenga su ambientación respecto a la temática del proyecto y que pida un enter para entrar al menú principal, siempre siguiendo las reglas"
+- **Uso:** crear la pantalla de título con la entrada de la cripta en pixel art de 0x72, antorchas, brasas, el héroe y sus enemigos, bienvenida, frases motivadoras que rotan y ENTER para entrar al menú (D66).
+
+## Entrada 83
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Yo lo revise, haz el commit y la documentación pertinente"
+- **Uso:** completar el README (instalación, comandos, pantallas, controles y archivos que genera el juego) y hacer el commit de la pantalla de título y la salida al menú con ESC.
+
+## Entrada 84
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Revisa que el proyecto cumpla con todo lo que dice el pdf, para ya poder entregarlo" (con el enunciado en PDF adjunto)
+- **Uso:** revisar el proyecto contra el enunciado sección por sección y corregir lo que faltaba: recorrer y ordenar el inventario desde la ventana (Tab, Shift+Tab, O) y ver la bitácora completa de 20 mensajes (L), con sus pruebas (§4.5, §4.8, §10.2); medir el rastro con --bench (benchRastro, §4.7) y la búsqueda de la caché según su capacidad (tabla 3 de benchCache, D32); completar el Documento de Decisiones (índice por problema de §4, secciones nuevas D67 a D70 para el rastro, el guardado binario, la interfaz del inventario y la bitácora de partida, quitar las D23/D24 duplicadas y las notas de trabajo, y completar los campos que faltaban); y actualizar el README (Python 3.11 o superior y las teclas nuevas).
+
+## Entrada 85
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Ya cumple con absolutamente todo?"
+- **Uso:** pedir un balance honesto de lo que cumple y de lo que seguía flojo frente al enunciado (§4.2 sin medición con --bench, evidencias de red sin medir, veneno y regeneración sin datos que los activen).
+
+## Entrada 86
+- **Fecha:** 18/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Ya probe Tab, O and L funcionan, si puedes solucionar los que falla o esta flojo hazlo"
+- **Uso:** medir la precarga contra pedir al entrar a cada sala (benchPrecarga, §4.2) y la capa de datos (benchDatos: traducción a DTO, Cola con y sin referencia al final, Session contra requests.get); agregar prueba_errores_red (HTTP 500, JSON inválido, timeout y conexión rechazada, D17); activar todas las pruebas sin red en ejecutar_pruebas (36); y reemplazar todas las "evidencias por medir" del Documento de Decisiones por la evidencia real o por la razón de no medirla.

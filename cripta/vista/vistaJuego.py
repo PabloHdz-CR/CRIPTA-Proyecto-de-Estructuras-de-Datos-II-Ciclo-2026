@@ -61,6 +61,24 @@ class VistaJuego(ABC):
         """Un rechazo de ResultadoAccion, o cualquier error que el jugador
         deba ver (p. ej. 'no se puede garantizar la reproducción fiel')."""
 
+    # DECISIÓN: estos dos NO son abstractos: una Vista que no los tenga (las
+    # Vistas de prueba, VistaNula) simplemente no muestra nada, y el menú
+    # sigue funcionando.
+    def mostrar_benchmark(self, resultado) -> None:
+        """resultado: BenchmarkVisible (las mediciones de --bench)."""
+
+    def mostrar_titulo(self) -> None:
+        """La pantalla de bienvenida, antes del menú. Su ENTER manda
+        Comando("entrar")."""
+
+    def mostrar_nombre_jugador(self, nombre: str) -> None:
+        """El nombre con el que se va a jugar, para que el menú lo muestre.
+        El Controlador lo manda antes de cada mostrar_menu."""
+
+    def mostrar_espera(self, texto: str) -> None:
+        """Un aviso mientras el Controlador hace algo que tarda (p. ej. el
+        benchmark). La próxima pantalla lo reemplaza."""
+
     @abstractmethod
     def actualizar(self) -> None:
         """Se llama una vez por vuelta del bucle del Controlador, antes de
