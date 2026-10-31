@@ -845,3 +845,15 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "Ya lo probe, haz la documentación y el commit"
 - **Uso:** dejar documentado el recorrido del inventario (README, D69 y prompts) y hacer el commit.
+- 
+## Entrada 92
+- **Fecha:** 31/10/2026
+- **Herramienta:** Gemini (3.1 Pro)
+- **Prompt:** "como ves ya esta el primer proyecto hecho y entregado, ocupo que me ayudes con el promopt para claude para que me haga el constitution que es clave en spec driven development. También agregar que despues de cada prompt, lo agregue automaticamente a PROMPTS_LLM.md."
+- **Uso:** Plantear el prompt para la generación del constitution.md por claude.
+
+## Entrada 93
+Fecha: 31/10/2026
+Herramienta: Claude
+Prompt: “Actúa como un Arquitecto de Software Principal experto en Spec-Driven Development (SDD). Tu primera tarea es redactar la “Constitución del Proyecto”...”
+Uso: revisar el prompt de constitución propuesto contra el enunciado, señalar lo que falta y lo que choca con el proyecto, y entregar una versión combinada.
