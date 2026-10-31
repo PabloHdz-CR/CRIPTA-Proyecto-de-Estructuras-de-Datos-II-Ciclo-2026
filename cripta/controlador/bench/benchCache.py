@@ -18,6 +18,27 @@ from .reporte import Reporte
 SEMILLA = 2026
 FRACCION_POPULARES = 0.2     # el 20% de las fichas...
 PROBABILIDAD_POPULAR = 0.8   # ...recibe el 80% de los accesos
+CONSULTAS = 2000             # consultas por medición de la tabla 3
+LATENCIA_RED_MS = 400        # lo que cuesta un fallo de la caché (§4.2)
+
+
+class EscenarioBusqueda:
+    """D32: contiene() de una ficha AUSENTE (peor caso: recorre toda la
+    caché) con la caché llena de `capacidad` fichas."""
+
+    def __init__(self):
+        self._cache = None
+
+    def preparar(self, capacidad):
+        from ...modelo.datos.cacheFichas import CacheFichas
+        self._cache = CacheFichas(capacidad)
+        for numero in range(capacidad):
+            self._cache.insertar(f"itm_{numero}", None)
+
+    def ejecutar(self):
+        cache = self._cache
+        for _ in range(CONSULTAS):
+            cache.contiene("itm_ausente")
 
 
 def generar_patron(azar, total_fichas, accesos):
@@ -124,6 +145,17 @@ def ejecutar(reporte=None, rapido=False):
                                     f"{por_acceso / tiempo_decision:.1f}x"))
     reporte.tabla("2. Tiempo por acceso, en microsegundos",
                   ("accesos", "política", "mínimo µs", "vs decisión"), filas)
+
+    # 3. Búsqueda lineal según la capacidad (D32: sin dict, O(capacidad))
+    filas = ListaEnlazada()
+    capacidades = (25, 100, 500) if rapido else (25, 100, 500, 2000)
+    for tope in capacidades:
+        por_consulta = medidor.medir(EscenarioBusqueda(), tope).minimo / CONSULTAS * 1e6
+        filas.agregar_al_final((str(tope), f"{por_consulta:.2f}",
+                                f"{por_consulta / (LATENCIA_RED_MS * 1000) * 100:.4f} %"))
+    reporte.tabla("3. Buscar una ficha ausente (peor caso) según la capacidad, en microsegundos",
+                  ("capacidad", "contiene() µs", f"vs un fallo de red ({LATENCIA_RED_MS} ms)"),
+                  filas)
 
     reporte.nota("")
     reporte.nota("Con un patrón de acceso desigual, LRU conserva en memoria las fichas "

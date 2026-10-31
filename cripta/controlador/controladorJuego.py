@@ -134,11 +134,9 @@ class ControladorJuego:
             # DECISIÓN: mover el cursor no es una acción del jugador (no
             # consume tiempo ni va al log): se llama directo al Inventario.
             # O(1) por ser lista doblemente enlazada (§4.5).
-            self.partida.jugador.inventario.siguiente()
-            self._mostrar_estado_actual()
+            self._mover_cursor_inventario(1)
         elif verbo == "inventario_anterior":
-            self.partida.jugador.inventario.anterior()
-            self._mostrar_estado_actual()
+            self._mover_cursor_inventario(-1)
         elif verbo == "ordenar_inventario":
             self._ordenar_inventario(comando.argumentos)
         else:
@@ -179,6 +177,27 @@ class ControladorJuego:
     # ------------------------------------------------------------------
     # Verbos de sesión
     # ------------------------------------------------------------------
+
+    def _mover_cursor_inventario(self, paso: int) -> None:
+        """Tab (paso 1) o Shift+Tab (paso -1), dando la vuelta en los extremos.
+        En orden real usa la ListaDoble, O(1). Con una vista ordenada sigue el
+        orden que se VE en pantalla: busca el objeto actual en la vista, O(n)
+        con n de decenas, y enfoca al vecino (el orden real no cambia)."""
+        inventario = self.partida.jugador.inventario
+        if self._criterio_orden is None or inventario.actual() is None:
+            if paso > 0:
+                inventario.siguiente()
+            else:
+                inventario.anterior()
+        else:
+            vista = inventario.vista_ordenada(self._criterio_orden)
+            actual = inventario.actual()
+            posicion = 0
+            for indice, objeto in enumerate(vista):
+                if objeto is actual:
+                    posicion = indice
+            inventario.enfocar(vista.obtener((posicion + paso) % len(vista)))
+        self._mostrar_estado_actual()
 
     def _ordenar_inventario(self, argumentos: tuple) -> None:
         # DECISIÓN: el criterio es estado de PRESENTACIÓN del Controlador, no

@@ -46,6 +46,19 @@ from .estadoVista import SALIDA_ABIERTA, SALIDA_CERRADA_CON_LLAVE
 from .hudJuego import Geometria, HudJuego
 from .pantallaBase import _PantallaCripta
 
+# Orden de la vista del inventario que recorre la tecla O (§4.5, §10.2):
+# "real" es el orden del inventario; los otros son vistas ordenadas.
+ORDENES_INVENTARIO = ("real", "peso", "valor", "nombre")
+
+
+def _orden_siguiente(actual) -> str:
+    """El criterio que sigue a `actual` (None = real), dando la vuelta."""
+    actual = actual if actual else "real"
+    for indice, criterio in enumerate(ORDENES_INVENTARIO):
+        if criterio == actual:
+            return ORDENES_INVENTARIO[(indice + 1) % len(ORDENES_INVENTARIO)]
+    return ORDENES_INVENTARIO[0]
+
 
 def _direccion_de_flecha(symbol):
     """Flecha -> "N"/"S"/"E"/"O", o None si no es flecha. Cadena de if (no
@@ -140,8 +153,16 @@ class PantallaJuego(_PantallaCripta):
 
     # -- modo normal --
 
+    def _alternar_bitacora(self) -> None:
+        """L: bitácora completa (últimos 20 mensajes, §4.8) o resumida.
+        Presentación pura: no es un Comando."""
+        self._vista_arcade.alternar_bitacora()
+        self._armar_textos()
+
     def _tecla_en_replay(self, symbol) -> None:
-        if symbol == arcade.key.SPACE:
+        if symbol == arcade.key.L:
+            self._alternar_bitacora()
+        elif symbol == arcade.key.SPACE:
             self._vista_arcade._encolar(Comando("replay_pausa"))
         elif symbol == arcade.key.RIGHT:
             self._vista_arcade._encolar(Comando("replay_paso"))
@@ -163,7 +184,17 @@ class PantallaJuego(_PantallaCripta):
             if direccion is not None:
                 self._vista_arcade._encolar(Comando("abrir", (direccion,)))
                 return
-        if symbol == arcade.key.SPACE:
+        if symbol == arcade.key.TAB:
+            # Tab recorre el inventario hacia adelante; Shift+Tab hacia atrás.
+            verbo = ("inventario_anterior" if modifiers & arcade.key.MOD_SHIFT
+                     else "inventario_siguiente")
+            self._vista_arcade._encolar(Comando(verbo))
+        elif symbol == arcade.key.O:
+            criterio = _orden_siguiente(self._estado.inventario.criterio_orden)
+            self._vista_arcade._encolar(Comando("ordenar_inventario", (criterio,)))
+        elif symbol == arcade.key.L:
+            self._alternar_bitacora()
+        elif symbol == arcade.key.SPACE:
             self._vista_arcade._encolar(Comando("esperar"))
         elif symbol == arcade.key.R:
             self._entrar_modo_objetivo("recoger", self._estado.sala.objetos)
@@ -244,7 +275,7 @@ class PantallaJuego(_PantallaCripta):
                                       self.window.get_pixel_ratio(), self._vista_arcade.skin)
         self._hud = HudJuego(self._estado, self._anterior, geometria, self._modo,
                              self._verbo_objetivo, self._lista_objetivo, self._cursor_objetivo,
-                             self._aviso)
+                             self._aviso, self._vista_arcade.bitacora_completa)
 
     # -- textos de una línea (los usan las pruebas de vista) --
 

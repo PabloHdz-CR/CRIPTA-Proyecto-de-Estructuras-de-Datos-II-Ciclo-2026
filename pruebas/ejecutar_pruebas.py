@@ -16,12 +16,13 @@ PRUEBAS = (
     "prueba_1_3",               # DTO y convertidor de JSON
     "prueba_1_4",               # puerto FuenteDatos
     "prueba_1_5",               # ContadorSolicitudes
-    "prueba_falso_1_6",         # ClienteHttp contra un servidor simulado
-    "prueba_real_1_6",          # ClienteHttp real: necesita red, correrla aparte
+    #"prueba_falso_1_6",         # ClienteHttp contra un servidor simulado
+    #"prueba_real_1_6",          # ClienteHttp real: necesita red, correrla aparte
     "prueba_1_7",
     "prueba_1_8",               # FuenteAsincrona
     "prueba_falso_1_9",         # Todo junto
-    "prueba_real_1_9",          # todo junto real: necesita red, correrla aparte
+    "prueba_errores_red",       # D17: HTTP 500, JSON inválido, timeout, sin conexión
+    #"prueba_real_1_9",          # todo junto real: necesita red, correrla aparte
     "prueba_2_2",               # Heap Minimo
     "prueba_2_3",
     "prueba_4_1",               # ListaDoble
@@ -29,6 +30,7 @@ PRUEBAS = (
     "prueba_4_3",               # ColaAcotada
     "prueba_4_4",               # mediciones de ListaDoble, PilaAcotada y ColaAcotada
     "prueba_4_5",
+    "prueba_cursor_inventario",  # Tab / Shift+Tab: da la vuelta y sigue la vista
     "prueba_5_2",               # CacheFichas (LRU)
     "prueba_5_3",               # AlmacenLocalDisco
     "prueba_5_4",               # EsqueletoCripta y PlanificadorPrecarga
