@@ -9,8 +9,8 @@ Más adelante el modo --bench del programa llamará a ejecutar_todo().
 import sys
 
 from . import (
-    benchAgenda, benchBitacora, benchCache, benchEtiquetas, benchGuardado,
-    benchHistorial, benchListaDoble, benchOrdenamiento)
+    benchAgenda, benchBitacora, benchCache, benchDatos, benchEtiquetas, benchGuardado,
+    benchHistorial, benchListaDoble, benchOrdenamiento, benchPrecarga, benchRastro)
 from .reporte import Reporte
 
 
@@ -26,6 +26,9 @@ def ejecutar_todo(reporte=None, rapido=False):
     benchOrdenamiento.ejecutar(reporte, rapido)
     benchGuardado.ejecutar(reporte, rapido)
     benchEtiquetas.ejecutar(reporte, rapido)
+    benchRastro.ejecutar(reporte, rapido)
+    benchPrecarga.ejecutar(reporte, rapido)
+    benchDatos.ejecutar(reporte, rapido)
     return reporte
 
 

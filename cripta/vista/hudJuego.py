@@ -34,7 +34,8 @@ from .estadoVista import SALIDA_ABIERTA, SALIDA_CERRADA_CON_LLAVE
 _MARGEN = 20
 _SEPARACION = 10
 _DURACION_AVISO = 4.0
-_MENSAJES_VISIBLES = 5
+_MENSAJES_VISIBLES = 5          # en el panel de abajo (la L muestra los 20)
+_MENSAJES_COMPLETOS = 20        # bitácora completa (§4.8)
 _ROJO_SUAVE = (240, 140, 125)
 _VERDE_SUAVE = (150, 215, 150)
 _CELESTE = (120, 180, 240)
@@ -115,7 +116,7 @@ class HudJuego:
 
     def __init__(self, estado, anterior, geometria: Geometria, modo: str = "normal",
                  verbo_objetivo=None, lista_objetivo=None, cursor_objetivo: int = 0,
-                 aviso=None):
+                 aviso=None, bitacora_completa: bool = False):
         self._estado = estado
         self._anterior = anterior
         self._g = geometria
@@ -124,6 +125,9 @@ class HudJuego:
         self._lista = lista_objetivo
         self._cursor = cursor_objetivo
         self._aviso = aviso
+        self._bitacora_completa = bitacora_completa
+        self._superpuestos = ListaEnlazada()  # (izq, der, abajo, arriba): panel sobre el mapa
+        self._textos_superpuestos = ListaEnlazada()
         self._paneles = ListaEnlazada()     # (izq, der, abajo, arriba, resaltado)
         self._textos = ListaEnlazada()      # arcade.Text
         self._figuras = ListaEnlazada()     # (tipo, a, b, c, d, e, f): ver _dibujar_figura
@@ -166,6 +170,8 @@ class HudJuego:
             y = self._armar_en_la_sala(izq, der, y)
             self._armar_inventario(izq, der, abajo, y)
         self._armar_bitacora_y_controles()
+        if self._bitacora_completa:
+            self._armar_bitacora_completa()
         self._armar_cartel()
 
     def _armar_encabezado(self) -> None:
@@ -360,21 +366,35 @@ class HudJuego:
             self._texto("Vacío. Usa R para recoger lo que hay en el suelo.", izq + 14,
                         arriba - 40, 11, estilo.TEXTO_APAGADO)
             return
+        # El orden que se ve: el real o la vista ordenada que eligió el
+        # jugador con O (el orden real no cambia, §4.5). El cursor marca el
+        # objeto actual del inventario, esté donde esté en la vista.
+        actual = (objetos.obtener(inventario.indice_actual)
+                  if inventario.indice_actual >= 0 else None)
+        criterio = inventario.criterio_orden or "real"
+        self._texto(f"orden: {criterio}   (Tab / Shift+Tab · O ordena)", der - 14, arriba - 14, 10,
+                    estilo.TEXTO_SUAVE, anchor_x="right")
+        if inventario.vista_ordenada is not None:
+            objetos = inventario.vista_ordenada
+        indice_actual = -1
+        for indice, objeto in enumerate(objetos):
+            if actual is not None and objeto.id_objeto == actual.id_objeto:
+                indice_actual = indice
         alto_fila = 21
         visibles = max(1, int((arriba - abajo - 34) // alto_fila))
         # La ventana de filas sigue al cursor del inventario.
         primera = 0
-        if inventario.indice_actual >= visibles:
-            primera = inventario.indice_actual - visibles + 1
+        if indice_actual >= visibles:
+            primera = indice_actual - visibles + 1
         y = arriba - 38
         for indice, objeto in enumerate(objetos):
             if indice < primera:
                 continue
             if indice >= primera + visibles:
-                self._texto(f"y {len(objetos) - indice} más...", der - 14, arriba - 14, 10,
+                self._texto(f"y {len(objetos) - indice} más...", der - 14, abajo + 12, 10,
                             estilo.TEXTO_SUAVE, anchor_x="right")
                 break
-            elegido = indice == inventario.indice_actual
+            elegido = indice == indice_actual
             if elegido:
                 self._figura("fila", izq + 6, y - alto_fila / 2 + 1, der - 6, y + alto_fila / 2 - 1)
                 self._figura("flecha", izq + 14, y, 5)
@@ -440,17 +460,54 @@ class HudJuego:
         if self._panel(x, der, abajo, arriba, "Controles"):
             self._armar_controles(x, der, abajo, arriba)
 
+    def _armar_bitacora_completa(self) -> None:
+        """L: los últimos 20 mensajes (§4.8), en un panel sobre el mapa."""
+        izq = self._g.mapa_izq
+        der = izq + self._g.lado_mapa
+        abajo, arriba = self._g.mapa_abajo + 8, self._g.mapa_arriba - 8
+        if not _cabe(izq, der, abajo, arriba):
+            return
+        self._superpuestos.agregar_al_final((izq + 8, der - 8, abajo, arriba))
+        textos = self._textos_superpuestos
+        textos.agregar_al_final(estilo.texto(
+            "Bitácora: últimos 20 mensajes", izq + 22, arriba - 18, 12, estilo.DORADO,
+            anchor_y="center", bold=True))
+        textos.agregar_al_final(estilo.texto(
+            "L para cerrar", der - 22, arriba - 18, 10, estilo.TEXTO_SUAVE, anchor_x="right",
+            anchor_y="center"))
+        mensajes = self._estado.mensajes
+        total = len(mensajes)
+        alto_fila = max(12, min(19, (arriba - abajo - 44) / _MENSAJES_COMPLETOS))
+        caracteres = max(20, int((der - izq - 50) / 6.4))
+        y = arriba - 42
+        if total == 0:
+            textos.agregar_al_final(estilo.texto("Todavía no pasó nada.", izq + 22, y, 11,
+                                                 estilo.TEXTO_APAGADO, anchor_y="center"))
+        # El Modelo ya entrega a lo sumo 20 (ColaAcotada, D30); igual se
+        # muestran solo los últimos _MENSAJES_COMPLETOS por si llegaran más.
+        omitir = total - _MENSAJES_COMPLETOS
+        for indice, mensaje in enumerate(mensajes):
+            if indice < omitir:
+                continue
+            ultimo = indice == total - 1
+            textos.agregar_al_final(estilo.texto(
+                f"{indice - max(omitir, 0) + 1:>2}. {_recortar(mensaje, caracteres)}", izq + 22, y, 11,
+                _color_mensaje(mensaje, ultimo), anchor_y="center", bold=ultimo))
+            y -= alto_fila
+
     def _controles(self):
         if self._estado.replay is not None:
             return (("Espacio", "Pausa / seguir"), ("Flecha izquierda", "Paso atrás"),
                     ("Flecha derecha", "Paso adelante"), ("Flecha arriba", "Más rápido"),
-                    ("Flecha abajo", "Más lento"), ("ESC", "Salir del replay"))
+                    ("Flecha abajo", "Más lento"), ("L", "Bitácora (20)"),
+                    ("ESC", "Salir del replay"))
         if self._modo == "objetivo":
             return (("Flecha arriba/abajo", "Elegir"), ("ENTER", "Confirmar"), ("ESC", "Cancelar"))
         return (("Flechas", "Moverse"), ("Shift+Flecha", "Abrir puerta"),
-                ("Espacio", "Esperar"), ("R", "Recoger"), ("A", "Atacar"), ("U", "Usar"),
-                ("Q", "Equipar"), ("S", "Soltar"), ("P", "Pergamino"), ("G / C", "Guardar/Cargar"),
-                ("ESC", "Volver al menú"))
+                ("Espacio", "Esperar"), ("R", "Recoger"), ("A", "Atacar"),
+                ("U / Q / S", "Usar/equipar/soltar"), ("Tab / Shift+Tab", "Bajar / subir inventario"),
+                ("O", "Ordenar inventario"), ("P", "Pergamino"), ("G / C", "Guardar/Cargar"),
+                ("L", "Bitácora (20)"), ("ESC", "Volver al menú"))
 
     def _armar_controles(self, izq, der, abajo, arriba) -> None:
         controles = self._controles()
@@ -498,6 +555,11 @@ class HudJuego:
         for figura in self._figuras:
             self._dibujar_figura(figura, t)
         for texto in self._textos:
+            texto.draw()
+        for izq, der, abajo, arriba in self._superpuestos:
+            arcade.draw_lrbt_rectangle_filled(izq, der, abajo, arriba, (12, 9, 10, 238))
+            arcade.draw_lrbt_rectangle_outline(izq, der, abajo, arriba, estilo.DORADO, 2)
+        for texto in self._textos_superpuestos:
             texto.draw()
         self._dibujar_cartel(t_aviso)
 

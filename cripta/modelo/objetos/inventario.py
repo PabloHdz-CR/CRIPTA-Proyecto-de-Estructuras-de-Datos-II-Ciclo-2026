@@ -163,18 +163,19 @@ class Inventario:
     def actual(self):
         return self._actual.dato if self._actual is not None else None
 
+    # DECISIÓN: el recorrido da la vuelta (después del último viene el primero
+    # y antes del primero, el último): así nunca queda "trabado" en un
+    # extremo. Sigue siendo O(1): primero() y ultimo() no recorren.
     def siguiente(self):
         if self._actual is not None:
             vecino = self._objetos.siguiente_de(self._actual)
-            if vecino is not None:
-                self._actual = vecino
+            self._actual = vecino if vecino is not None else self._objetos.primero()
         return self.actual()
 
     def anterior(self):
         if self._actual is not None:
             vecino = self._objetos.anterior_de(self._actual)
-            if vecino is not None:
-                self._actual = vecino
+            self._actual = vecino if vecino is not None else self._objetos.ultimo()
         return self.actual()
 
     def enfocar(self, objeto) -> None:
