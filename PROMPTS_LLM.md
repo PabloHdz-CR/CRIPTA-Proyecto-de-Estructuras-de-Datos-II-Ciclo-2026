@@ -934,3 +934,33 @@ Uso: revisar tasks.md de 001-terreno-cazador antes de /speckit-analyze, señalar
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "corrige esto: Aplica estos ajustes a specs/001-terreno-cazador/tasks.md en un commit propio: 1) Fase 1: agrega una tarea al inicio que confirme que `py pruebas/ejecutar_pruebas.py` corre completa y en verde ... y otra que genere con el código ACTUAL un archivo de guardado del formato anterior como fixture ... 2) T013: enlazar() debe ser idempotente ... 3) T025: aísla la regla de la cota en un método `_cota_nueva(cota_minima)` ... 4) T003: el oráculo corre Bellman-Ford desde cada vecina abierta v ... 5) T053: mover el registro en PROMPTS_LLM.md a cada commit de fase ... 6) T051 ... T052 ... git pull de main y usar el siguiente número D libre. 7) T038 y T039: ... prueba_reglas lo revisa ... 8) Actualiza la tabla de cobertura y las dependencias si cambia algún ID." (texto completo en la conversación).
 - **Uso:** aplicar los ocho ajustes a tasks.md: dos tareas nuevas al inicio (línea base verde y fixture del formato anterior), renumerar a T001–T058 y actualizar la tabla de escenarios, la cobertura y las dependencias. Las prueba_real_* siguen comentadas porque usan el API real y gastan presupuesto.
+
+## Entrada 107
+- **Fecha:** 01/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "revisa el codigo porque creo que solo falta el implement de speckit, ayer hicimos ya un analyze pero revisalo un momento nada mas"
+- **Uso:** revisar el estado de 001-terreno-cazador: tasks.md tiene 58 tareas sin marcar, no existe código de la feature, las referencias entre tareas son consistentes y la suite pasa 37/37 con .venv. Se señaló que T048 está bloqueada por T047 (coordinación con Pablo) y que no había entrada del analyze en PROMPTS_LLM.md.
+
+## Entrada 108
+- **Fecha:** 01/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Estamos en la rama 001-terreno-cazador del proyecto Cripta (Parte II, Spec-Driven Development). Antes de hacer nada, lee .specify/memory/constitution.md y specs/001-terreno-cazador/tasks.md. Trabaja siempre bajo esa constitución: estructuras propias (sin dict, set, list ni heapq en cripta/), determinismo, MVC con puertos, la spec precede al código, pruebas antes del código, medir antes de afirmar y registrar cada prompt en PROMPTS_LLM.md. Dime qué tareas de tasks.md están marcadas [x] y cuál es la siguiente. No cambies código todavía."
+- **Uso:** leer la constitución y tasks.md completos: ninguna tarea marcada [x]; la siguiente es T001 (línea base con prueba_falso_1_6, se esperan 38). Sin cambios de código.
+
+## Entrada 109
+- **Fecha:** 01/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5), comando de spec-kit `/speckit-analyze`
+- **Prompt:** "Sí. Orden: 1) Revisa git log y dime si /speckit-analyze corrió y se commiteó. Si no, córrelo ahora y espera mi revisión antes de seguir. 2) Agrega a PROMPTS_LLM.md las entradas faltantes (desde la 107, con el texto real de cada prompt) y haz un commit solo con eso. 3) Después empieza T001. Cuando la línea base quede en 38, actualiza en tasks.md el checkpoint de la Fase 2 ("38/38") y T051 (el total final será 47, no 46), en un commit aparte. Haz un commit por fase, como pide la constitución, y no pases a la fase siguiente sin avisarme."
+- **Uso:** confirmar en git log y reflog que /speckit-analyze no había corrido (el último commit era "ajustes antes de analyze") y correrlo. Informe sin problemas críticos y con 100 % de cobertura de FR y SC; hallazgos D1 (prueba_reglas no detecta set, collections ni bibliotecas de grafos), U1 (desempate entre dos salidas a la misma vecina), I1 (T051 no tiene total), I2, I3, I4, U2 y C1. Se detuvo a esperar la revisión.
+
+## Entrada 110
+Fecha: 01/11/2026
+Herramienta: Claude
+Prompt: “[informe de /speckit-analyze de 001-terreno-cazador adjunto]”
+Uso: revisar el informe de analyze, decidir qué hallazgos corregir, mover la regla de desempate a la spec y fijar dónde va el total de 47 pruebas.
+
+## Entrada 111
+- **Fecha:** 01/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Sí. Corrige D1, U1, U2 (el de T013), I2, I3, I4 y C1, en este orden de commits: 1) Un commit que toque SOLO spec.md: agrega a FR-014 que si dos salidas de u llevan a la misma vecina v con el mismo costo, gana la primera en el orden N, S, E, O, y agrega ese caso a los casos borde (no como escenario de aceptación nuevo, para que SC-001 siga en 21). 2) Un commit con los cambios en tasks.md y plan.md: - D1: tarea nueva en la Fase 1, justo después de T001: ampliar prueba_reglas para detectar set, frozenset, {a, b}, comprensiones de conjunto, set(), import heapq, bisect, collections (cualquiera), networkx y otras bibliotecas de grafos, con autopruebas. T057 queda con "sin dict, set, list, heapq, bisect ni sorted". - U1: T005, T028 y el generador de T021 siguen la regla de FR-014 (id de la vecina, luego orden N, S, E, O); agrega un caso con dos salidas a la misma vecina. - U2: en T013, _registro = None se asigna antes que cerrada. - C1: agrega a T020 (prueba_cazador) los casos de jugador muerto, varios cazadores en la misma sala y primer costo del cazador, con la marca BORDE. - I2, I3, I4 como los propones. - El total: "47/47" en T053 y T057; en T001, corregir README.md:27 a 38; en la tarea de README final, a 47. 3) Un commit con las entradas faltantes de PROMPTS_LLM.md (analyze y esta revisión). No empieces T001 hasta que yo confirme los tres commits." Seguido de "Agrega este prompt antes del tuyo" con el texto de la entrada 110.
+- **Uso:** tres commits. (1) spec.md: desempate N, S, E, O en FR-014 y su caso borde; SC-001 sigue en 21. (2) tasks.md y plan.md: nueva T002 (ampliar prueba_reglas), así que las tareas se renumeran a T001–T059 (las citadas como T005, T013, T020, T021, T028, T053 y T057 ahora son T006, T014, T021, T022, T029, T054 y T058); desempate en el oráculo, el Cazador y el generador; _registro antes que cerrada; casos BORDE; totales 38 y 47/47; I2, I3 e I4 en plan.md. (3) Estas entradas 107 a 111.
