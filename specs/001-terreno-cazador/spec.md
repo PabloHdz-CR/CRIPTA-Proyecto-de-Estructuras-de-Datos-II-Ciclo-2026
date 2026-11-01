@@ -132,6 +132,7 @@ pequeño en criptas de tamaños distintos.
 - Puertas direccionales: cada cara de una puerta tiene su propio estado abierto/cerrado; la ruta del cazador usa solo salidas abiertas en el sentido en que las recorre.
 - El jugador cambia de sala, otra puerta se abre o se cierra, o muere otro actor entre dos turnos del cazador: el cazador decide de nuevo con el estado del instante.
 - Varios cazadores en la misma sala con el mismo objetivo: cada uno decide de forma independiente y llega a la misma decisión si sus rangos lo permiten.
+- Dos salidas abiertas de la sala del cazador llevan a la misma vecina con el mismo costo y ambas alcanzan d: el cazador usa la primera en el orden N, S, E, O (FR-014).
 - Jugador muerto: el cazador no ataca (igual que los demás enemigos); la partida termina según las reglas existentes.
 - Primera acción de un cazador al aparecer: mismo costo inicial que el resto de los enemigos.
 - Cambio de velocidad cuando el próximo turno del actor no está agendado: se aplica la regla existente sin cambios.
@@ -161,7 +162,7 @@ pequeño en criptas de tamaños distintos.
 - **FR-011**: Si no comparte sala, el cazador MUST considerar d = costo mínimo de llegar desde su sala hasta la sala actual del jugador, sumando el costo de cada salida recorrida y usando únicamente salidas abiertas en ese instante en el sentido del recorrido.
 - **FR-012**: Si no existe ruta, o si d > rango, el cazador MUST esperar con costo 100.
 - **FR-013**: Si existe ruta y d ≤ rango, el cazador MUST moverse un paso por una ruta de costo d; el costo de esa acción MUST ser el costo de la salida que atraviesa.
-- **FR-014**: Sea u la sala del cazador; entre las vecinas v alcanzables por una salida abierta con costo(u, v) + dist(v, jugador) = d, el cazador MUST moverse a la de menor id, independientemente de cómo se calcule la ruta.
+- **FR-014**: Sea u la sala del cazador; entre las vecinas v alcanzables por una salida abierta con costo(u, v) + dist(v, jugador) = d, el cazador MUST moverse a la de menor id, independientemente de cómo se calcule la ruta. Si dos o más salidas abiertas de u llevan a esa misma vecina v con el mismo costo, MUST usar la primera en el orden N, S, E, O.
 - **FR-015**: La decisión del cazador MUST depender solo del esqueleto (incluidos los costos), del estado actual de todas las puertas y de la sala actual del jugador; MUST NOT depender de la niebla de guerra del jugador ni de si el contenido de una sala ya fue descargado.
 - **FR-016**: El cazador MUST NOT abrir puertas cerradas; una salida cerrada es intransitable para él.
 - **FR-017**: La decisión del cazador en cada turno MUST ser idéntica a la que se obtendría calculando la ruta desde cero en ese instante; cualquier reutilización de cálculos previos solo es válida si nunca cambia esa decisión (y debe demostrarse con pruebas).
