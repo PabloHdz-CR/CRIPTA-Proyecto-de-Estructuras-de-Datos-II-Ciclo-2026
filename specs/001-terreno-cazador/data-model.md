@@ -61,8 +61,8 @@ Validez: la ficha vale mientras coincida la versión global del catálogo
 |---|---|---|
 | salidas | tupla (N, S, E, O) | sin cambios |
 | **_entrantes / `entrantes`** | **ListaEnlazada de Salida** | **salidas de otras salas cuyo destino es esta. Se llena en el enlace en orden de construcción, que es determinista** |
-| **_sello_mapa** | **int** | **número del último mapa que fijó su distancia (R5)** |
-| **_distancia_mapa** | **int** | **válida solo si `_sello_mapa` coincide con el sello vigente del mapa** |
+| **_sello_mapa / `sello_mapa`** | **int** | **número del último cálculo de distancias que la tocó (R5)** |
+| **_distancia_mapa / `distancia_mapa`** | **int** | **válida solo si `sello_mapa` coincide con el sello del mapa vigente. Las dos se escriben juntas con `anotar_distancia(sello, distancia)`, en O(1)** |
 
 ### RegistroPuertas (nuevo, `cripta/modelo/mundo/registroPuertas.py`)
 
@@ -85,33 +85,51 @@ lo único que importa es que *cambie* (R2).
   Costo: O(salas²) por la búsqueda lineal por id, una sola vez.
 - Que una salida apunte a una sala inexistente ya es un error del esqueleto
   (`ErrorCripta`) y conserva su mensaje actual.
+- **`_sello_mapa` / `sello_mapa`** y **`nuevo_sello_mapa()`**: el contador de
+  sellos de los cálculos de distancias vive en el Mundo, no en cada mapa.
+  Cada cálculo reserva el siguiente con `nuevo_sello_mapa()`. Así, si dos
+  mapas usan el mismo mundo (por ejemplo, el bench que compara P1, P2 y P3),
+  cada uno detecta que otro sobrescribió los campos de las salas (el sello
+  del mundo ya no es el suyo) y recalcula, en vez de leer distancias ajenas.
 
 ### MapaDistancias (nuevo, `cripta/modelo/mundo/mapaDistancias.py`)
 
 Mapa de distancias de costo mínimo **hacia** la sala del jugador (R1 a R3).
-Lo posee la Partida; hay uno por partida.
+Lo posee la Partida (`Partida.mapa_distancias`, creado en `iniciar()` después
+de `enlazar()`); hay uno por partida.
 
 | Campo | Tipo | Notas |
 |---|---|---|
-| _sello | int | identifica el mapa vigente; avanza con cada cálculo |
+| _sello | int | sello de su último cálculo, reservado con `Mundo.nuevo_sello_mapa()`; 0 = todavía no se calculó |
 | _id_objetivo | int \| None | sala del jugador cuando se calculó |
 | _version_puertas | int | `registro_puertas.version` cuando se calculó |
 | _cota | int | costo máximo explorado |
-| _salas_examinadas | int | contador acumulado, para el bench y FR-026 |
-| _calculos | int | cuántas veces se recalculó (bench) |
+| _cota_reutilizable | int | la cota anterior si el objetivo y la versión no cambiaron, o 0; la lee `_cota_nueva` |
+| _salas_examinadas / `salas_examinadas` | int | contador acumulado, para el bench y FR-026 |
+| _examinadas_ultimo / `examinadas_ultimo_calculo` | int | salas examinadas por el último cálculo: las fijadas a costo ≤ cota y sus vecinas inmediatas (FR-026(b), SC-004) |
+| _calculos / `calculos` | int | cuántas veces se recalculó (bench) |
 
 Operaciones:
 
-- `asegurar(sala_objetivo, cota_minima)`: si la clave (objetivo, versión,
-  cota ≥ cota_minima) no se cumple, recalcula desde cero con una cota nueva
-  ≥ `cota_minima`. La regla que elige esa cota (P1, P2 o P3) se decide con el
-  bench (research.md R3; plan.md, "Política de cota del mapa"). P1, el punto
-  de partida, es `max(cota_anterior si el objetivo y la versión no cambiaron,
-  cota_minima)`. El cálculo es un Dijkstra hacia atrás por `entrantes`
-  abiertas, con el `HeapMinimo` y eliminación perezosa (R6), sin pasar de la
-  cota.
+- `asegurar(id_objetivo, cota_minima)`: recibe el **id** de la sala del
+  jugador, no la Sala, para no buscarla en el mundo (búsqueda lineal, D32)
+  cuando el mapa sigue valiendo, que es lo más común entre los cazadores de
+  un mismo ciclo; solo la busca al recalcular. Reutiliza el mapa si el
+  objetivo y la versión de las puertas no cambiaron, el sello del mundo
+  sigue siendo el suyo y la cota es ≥ `cota_minima`. Si no, recalcula desde
+  cero con la cota que devuelve `_cota_nueva(cota_minima)`.
+- `_cota_nueva(cota_minima)`: la regla de la cota, aislada para que las
+  subclases del bench (P2, P3) sobrescriban solo este método. La política se
+  decide con el bench (research.md R3; plan.md, "Política de cota del mapa").
+  La base es P1: `max(cota_anterior si el objetivo y la versión no
+  cambiaron, cota_minima)`.
+- El cálculo es un Dijkstra hacia atrás por `entrantes` abiertas, con el
+  `HeapMinimo` y eliminación perezosa (R6), sin pasar de la cota: una vecina
+  a más de la cota queda anotada (cuenta como examinada) pero no entra al
+  heap.
 - `distancia(sala) -> int | None`: devuelve la distancia guardada solo si el
-  sello de la sala coincide con el del mapa **y** esa distancia es ≤ `_cota`.
+  sello de la sala coincide con el del mapa, ese sello sigue siendo el último
+  del mundo **y** la distancia es ≤ `_cota`.
   En cualquier otro caso devuelve None: sala no alcanzada (infinito), o un
   valor provisional mayor que la cota, por ejemplo el de una vecina de una
   sala del borde que se anotó sin llegar a fijarse. Así el mapa solo expone
@@ -133,7 +151,7 @@ mejorar).
 
 `decidir_sin_jugador(enemigo, partida)`:
 
-1. `mapa.asegurar(sala del jugador, rango)`.
+1. `mapa.asegurar(id de la sala del jugador, rango)`.
 2. Recorre las salidas abiertas de la sala del cazador, en orden fijo N, S, E,
    O. Para cada `u → v` con `distancia(v)` definida calcula
    `t = costo + distancia(v)` y se queda con el menor `t`. En un empate gana

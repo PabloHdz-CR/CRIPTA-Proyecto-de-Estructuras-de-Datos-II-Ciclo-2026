@@ -1018,3 +1018,9 @@ Uso: decidir que un costo null equivale a no declarado, registrar la aclaración
 - **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-implement` (Fase 4, US2)
 - **Prompt:** "listo haz el push y empiezas con la fase 4"
 - **Uso:** push (5772804..ff88865) y Fase 4 (T021 a T032). Pruebas primero, y fallaron todas por lo que faltaba: prueba_cazador (18 casos: H2.E1 a H2.E9, rango 0, misma vecina por dos salidas, sentido del recorrido, casos BORDE y la regla de activación), prueba_cazador_equivalencia (1000 situaciones con turnos encadenados), casos de rango en prueba_datos_costo y rango por las dos fuentes y la caché en prueba_fuentes_costos. Se corrigieron defectos de las pruebas (comparar fichas con ListaEnlazada, activar enemigos con el Diario conectado) y se optimizó el oráculo sin cambiar su algoritmo, validado otra vez contra Dijkstra. Implementación: rango en convertidor y caché, sello en Sala, MapaDistancias (P1), Cazador, fábrica y Partida. Resultado: 4492 decisiones idénticas al oráculo, tres errores introducidos a propósito detectados, suite 37/37 y bench rápido sin errores.
+
+## Entrada 121
+- **Fecha:** 01/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "actualiza data-model.md y haces el push para que inicies Fase 5"
+- **Uso:** alinear data-model.md con la implementación de la Fase 4: asegurar() recibe el id del objetivo, el contador de sellos vive en el Mundo (sello_mapa, nuevo_sello_mapa), las propiedades y anotar_distancia de Sala, _cota_reutilizable y examinadas_ultimo_calculo del mapa. Push y comienzo de la Fase 5.
