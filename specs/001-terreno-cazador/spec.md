@@ -184,7 +184,7 @@ pequeño en criptas de tamaños distintos.
 **Rendimiento**
 
 - **FR-025**: Con 20, 50 y 100 cazadores activos persiguiendo al mismo objetivo en la cripta de referencia (tres mediciones separadas), resolver un ciclo completo de eventos entre dos decisiones del jugador MUST tomar menos de 20 ms en cada una, medido con --bench.
-- **FR-026**: El trabajo de las decisiones de los cazadores MUST NOT crecer con el tamaño total de la cripta: (a) cada decisión examina solo las salidas de la sala del cazador y sus salas destino; (b) los cálculos de distancia que esas decisiones necesitan examinan como máximo las salas a costo ≤ R de la sala del jugador más sus vecinas inmediatas, donde R es el mayor rango de los cazadores que los consultaron; (c) ambos conteos son idénticos en criptas de tamaños distintos con la misma región alcanzable. Se demuestra contando salas examinadas, no midiendo tiempo.
+- **FR-026**: El trabajo de las decisiones de los cazadores MUST NOT crecer con el tamaño total de la cripta: (a) cada decisión examina solo las salidas de la sala del cazador y sus salas destino; (b) los cálculos de distancia que esas decisiones necesitan examinan como máximo las salas a costo ≤ R de la sala del jugador más sus vecinas inmediatas, donde R es el mayor rango entre los cazadores activos (los únicos que deciden) en el momento del cálculo; (c) ambos conteos son idénticos en criptas de tamaños distintos con la misma región alcanzable. Se demuestra contando salas examinadas, no midiendo tiempo.
 
 ### Key Entities *(include if feature involves data)*
 
