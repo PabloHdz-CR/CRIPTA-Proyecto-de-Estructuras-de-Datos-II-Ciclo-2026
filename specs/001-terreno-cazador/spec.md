@@ -124,10 +124,11 @@ pequeño en criptas de tamaños distintos.
 ### Edge Cases
 
 - Salida sin costo declarado: vale 100.
-- Costo declarado inválido (0, negativo, no entero): la cripta se rechaza con un error de datos claro; no se corrige en silencio.
+- Costo declarado inválido (0, negativo, no entero, texto o booleano): la cripta se rechaza con un error de datos claro; no se corrige en silencio.
+- Costo null: equivale a no declararlo (vale 100, sujeto a la regla de las dos caras de FR-027), igual que un campo ausente. Cualquier otro valor que no sea un entero ≥ 1 sigue siendo error (FR-003).
 - Las dos caras de una misma puerta declaran costos distintos: la cripta se rechaza con un error claro (FR-027).
 - Solo una de las dos caras declara costo: ese costo vale para ambos sentidos (FR-027).
-- Rango de cazador ausente, negativo o no entero en la ficha: la ficha se rechaza con error de datos.
+- Rango de cazador ausente, null, negativo o no entero en la ficha: la ficha se rechaza con error de datos (FR-009). A diferencia del costo, null no equivale a un valor por omisión: el rango de un cazador es obligatorio.
 - Rango 0: el cazador solo actúa si comparte sala con el jugador (ataca); en otro caso, como d ≥ 1 > 0, espera.
 - Puertas direccionales: cada cara de una puerta tiene su propio estado abierto/cerrado; la ruta del cazador usa solo salidas abiertas en el sentido en que las recorre.
 - El jugador cambia de sala, otra puerta se abre o se cierra, o muere otro actor entre dos turnos del cazador: el cazador decide de nuevo con el estado del instante.
@@ -146,7 +147,7 @@ pequeño en criptas de tamaños distintos.
 
 - **FR-001**: Cada salida del esqueleto MUST poder declarar un costo de tránsito entero ≥ 1; si no lo declara, su costo MUST ser 100.
 - **FR-002**: El costo de una salida MUST ser el mismo en ambos sentidos de la conexión que representa.
-- **FR-003**: Un costo declarado que no sea un entero ≥ 1 MUST provocar un error de datos explícito que identifique la sala y la salida; nunca se sustituye en silencio.
+- **FR-003**: Un costo declarado que no sea un entero ≥ 1 MUST provocar un error de datos explícito que identifique la sala y la salida; nunca se sustituye en silencio. Un costo null equivale a no declararlo (FR-001: vale 100) y no es un error.
 - **FR-027**: Si las dos caras de una misma puerta declaran costos distintos, la cripta MUST rechazarse al cargarse con un error de datos claro que identifique ambas salas y ambos costos; nunca se elige uno en silencio. Si solo una de las dos caras declara costo, ese costo MUST valer para ambos sentidos.
 - **FR-028**: Al moverse, un actor MUST pasar a la sala de destino en el instante en que inicia el movimiento; el intervalo max(1, costo_salida × 100 // velocidad) es la espera hasta su próxima acción, durante la cual ya está en la sala de destino a todos los efectos (puede ser atacado allí y es la "sala actual" que usa el cazador). No existe un estado intermedio "en tránsito".
 - **FR-004**: El costo base de la acción de moverse a través de una salida MUST ser el costo de esa salida (en lugar del 100 fijo) para todos los actores que se mueven: jugador, errantes, rastreadores y cazadores.
