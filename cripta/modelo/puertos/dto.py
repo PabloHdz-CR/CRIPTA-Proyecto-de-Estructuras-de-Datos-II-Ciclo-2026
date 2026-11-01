@@ -57,6 +57,11 @@ class SalidaDTO:
     cerrada: bool = False
     llave: str = None            # id de la llave que la abre (si está cerrada)
     cierre_automatico: int = None  # None = no se cierra sola
+    # None = no declarado. Si viene, entero ≥ 1 (sin bool). Se conserva None
+    # (en vez de poner 100) porque la regla de las dos caras de una puerta
+    # distingue "no declarado" de "declarado 100" (FR-001, FR-027). Va al
+    # final y con valor por omisión para no romper a quien construye el DTO.
+    costo: int = None
 
 
 @dataclass(frozen=True)
@@ -124,6 +129,10 @@ class FichaEnemigoDTO(FichaDTO):
     velocidad: int
     comportamiento: str          # llega tal cual: "guardián", "errante", ...
     suelta: ListaEnlazada        # de str (ids de catálogo)
+    # Obligatorio si el comportamiento es cazador: entero ≥ 0, sin bool, en
+    # unidades de costo. Se ignora en los demás comportamientos (FR-009,
+    # FR-020). Al final y con valor por omisión, como SalidaDTO.costo.
+    rango: int = None
 
     CLASE = "enemigo"
 

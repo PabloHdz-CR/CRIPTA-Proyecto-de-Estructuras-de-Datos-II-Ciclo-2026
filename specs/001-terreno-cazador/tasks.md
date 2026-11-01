@@ -83,13 +83,13 @@ heapq ni sorted (`prueba_reglas`).
 
 **⚠️ CRITICAL**: ninguna historia empieza antes de terminar esta fase.
 
-- [ ] T007 [P] Agregar `class DatosInvalidos(ErrorCripta)` en `cripta/modelo/puertos/errores.py`, con docstring: datos de la cripta o del catálogo inconsistentes entre sí o fuera de rango; el mensaje identifica salas, dirección y valores. Cubre FR-027 y FR-003.
-- [ ] T008 [P] Agregar a `cripta/modelo/puertos/dto.py`:
+- [X] T007 [P] Agregar `class DatosInvalidos(ErrorCripta)` en `cripta/modelo/puertos/errores.py`, con docstring: datos de la cripta o del catálogo inconsistentes entre sí o fuera de rango; el mensaje identifica salas, dirección y valores. Cubre FR-027 y FR-003.
+- [X] T008 [P] Agregar a `cripta/modelo/puertos/dto.py`:
   - `SalidaDTO.costo: int = None`, que significa "None = no declarado. Si viene, entero ≥ 1 (sin bool)".
   - `FichaEnemigoDTO.rango: int = None`, que significa "Obligatorio si el comportamiento es cazador: entero ≥ 0, sin bool. Se ignora en los demás comportamientos".
 
   Los dos van al final y con valor por omisión, para no romper las pruebas existentes que construyen DTOs a mano. Cubre FR-001, FR-009, FR-019 y FR-020.
-- [ ] T009 [P] Crear `cripta/modelo/mundo/registroPuertas.py`:
+- [X] T009 [P] Crear `cripta/modelo/mundo/registroPuertas.py`:
   - `class RegistroPuertas` con `_version: int = 0`, la propiedad `version` y `avisar_cambio()`, que incrementa la versión.
   - Docstring que explique por qué no es estado reversible: deshacer la incrementa en lugar de restaurarla.
 

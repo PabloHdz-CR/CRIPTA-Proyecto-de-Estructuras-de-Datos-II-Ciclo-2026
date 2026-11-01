@@ -34,6 +34,17 @@ class VersionIncompatible(ErrorCripta):
             f"se esperaba {esperada} y se encontró {encontrada}."
         )
 
+class DatosInvalidos(ErrorCripta):
+    """Datos de la cripta o del catálogo inconsistentes entre sí o fuera de
+    rango (por ejemplo, las dos caras de una puerta con costos distintos,
+    FR-027). El mensaje identifica las salas, la dirección y los valores, para
+    que el jugador o el equipo sepan qué dato corregir. Nunca se corrige en
+    silencio: la cripta no se inicia."""
+
+    def __init__(self, mensaje: str) -> None:
+        super().__init__(mensaje)
+
+
 class LoteInvalido(ErrorCripta):
     def __init__(self, operacion, cantidad, limite):
         self.operacion = operacion

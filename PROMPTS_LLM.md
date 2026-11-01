@@ -982,3 +982,9 @@ Uso: revisar el informe de la Fase 1, aprobar el push, señalar tres ajustes pre
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "Sí, haz push y antes de la Fase 2: 1) Baja la probabilidad de salidas repetidas hacia la misma vecina en las criptas al azar de apoyo_terreno para que solo una minoría (alrededor de 20 a 30 %) tenga alguna sala con duplicadas, y deja un caso fijo con duplicadas. Commit propio.2)Agrega a la sección Assumptions de spec.md, en un commit propio que solo toque spec.md: "El cazador usa la misma regla de activación que los demás enemigos (Parte I §2.4): está dormido y no actúa hasta que el jugador entra a su sala; una vez activo permanece activo aunque cambie de sala. Su primera acción se programa con costo base 100. La decisión de la ruta (FR-011 a FR-017) solo aplica a cazadores activos." Registra el prompt en PROMPTS_LLM.md. No cambies nada más." Seguido de "Agrega este prompt" con el texto de la entrada 113.
 - **Uso:** push de la Fase 1 (a2b02b8..fa09957). (1) apoyo_terreno: dos salas se conectan una sola vez y la duplicada se agrega solo a propósito (PROB_DUPLICADA = 0.04, 23,9 % de 1000 criptas), con el caso fijo duplicadas_misma_vecina() comprobado con el oráculo. (2) spec.md: la regla de activación del cazador en Assumptions. (3) Estas entradas.
+
+## Entrada 115
+- **Fecha:** 01/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-implement` (Fase 2)
+- **Prompt:** "Haz push y empieza la Fase 2"
+- **Uso:** push de los ajustes previos (fa09957..702fc12) y Fase 2 (T007 a T009). Primero se escribió una verificación del contrato en el scratchpad (no entra en la suite, para no cambiar los totales) y fallaron sus 4 casos. Después: DatosInvalidos(ErrorCripta), SalidaDTO.costo y FichaEnemigoDTO.rango al final y con valor por omisión, y RegistroPuertas. Los 4 casos pasan, prueba_reglas sigue en verde y la suite queda en 37/37.
