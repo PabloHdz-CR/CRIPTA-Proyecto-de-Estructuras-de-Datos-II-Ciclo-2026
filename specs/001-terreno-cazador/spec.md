@@ -14,7 +14,7 @@
 
 - Q: Cuando un actor atraviesa una salida costosa, ¿en qué momento pasa a estar en la sala de destino? → A: Llega a la sala de destino en cuanto inicia el movimiento; durante el intervalo ya está en la sala nueva, donde lo pueden atacar y donde el cazador lo busca (FR-028).
 - Q: ¿Con cuántos cazadores activos a la vez se mide el límite de 20 ms del ciclo de eventos? → A: Se mide con 20, 50 y 100 cazadores activos, y los tres casos deben quedar por debajo de 20 ms (FR-025, SC-003).
-- Q: ¿Cómo se comprueba que la decisión de un cazador de rango pequeño no crece con el tamaño de la cripta? → A: Contando las salas que examina la decisión: nunca más que las salas a distancia ≤ rango más sus vecinas inmediatas, y el conteo es idéntico en una cripta 10 veces más grande con la misma región a su alcance (FR-026, SC-004).
+- Q: ¿Cómo se comprueba que la decisión de un cazador de rango pequeño no crece con el tamaño de la cripta? → A: Contando las salas que examina la decisión: nunca más que las salas a distancia ≤ rango más sus vecinas inmediatas, y el conteo es idéntico en una cripta 10 veces más grande con la misma región a su alcance (FR-026, SC-004). *Enmendado en la fase de plan (2026-10-31)*: el criterio sigue siendo contar salas, pero se cuentan por separado lo que examina cada decisión (las salidas de la sala del cazador) y lo que examinan los cálculos de distancia que esas decisiones necesitan (región a costo ≤ R de la sala del jugador); ver FR-026.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -117,7 +117,7 @@ pequeño en criptas de tamaños distintos.
 **Acceptance Scenarios**:
 
 1. **Given** la cripta de referencia con 20, 50 y 100 cazadores activos (tres mediciones separadas) persiguiendo al jugador, **When** se resuelve un ciclo completo de eventos entre dos decisiones del jugador, **Then** en cada una de las tres mediciones toma menos de 20 ms medidos con el modo de medición.
-2. **Given** un cazador de rango pequeño, **When** decide en criptas de tamaños muy distintos pero con la misma región a su alcance, **Then** la cantidad de salas que examina su decisión es idéntica en ambas criptas y nunca supera las salas a distancia ≤ rango más sus vecinas inmediatas.
+2. **Given** un cazador de rango pequeño, **When** decide en criptas de tamaños muy distintos pero con la misma región a su alcance, **Then** tanto las salas que examina su decisión (solo las salidas de su sala y sus destinos) como las que examinan los cálculos de distancia que la decisión necesita (a costo ≤ R de la sala del jugador, más sus vecinas inmediatas) son idénticas en ambas criptas.
 
 ---
 
@@ -182,7 +182,7 @@ pequeño en criptas de tamaños distintos.
 **Rendimiento**
 
 - **FR-025**: Con 20, 50 y 100 cazadores activos persiguiendo al mismo objetivo en la cripta de referencia (tres mediciones separadas), resolver un ciclo completo de eventos entre dos decisiones del jugador MUST tomar menos de 20 ms en cada una, medido con --bench.
-- **FR-026**: La cantidad de salas que examina la decisión de un cazador MUST NOT superar las salas a distancia ≤ rango de su sala más sus vecinas inmediatas, y MUST ser idéntica en criptas de tamaños distintos que comparten la misma región a su alcance; se demuestra contando salas examinadas (no midiendo tiempo).
+- **FR-026**: El trabajo de las decisiones de los cazadores MUST NOT crecer con el tamaño total de la cripta: (a) cada decisión examina solo las salidas de la sala del cazador y sus salas destino; (b) los cálculos de distancia que esas decisiones necesitan examinan como máximo las salas a costo ≤ R de la sala del jugador más sus vecinas inmediatas, donde R es el mayor rango de los cazadores que los consultaron; (c) ambos conteos son idénticos en criptas de tamaños distintos con la misma región alcanzable. Se demuestra contando salas examinadas, no midiendo tiempo.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -199,7 +199,7 @@ pequeño en criptas de tamaños distintos.
 - **SC-001**: Los 9 escenarios de aceptación de la descripción tienen una prueba automatizada que cita su requisito y pasa en el 100 % de las ejecuciones.
 - **SC-002**: En al menos 1000 situaciones generadas al azar (con semilla fija) de criptas pequeñas con costos y puertas variadas, la decisión del cazador coincide en el 100 % de los casos con la de un cálculo independiente desde cero.
 - **SC-003**: Con 20, 50 y 100 cazadores activos en la cripta de referencia, el ciclo de eventos entre dos decisiones del jugador se resuelve en menos de 20 ms en el equipo local en las tres mediciones.
-- **SC-004**: Para un cazador de rango fijo, multiplicar por 10 el tamaño de la cripta sin cambiar la región a su alcance deja exactamente igual la cantidad de salas que examina su decisión, y esa cantidad nunca supera las salas a distancia ≤ rango más sus vecinas inmediatas (medido con --bench).
+- **SC-004**: Multiplicar por 10 el tamaño de la cripta sin cambiar la región alcanzable deja exactamente iguales los conteos de salas examinadas por decisión y por cálculo de distancias, y ambos respetan las cotas de FR-026 (medido con --bench).
 - **SC-005**: Reproducir con --replay una partida con costos y cazadores produce exactamente la misma secuencia de acciones y estado final que la partida original.
 - **SC-006**: Un jugador puede leer en la vista el costo de cada salida de su sala y reconocer a un cazador sin consultar ayuda externa.
 
