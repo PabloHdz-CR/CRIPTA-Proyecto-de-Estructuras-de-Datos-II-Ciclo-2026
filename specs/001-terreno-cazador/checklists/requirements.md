@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,6 +31,6 @@
 
 ## Notes
 
-- Pendiente 1 marcador [NEEDS CLARIFICATION] (costos distintos en las dos caras de una puerta).
+- Aclaración resuelta (Q1): costos distintos en las dos caras de una puerta rechazan la cripta (FR-027); si solo una cara declara costo, vale para ambas.
 - Las menciones a --bench, --replay y --offline se refieren a modos del juego definidos en la constitución, no a detalles de implementación.
 - No se nombran estructuras, clases ni módulos (constitución, principio VII).

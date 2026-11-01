@@ -862,3 +862,9 @@ Uso: revisar el prompt de constitución propuesto contra el enunciado, señalar 
 - **Herramienta:** Claude Code (Claude Opus 5.5), comando de spec-kit `/speckit-specify`
 - **Prompt:** "Terreno y cazador: las salidas de una sala tienen costo de tránsito y aparece un nuevo enemigo, el cazador, que calcula la ruta más barata hacia el jugador. ..." (texto completo con reglas del juego, contrato de datos, interfaz, rendimiento y escenarios de aceptación).
 - **Uso:** generar specs/001-terreno-cazador/spec.md y su checklist de calidad (checklists/requirements.md).
+
+## Entrada 95
+- **Fecha:** 31/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "dejalo en la spec como requisito con su FR-xxx y como escenario de aceptación (“las dos caras declaran costos distintos: la cripta se rechaza con un error claro”). y haz el git commit y push"
+- **Uso:** resolver la aclaración pendiente del spec 001-terreno-cazador agregando FR-027 y sus escenarios de aceptación, y actualizar el checklist de calidad.

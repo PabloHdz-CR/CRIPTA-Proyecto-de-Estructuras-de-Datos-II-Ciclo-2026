@@ -35,6 +35,8 @@ max(1, costo_salida × 100 // velocidad), sin que exista ningún cazador.
 4. **Given** un actor que acaba de atravesar una salida de costo 400 con velocidad 100, **When** su velocidad cambia a 200 a mitad del tránsito, **Then** el tiempo restante se reescala con la regla de velocidad existente (restante × velocidad_anterior // velocidad_nueva, mínimo 1).
 5. **Given** un errante y un rastreador, **When** deciden moverse, **Then** eligen la salida exactamente igual que antes de esta capacidad y solo cambia el tiempo que tarda su movimiento.
 6. **Given** cualquier actor, **When** ataca, espera o realiza otra acción que no sea moverse, **Then** su costo es el mismo que antes de esta capacidad.
+7. **Given** un esqueleto en el que las dos caras de una misma puerta declaran costos distintos (por ejemplo, A→B cuesta 300 y B→A cuesta 200), **When** se carga la cripta, **Then** la cripta se rechaza con un error claro que identifica las dos salas y ambos costos, y la partida no comienza.
+8. **Given** un esqueleto en el que solo la cara A→B declara costo 300 y la cara B→A no declara costo, **When** un actor atraviesa la puerta en cualquiera de los dos sentidos, **Then** el costo es 300.
 
 ---
 
@@ -115,7 +117,8 @@ pequeño en criptas de tamaños distintos.
 
 - Salida sin costo declarado: vale 100.
 - Costo declarado inválido (0, negativo, no entero): la cripta se rechaza con un error de datos claro; no se corrige en silencio.
-- Las dos caras de una misma puerta declaran costos distintos (o una lo declara y la otra no): [NEEDS CLARIFICATION: ¿se rechaza la cripta como inconsistente, o cada cara usa su propio costo al atravesarla en su sentido?]
+- Las dos caras de una misma puerta declaran costos distintos: la cripta se rechaza con un error claro (FR-027).
+- Solo una de las dos caras declara costo: ese costo vale para ambos sentidos (FR-027).
 - Rango de cazador ausente, negativo o no entero en la ficha: la ficha se rechaza con error de datos.
 - Rango 0: el cazador solo actúa si comparte sala con el jugador (ataca); en otro caso, como d ≥ 1 > 0, espera.
 - Puertas direccionales: cada cara de una puerta tiene su propio estado abierto/cerrado; la ruta del cazador usa solo salidas abiertas en el sentido en que las recorre.
@@ -134,6 +137,7 @@ pequeño en criptas de tamaños distintos.
 - **FR-001**: Cada salida del esqueleto MUST poder declarar un costo de tránsito entero ≥ 1; si no lo declara, su costo MUST ser 100.
 - **FR-002**: El costo de una salida MUST ser el mismo en ambos sentidos de la conexión que representa.
 - **FR-003**: Un costo declarado que no sea un entero ≥ 1 MUST provocar un error de datos explícito que identifique la sala y la salida; nunca se sustituye en silencio.
+- **FR-027**: Si las dos caras de una misma puerta declaran costos distintos, la cripta MUST rechazarse al cargarse con un error de datos claro que identifique ambas salas y ambos costos; nunca se elige uno en silencio. Si solo una de las dos caras declara costo, ese costo MUST valer para ambos sentidos.
 - **FR-004**: El costo base de la acción de moverse a través de una salida MUST ser el costo de esa salida (en lugar del 100 fijo) para todos los actores que se mueven: jugador, errantes, rastreadores y cazadores.
 - **FR-005**: El intervalo hasta la próxima acción tras un movimiento MUST ser max(1, costo_salida × 100 // velocidad).
 - **FR-006**: El costo de atacar, esperar y las demás acciones que no son moverse MUST permanecer igual que antes de esta capacidad.
