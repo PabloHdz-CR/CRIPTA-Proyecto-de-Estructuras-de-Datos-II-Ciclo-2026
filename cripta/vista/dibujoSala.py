@@ -32,7 +32,7 @@ import math
 import arcade
 
 from ..modelo.estructuras.listaEnlazada import ListaEnlazada
-from . import texturas
+from . import estilo, texturas
 from .estadoVista import SALIDA_ABIERTA, SALIDA_CERRADA_CON_LLAVE, SALIDA_SIN_SALIDA
 
 _COLOR_PUERTA_ABIERTA = (70, 170, 90)
@@ -206,6 +206,12 @@ class DibujoSala:
         for indice, (enemigo, vida_previa) in enumerate(
                 zip(self._estado.sala.enemigos, self._vidas_previas)):
             x, y = self.posicion_enemigo(indice)
+            if enemigo.es_cazador:
+                # FR-024: un anillo (una forma, no solo un color), encima de la
+                # oscuridad para que se vea aunque no haya antorcha.
+                y_figura = y + math.sin(t * 3.4 + indice * 1.9) * r * 0.1
+                arcade.draw_circle_outline(x, y_figura, r * 1.3, estilo.COLOR_CAZADOR,
+                                           max(2, r * 0.16))
             dibujar_barra(x - r, y + r * 1.45, r * 2, max(r * 0.28, 3),
                           valor_animado(vida_previa, enemigo.vida, t), enemigo.vida_max)
         for texto in self._etiquetas:
@@ -335,9 +341,10 @@ class DibujoSala:
                                        anchor_y="center", bold=True)
         for indice, enemigo in enumerate(self._estado.sala.enemigos):
             x, y = self.posicion_enemigo(indice)
+            color = estilo.COLOR_CAZADOR if enemigo.es_cazador else arcade.color.WHITE
             self._etiquetas.agregar_al_final(arcade.Text(
-                enemigo.etiqueta, x, y - self._radio * 2.0, arcade.color.WHITE, tamano,
-                anchor_x="center"))
+                estilo.etiqueta_enemigo(enemigo), x, y - self._radio * 2.0, color, tamano,
+                anchor_x="center", bold=enemigo.es_cazador))
         for indice, objeto in enumerate(self._estado.sala.objetos):
             x, y = self.posicion_objeto(indice)
             self._etiquetas.agregar_al_final(arcade.Text(
@@ -345,11 +352,16 @@ class DibujoSala:
                 anchor_x="center"))
         for salida in self._estado.sala.salidas:
             if salida is not None and salida.estado != SALIDA_SIN_SALIDA:
-                # La letra va justo adentro de la sala, frente a la puerta.
+                # La letra va justo adentro de la sala, frente a la puerta, y
+                # debajo el costo de cruzarla, abierta o cerrada (FR-023).
                 x, y = self._frente_a_puerta(salida.direccion)
                 self._etiquetas.agregar_al_final(arcade.Text(
                     salida.direccion, x, y, arcade.color.WHITE, tamano,
                     anchor_x="center", anchor_y="center", bold=True))
+                if salida.costo is not None:
+                    self._etiquetas.agregar_al_final(arcade.Text(
+                        str(salida.costo), x, y - tamano - 3, (232, 193, 92),
+                        max(tamano - 1, 7), anchor_x="center", anchor_y="center"))
 
 
 def _buscar_por_etiqueta(enemigos, etiqueta: str):

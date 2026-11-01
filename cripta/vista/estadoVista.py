@@ -28,6 +28,10 @@ SALIDA_SIN_SALIDA = "sin_salida"
 class SalidaVisible:
     direccion: str                  # "N", "S", "E" u "O"
     estado: str                     # una de las constantes SALIDA_*
+    # Costo efectivo (100 si no se declaró); None si estado == SALIDA_SIN_SALIDA
+    # (001-terreno-cazador, FR-023). Con valor por omisión: los DTOs armados a
+    # mano antes de esta capacidad siguen siendo válidos.
+    costo: Optional[int] = None
 
 
 @dataclass(frozen=True)
@@ -37,6 +41,9 @@ class ActorVisible:
     etiqueta: str
     vida: int
     vida_max: int
+    # True si el comportamiento del enemigo es cazador (FR-024). La Vista lo
+    # distingue con un marcador además del color.
+    es_cazador: bool = False
 
 
 @dataclass(frozen=True)

@@ -292,6 +292,8 @@ class PantallaJuego(_PantallaCripta):
             descripcion = "cerrada con llave"
         else:
             descripcion = "sin salida"
+        if salida.costo is not None:                      # FR-023
+            return f"{salida.direccion}: {descripcion}, costo {salida.costo}"
         return f"{salida.direccion}: {descripcion}"
 
     def _texto_efectos(self) -> str:
@@ -303,7 +305,8 @@ class PantallaJuego(_PantallaCripta):
         if self._estado.sala.enemigos.esta_vacia():
             return "Enemigos: ninguno"
         return "Enemigos: " + ", ".join(
-            f"{e.etiqueta} ({e.vida}/{e.vida_max})" for e in self._estado.sala.enemigos)
+            f"{estilo.etiqueta_enemigo(e)} ({e.vida}/{e.vida_max})"     # FR-024
+            for e in self._estado.sala.enemigos)
 
     def _texto_objetos_suelo(self) -> str:
         if self._estado.sala.objetos.esta_vacia():

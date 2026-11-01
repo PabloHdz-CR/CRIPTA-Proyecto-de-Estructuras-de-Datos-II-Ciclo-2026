@@ -1024,3 +1024,9 @@ Uso: decidir que un costo null equivale a no declarado, registrar la aclaración
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "actualiza data-model.md y haces el push para que inicies Fase 5"
 - **Uso:** alinear data-model.md con la implementación de la Fase 4: asegurar() recibe el id del objetivo, el contador de sellos vive en el Mundo (sello_mapa, nuevo_sello_mapa), las propiedades y anotar_distancia de Sala, _cota_reutilizable y examinadas_ultimo_calculo del mapa. Push y comienzo de la Fase 5.
+
+## Entrada 122
+- **Fecha:** 01/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-implement` (Fase 5, US3)
+- **Prompt:** "actualiza data-model.md y haces el push para que inicies Fase 5" (la parte de la Fase 5).
+- **Uso:** Fase 5 (T033 a T037). Prueba primero: prueba_vista_costos (H3.E1, H3.E2 y compatibilidad de los DTOs), que falló en sus 3 casos. Después: SalidaVisible.costo y ActorVisible.es_cazador; el Controlador los llena; dibujoSala muestra el costo bajo la letra de cada puerta y un anillo y el prefijo «» » en el cazador; hudJuego pone el costo en la brújula y el prefijo en "En la sala" y en el selector de ataque; pantallaJuego, en sus textos. Se renderizó una sala real con una ventana invisible de arcade para revisar el dibujo, y el anillo se movió encima de la capa de oscuridad. Suite 37/37. T038 queda pendiente de la revisión manual de quickstart §3.

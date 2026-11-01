@@ -291,18 +291,21 @@ class HudJuego:
         return abajo - _SEPARACION
 
     def _armar_brujula(self, cx, cy) -> None:
-        """Una cruz N/S/E/O: verde abierta, dorado con llave, gris sin salida."""
+        """Una cruz N/S/E/O: verde abierta, dorado con llave, gris sin salida.
+        Debajo de la letra, el costo de cruzar esa salida (FR-023)."""
         celda = 24
         posiciones = (("N", 0, 1), ("S", 0, -1), ("E", 1, 0), ("O", -1, 0))
         estados = ListaEnlazada()
         for salida in self._estado.sala.salidas:
             if salida is not None:
-                estados.agregar_al_final((salida.direccion, salida.estado))
+                estados.agregar_al_final((salida.direccion, salida.estado, salida.costo))
         for direccion, dx, dy in posiciones:
             estado = None
-            for direccion_salida, estado_salida in estados:
+            costo = None
+            for direccion_salida, estado_salida, costo_salida in estados:
                 if direccion_salida == direccion:
                     estado = estado_salida
+                    costo = costo_salida
             if estado == SALIDA_ABIERTA:
                 color, borde = (46, 92, 56), estilo.VERDE
             elif estado == SALIDA_CERRADA_CON_LLAVE:
@@ -311,9 +314,13 @@ class HudJuego:
                 color, borde = (34, 30, 30), (70, 64, 60)
             x, y = cx + dx * (celda + 2), cy + dy * (celda + 2)
             self._figura("celda", x, y, celda, 0, color, borde)
-            self._texto(direccion, x, y, 11,
-                        estilo.TEXTO if estado in (SALIDA_ABIERTA, SALIDA_CERRADA_CON_LLAVE)
-                        else estilo.TEXTO_APAGADO, anchor_x="center", bold=True)
+            if costo is None:
+                self._texto(direccion, x, y, 11,
+                            estilo.TEXTO if estado in (SALIDA_ABIERTA, SALIDA_CERRADA_CON_LLAVE)
+                            else estilo.TEXTO_APAGADO, anchor_x="center", bold=True)
+            else:
+                self._texto(direccion, x, y + 4, 10, estilo.TEXTO, anchor_x="center", bold=True)
+                self._texto(str(costo), x, y - 7, 7, estilo.DORADO, anchor_x="center")
         self._figura("celda", cx, cy, celda - 8, 0, (24, 20, 20), (70, 64, 60))
 
     def _armar_en_la_sala(self, izq, der, arriba) -> float:
@@ -334,7 +341,9 @@ class HudJuego:
                 y -= 18
                 break
             self._figura("calavera", izq + 20, y, 7)
-            self._texto(_recortar(enemigo.etiqueta, 22), izq + 34, y, 11, estilo.TEXTO)
+            # FR-024: el cazador lleva un prefijo además del color.
+            self._texto(_recortar(estilo.etiqueta_enemigo(enemigo), 22), izq + 34, y, 11,
+                        estilo.COLOR_CAZADOR if enemigo.es_cazador else estilo.TEXTO)
             self._figura("barra", der - 150, y - 5, 90, 10, enemigo.vida, enemigo.vida_max)
             self._texto(f"{enemigo.vida}/{enemigo.vida_max}", der - 14, y, 10, estilo.TEXTO_SUAVE,
                         anchor_x="right")
@@ -425,7 +434,10 @@ class HudJuego:
             color = estilo.DORADO if elegido else estilo.TEXTO
             if self._verbo == "atacar":
                 self._figura("calavera", izq + 36, y, 8)
-                self._texto(objetivo.etiqueta, izq + 52, y, 13, color, bold=elegido)
+                if objetivo.es_cazador and not elegido:
+                    color = estilo.COLOR_CAZADOR
+                self._texto(estilo.etiqueta_enemigo(objetivo), izq + 52, y, 13, color,
+                            bold=elegido)
                 self._figura("barra", der - 170, y - 6, 110, 12, objetivo.vida, objetivo.vida_max)
                 self._texto(f"{objetivo.vida}/{objetivo.vida_max}", der - 16, y, 11,
                             estilo.TEXTO_SUAVE, anchor_x="right")

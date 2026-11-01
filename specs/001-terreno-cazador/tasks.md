@@ -247,17 +247,17 @@ heapq ni sorted (`prueba_reglas`).
 
 ### Tests for User Story 3 (escribir primero; deben fallar)
 
-- [ ] T033 [P] [US3] Crear `pruebas/prueba_vista_costos.py`, con docstring que cite FR-023 y FR-024:
+- [X] T033 [P] [US3] Crear `pruebas/prueba_vista_costos.py`, con docstring que cite FR-023 y FR-024:
   - **H3.E1**: una sala con salidas de costo 100 (no declarado), 250 y 1 → `SalidaVisible.costo` vale 100, 250 y 1, y `None` donde no hay salida.
   - **H3.E2**: un cazador y un errante → `ActorVisible.es_cazador` vale True y False.
   - Además, un DTO construido sin los campos nuevos sigue siendo válido (valores por omisión).
 
 ### Implementation for User Story 3
 
-- [ ] T034 [US3] En `cripta/vista/estadoVista.py`, agregar `SalidaVisible.costo: int = None` ("costo efectivo (100 si no se declaró); None si estado == SALIDA_SIN_SALIDA") y `ActorVisible.es_cazador: bool = False`, según `contracts/vista.md`. Cubre FR-023 y FR-024.
-- [ ] T035 [US3] En `cripta/controlador/constructorEstadoVista.py`, llenar `costo` desde `salida.costo` y `es_cazador` según si el comportamiento del enemigo es `Cazador`. Cubre FR-023 y FR-024.
-- [ ] T036 [P] [US3] En `cripta/vista/dibujoSala.py`, dibujar el costo junto a cada salida existente de la sala actual, abierta o cerrada. Cubre FR-023.
-- [ ] T037 [P] [US3] En `cripta/vista/hudJuego.py` (y `dibujoSala.py` si dibuja enemigos), marcar al cazador con un marcador o un prefijo en la etiqueta además del color: "la distinción no depende solo del color". Cubre FR-024.
+- [X] T034 [US3] En `cripta/vista/estadoVista.py`, agregar `SalidaVisible.costo: int = None` ("costo efectivo (100 si no se declaró); None si estado == SALIDA_SIN_SALIDA") y `ActorVisible.es_cazador: bool = False`, según `contracts/vista.md`. Cubre FR-023 y FR-024.
+- [X] T035 [US3] En `cripta/controlador/constructorEstadoVista.py`, llenar `costo` desde `salida.costo` y `es_cazador` según si el comportamiento del enemigo es `Cazador`. Cubre FR-023 y FR-024.
+- [X] T036 [P] [US3] En `cripta/vista/dibujoSala.py`, dibujar el costo junto a cada salida existente de la sala actual, abierta o cerrada. Cubre FR-023.
+- [X] T037 [P] [US3] En `cripta/vista/hudJuego.py` (y `dibujoSala.py` si dibuja enemigos), marcar al cazador con un marcador o un prefijo en la etiqueta además del color: "la distinción no depende solo del color". Cubre FR-024.
 - [ ] T038 [US3] Ejecutar T033 y las pruebas `prueba_vista_*` existentes en verde, y hacer la revisión manual de quickstart.md §3 con `py main.py --offline=pruebas/datos/terreno_cazador`. Cubre FR-023, FR-024 y SC-006.
 
 **Checkpoint**: US3 visible en la ventana.

@@ -23,6 +23,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
+from ..modelo.actores.comportamientos import Cazador
 from ..modelo.estructuras.listaEnlazada import ListaEnlazada
 from ..modelo.nucleo.constantes import COSTO_MOVER
 from ..modelo.objetos.inventario import CRITERIOS_ORDEN
@@ -105,6 +106,7 @@ class ConstructorEstadoVista:
                 etiqueta=self._etiquetas.etiqueta_de(enemigo),
                 vida=enemigo.vida,
                 vida_max=enemigo.vida_max,
+                es_cazador=isinstance(enemigo.comportamiento, Cazador),   # FR-024
             ))
         objetos = ListaEnlazada()
         for objeto in sala.suelo:
@@ -125,12 +127,11 @@ class ConstructorEstadoVista:
     def _salida_visible(self, sala: "Sala", indice: int) -> SalidaVisible:
         salida = sala.salidas[indice]
         if salida is None:
-            estado = SALIDA_SIN_SALIDA
-        elif salida.cerrada:
-            estado = SALIDA_CERRADA_CON_LLAVE
-        else:
-            estado = SALIDA_ABIERTA
-        return SalidaVisible(direccion=DIRECCIONES[indice], estado=estado)
+            return SalidaVisible(direccion=DIRECCIONES[indice], estado=SALIDA_SIN_SALIDA)
+        estado = SALIDA_CERRADA_CON_LLAVE if salida.cerrada else SALIDA_ABIERTA
+        # FR-023: el costo efectivo, abierta o cerrada (100 si no se declaró).
+        return SalidaVisible(direccion=DIRECCIONES[indice], estado=estado,
+                             costo=salida.costo)
 
     def _efectos_visibles(self, jugador: "Jugador", reloj: int) -> ListaEnlazada:
         """O(f)."""

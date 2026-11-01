@@ -72,3 +72,16 @@ def titulo(contenido: str, x: float, y: float, tamano: int):
     frente = arcade.Text(contenido, x, y, DORADO, tamano, anchor_x="center",
                          anchor_y="center", bold=True)
     return sombra, frente
+
+
+# Cazador (001-terreno-cazador, FR-024): se distingue por un marcador de forma
+# (el prefijo en la etiqueta y un anillo alrededor de su figura en la sala),
+# no solo por el color. El color es un refuerzo.
+PREFIJO_CAZADOR = "» "
+COLOR_CAZADOR = (245, 140, 40)
+
+
+def etiqueta_enemigo(enemigo) -> str:
+    """La etiqueta que se muestra de un ActorVisible: con el prefijo del
+    cazador si lo es."""
+    return PREFIJO_CAZADOR + enemigo.etiqueta if enemigo.es_cazador else enemigo.etiqueta
