@@ -886,3 +886,9 @@ Uso: revisar el prompt de constitución propuesto contra el enunciado, señalar 
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "corrige y has los commit y push para revisar los archivos"
 - **Uso:** aplicar la enmienda de FR-026/SC-004 al spec en un commit propio, actualizar el plan y confirmar los artefactos de la fase plan, con push.
+
+## Entrada 99
+- **Fecha:** 31/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Aplica estas correcciones, cada grupo en su propio commit: 1) En spec.md: cambia SC-001 para cubrir todos los escenarios de aceptación de las Historias 1 a 4 ... 2) En plan.md y quickstart.md: (a) agrega pruebas automáticas para FR-021 y para los conteos de salas examinadas de FR-026/SC-004, y una verificación automática de FR-025; (b) ... DatosInvalidos ... mostrar_error; (c) ... 100 cazadores de rangos distintos ... cota al doble; (d) deja FORMATO_VERSION como pendiente de coordinar ... 3) Luego corre /speckit-analyze y corrige lo que reporte." Seguido de "2" (corregir solo las inconsistencias, porque /speckit-analyze exige tasks.md).
+- **Uso:** SC-001 con los 21 escenarios; pruebas, captura de DatosInvalidos, bench de rangos distintos y FORMATO_VERSION pendiente en plan y quickstart; alinear research.md, data-model.md y el contrato del formato de guardado. /speckit-analyze no se pudo ejecutar porque todavía no existe tasks.md.
