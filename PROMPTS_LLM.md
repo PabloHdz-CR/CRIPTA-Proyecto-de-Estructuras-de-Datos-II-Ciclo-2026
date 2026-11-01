@@ -970,3 +970,15 @@ Uso: revisar el informe de analyze, decidir qué hallazgos corregir, mover la re
 - **Herramienta:** Claude Code (Claude Opus 5.5), comando de spec-kit `/speckit-implement` (solo la Fase 1)
 - **Prompt:** "Primero haz el push de los commits y lo confirmas, luego empezamos con T001, haz un commi por fase terminada. En esta sección es clave que hagas las pruebas de cada fase priemro para ver si fallan y corregir en el momento. Si el error se ve relacionado con algo del spec.md se detiene y pregunta antes de corregir por si solo. Ah y me mandas el resultado de la fase para verificar antes de empezar la siguiente." Durante T001 se respondió "Dejarla fuera (Recomendado)" a la pregunta de qué hacer con prueba_falso_1_6.
 - **Uso:** push de la rama y Fase 1 (T001 a T006). T001: prueba_falso_1_6 queda fuera porque es el módulo de ServidorFalso, sin asserts; línea base 37/37 y README a 37 (los totales de tasks.md pasaron a 37 y 46 en un commit aparte). T002: prueba_reglas detecta conjuntos, collections y bibliotecas de grafos; sus autopruebas fallaron antes del cambio. T003: fixture del formato 1 con un script reproducible. T004: paquete pruebas/datos/terreno_cazador. T005: apoyo_terreno.py. T006: oráculo Bellman-Ford, validado contra Dijkstra en 6000 pares.
+
+## Entrada 113
+Fecha: 01/11/2026
+Herramienta: Claude
+Prompt: “La Fase 1 está terminada y confirmada en fa09957. Las pruebas pasan 37/37. ... yo loveo muy bien, pensaria que se puede hacerr el push y empozar com la 2”
+Uso: revisar el informe de la Fase 1, aprobar el push, señalar tres ajustes previos a la Fase 2 y marcar la duda sobre la activación del cazador.
+
+## Entrada 114
+- **Fecha:** 01/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Sí, haz push y antes de la Fase 2: 1) Baja la probabilidad de salidas repetidas hacia la misma vecina en las criptas al azar de apoyo_terreno para que solo una minoría (alrededor de 20 a 30 %) tenga alguna sala con duplicadas, y deja un caso fijo con duplicadas. Commit propio.2)Agrega a la sección Assumptions de spec.md, en un commit propio que solo toque spec.md: "El cazador usa la misma regla de activación que los demás enemigos (Parte I §2.4): está dormido y no actúa hasta que el jugador entra a su sala; una vez activo permanece activo aunque cambie de sala. Su primera acción se programa con costo base 100. La decisión de la ruta (FR-011 a FR-017) solo aplica a cazadores activos." Registra el prompt en PROMPTS_LLM.md. No cambies nada más." Seguido de "Agrega este prompt" con el texto de la entrada 113.
+- **Uso:** push de la Fase 1 (a2b02b8..fa09957). (1) apoyo_terreno: dos salas se conectan una sola vez y la duplicada se agrega solo a propósito (PROB_DUPLICADA = 0.04, 23,9 % de 1000 criptas), con el caso fijo duplicadas_misma_vecina() comprobado con el oráculo. (2) spec.md: la regla de activación del cazador en Assumptions. (3) Estas entradas.
