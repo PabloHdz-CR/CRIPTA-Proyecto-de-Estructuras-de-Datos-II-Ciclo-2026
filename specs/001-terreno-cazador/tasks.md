@@ -129,7 +129,7 @@ heapq ni sorted (`prueba_reglas`).
 
 ### Implementation for User Story 1
 
-- [X] T013 [US1] En `cripta/adaptadores/convertidorJson.py`, hacer que `_salida_desde_json` lea `costo` (recibe también el id de la sala para el mensaje). Regla: "entero ≥ 1; se rechazan bool, 0, negativos, decimales y texto". Si no se cumple, lanza un error de datos de la jerarquía `ErrorCripta` que nombra la sala y la dirección. Si falta el campo, queda `None`. Cubre FR-001, FR-003 y FR-019.
+- [X] T013 [US1] En `cripta/adaptadores/convertidorJson.py`, hacer que `_salida_desde_json` lea `costo` (recibe también el id de la sala para el mensaje). Regla: "entero ≥ 1; se rechazan bool, 0, negativos, decimales y texto". Si no se cumple, lanza un error de datos de la jerarquía `ErrorCripta` que nombra la sala y la dirección. Si falta el campo o viene `null`, queda `None` (no declarado; aclaración de FR-003). Cubre FR-001, FR-003 y FR-019.
 - [X] T014 [US1] En `cripta/modelo/mundo/salida.py`:
   - Nuevo parámetro `costo=None`, guardado como `_costo_declarado`.
   - Propiedad `costo`: el costo efectivo si ya se enlazó; si no, el declarado, o 100.

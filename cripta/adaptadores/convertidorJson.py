@@ -55,13 +55,15 @@ def datos_cripta_desde_json(datos):
 def _costo_desde_json(id_sala, direccion, datos):
     """El costo declarado de una salida, o None si no lo declara (FR-001).
 
-    Regla: entero >= 1; se rechazan bool, 0, negativos, decimales, texto y
-    null (FR-003). Un valor inválido nunca se sustituye en silencio: es un
-    error de datos que nombra la sala y la dirección.
+    Ausente o null equivalen a no declarado, igual que llave y
+    cierre_automatico (FR-003). Si viene un valor, debe ser un entero >= 1:
+    se rechazan bool, 0, negativos, decimales y texto. Un valor inválido
+    nunca se sustituye en silencio: es un error de datos que nombra la sala
+    y la dirección.
     """
-    if "costo" not in datos:
+    costo = datos.get("costo")
+    if costo is None:
         return None
-    costo = datos["costo"]
     # DECISIÓN: type(...) is int y no isinstance: True y False son int en
     # Python, y un bool en el JSON es un error de datos, no un costo 1 o 0.
     if type(costo) is not int or costo < 1:

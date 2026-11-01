@@ -22,10 +22,12 @@ from cripta.adaptadores.registroArchivo import CarpetaRegistros
 from cripta.controlador.controladorMenu import ControladorMenu
 from cripta.controlador.gestorGuardado import GestorGuardado
 from cripta.controlador.reporteFinal import ReporteFinal
+from cripta.modelo.mundo.mundo import Mundo
 from cripta.modelo.puertos.errores import DatosInvalidos, ErrorCripta
 from cripta.vista.comando import Comando
 from pruebas.apoyo_terreno import (
-    VistaRegistradora, a_lista, mundo_desde, pasillo, salida, servicio_terreno)
+    VistaRegistradora, a_lista, datos_cripta, mundo_desde, pasillo, salida,
+    servicio_terreno)
 
 
 def pagina_json(salidas_de_la_sala_7):
@@ -58,8 +60,8 @@ def caso_convertidor_lee_costo():
 def caso_convertidor_rechaza_costos_invalidos():
     """FR-003: 0, negativos, decimales, texto y bool son un error de datos de la
     jerarquía ErrorCripta que nombra la sala y la dirección; nunca se
-    sustituyen en silencio."""
-    for invalido in (0, -5, 2.5, "100", True, False, None, 100.0):
+    sustituyen en silencio. (null no está aquí: equivale a no declarado.)"""
+    for invalido in (0, -5, 2.5, "100", True, False, 100.0):
         try:
             convertidorJson.pagina_salas_desde_json(
                 pagina_json({"E": {"sala": 8, "costo": invalido}}))
@@ -69,6 +71,25 @@ def caso_convertidor_rechaza_costos_invalidos():
             assert repr(invalido) in texto or str(invalido) in texto, f"{invalido!r}: {texto}"
         else:
             raise AssertionError(f"el costo {invalido!r} debía rechazarse")
+
+
+def caso_convertidor_costo_null():
+    """FR-003, FR-001: "costo": null equivale a no declararlo, igual que un campo
+    ausente (como llave y cierre_automatico): el DTO queda con None y, tras el
+    enlace, vale 100, o el de la otra cara si esa sí lo declara (FR-027)."""
+    pagina = convertidorJson.pagina_salas_desde_json(pagina_json(
+        {"N": {"sala": 8, "costo": None}, "E": {"sala": 8}}))
+    por_direccion = {s.direccion: s.costo for s in salidas_dto(pagina, 7)}
+    assert por_direccion == {"N": None, "E": None}, por_direccion
+    salas = convertidorJson.pagina_salas_desde_json({"pagina": 1, "total_paginas": 1, "salas": [
+        {"id": 1, "nombre": "Uno", "salidas": {"E": {"sala": 2, "costo": None},
+                                                "N": {"sala": 3, "costo": None}}},
+        {"id": 2, "nombre": "Dos", "salidas": {"O": {"sala": 1, "costo": 250}}},
+        {"id": 3, "nombre": "Tres", "salidas": {"S": {"sala": 1, "costo": None}}}]}).salas
+    mundo = Mundo(datos_cripta(((1, ()), (2, ()), (3, ()))))
+    mundo.agregar_esqueleto(salas)
+    mundo.enlazar()
+    assert costos(mundo) == {(1, "E"): 250, (2, "O"): 250, (1, "N"): 100, (3, "S"): 100}
 
 
 # ---------------------------------------------------------------------------
@@ -199,6 +220,7 @@ def caso_controlador_terreno_valido():
 CASOS = (
     caso_convertidor_lee_costo,
     caso_convertidor_rechaza_costos_invalidos,
+    caso_convertidor_costo_null,
     caso_h1_e7_caras_distintas,
     caso_h1_e8_una_sola_cara,
     caso_tabla_del_contrato,

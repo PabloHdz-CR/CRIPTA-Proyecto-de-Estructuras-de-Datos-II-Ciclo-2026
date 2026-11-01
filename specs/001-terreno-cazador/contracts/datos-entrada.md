@@ -19,7 +19,7 @@ Aplica por igual a la fuente en línea (API) y a la fuente sin conexión
 
 | Campo | Obligatorio | Tipo | Regla |
 |---|---|---|---|
-| `costo` | no | entero | ≥ 1. Ausente = no declarado (vale 100 si la otra cara tampoco declara). `true`/`false`, `0`, negativos, decimales o texto: **error de datos** que nombra la sala y la dirección |
+| `costo` | no | entero | ≥ 1. Ausente o `null` = no declarado (vale 100 si la otra cara tampoco declara). `true`/`false`, `0`, negativos, decimales o texto: **error de datos** que nombra la sala y la dirección |
 
 Validez: mientras coincida la versión de la cripta (`version.json` /
 `GET .../version`).

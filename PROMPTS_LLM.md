@@ -1000,3 +1000,15 @@ Uso: revisar el informe de la Fase 1, aprobar el push, señalar tres ajustes pre
 - **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-implement` (Fase 3, US1)
 - **Prompt:** "retoma donde qudaste, antes verifica que los T anteriores de la fase si hayan quedado implementados"
 - **Uso:** comprobar que T010 a T015 estaban en el árbol de trabajo y funcionaban (prueba_reglas en verde y una comprobación directa de Salida y Sala), y terminar T016 (Mundo.enlazar), T017 (Partida.costo_de), T018 (EventoAccionActor), T019 (ControladorMenu sin cambios) y T020: las tres pruebas de US1 en verde, prueba_reglas OK, suite 37/37 y main.py --bench --rapido sin errores.
+
+## Entrada 118
+Fecha: 01/11/2026
+Herramienta: Claude
+Prompt: “[informe de la Fase 3 de Claude Code] lo que veo es lo del null del json pero realmente no lo veo tan mal, auqnue nose si es mejor no declarado para evitar errorres de no haber inicializado parametors, y lo demas lo veo bien trabajado”
+Uso: decidir que un costo null equivale a no declarado, registrar la aclaración en la spec antes del código y dar el prompt para cerrar la Fase 3.
+
+## Entrada 119
+- **Fecha:** 01/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Sí: un "costo": null equivale a no declarado (100), igual que llave y cierre_automatico, que ya usan datos.get. Orden: 1) Un commit que toque SOLO spec.md: en FR-003 y en los casos borde, aclara que costo null equivale a ausente (100) y que cualquier otro valor que no sea entero ≥ 1 sigue siendo error. rango null o ausente en un cazador sigue siendo error (FR-009). 2) Ajusta el convertidor (T013) y prueba_datos_costo: null vale 100; "100", true, 0, -5 y 2.5 siguen fallando. Corre la suite. 3) Commit de la Fase 3 (US1) con las tareas marcadas en tasks.md y los prompts en PROMPTS_LLM.md. Avísame al terminar, con el resultado de la suite." Seguido de "y agrega" con el texto de la entrada 118.
+- **Uso:** (1) spec.md: FR-003 y casos borde (costo null = no declarado; rango null o ausente de un cazador sigue siendo error), commit e6106f2. (2) Primero se ajustó prueba_datos_costo (sacar null de los inválidos y un caso nuevo, que falló), después el convertidor con datos.get("costo"). Las tres pruebas de US1 pasan, prueba_reglas OK y la suite 37/37. T013 y contracts/datos-entrada.md dicen ahora "ausente o null". La Fase 3 ya estaba confirmada en 8bdd138, así que el ajuste va en un commit propio encima.
