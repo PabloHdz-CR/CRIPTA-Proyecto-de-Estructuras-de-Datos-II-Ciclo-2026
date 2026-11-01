@@ -988,3 +988,15 @@ Uso: revisar el informe de la Fase 1, aprobar el push, señalar tres ajustes pre
 - **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-implement` (Fase 2)
 - **Prompt:** "Haz push y empieza la Fase 2"
 - **Uso:** push de los ajustes previos (fa09957..702fc12) y Fase 2 (T007 a T009). Primero se escribió una verificación del contrato en el scratchpad (no entra en la suite, para no cambiar los totales) y fallaron sus 4 casos. Después: DatosInvalidos(ErrorCripta), SalidaDTO.costo y FichaEnemigoDTO.rango al final y con valor por omisión, y RegistroPuertas. Los 4 casos pasan, prueba_reglas sigue en verde y la suite queda en 37/37.
+
+## Entrada 116
+- **Fecha:** 01/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-implement` (Fase 3, US1)
+- **Prompt:** "Haz push y empieza la Fase 3"
+- **Uso:** push de la Fase 2 (702fc12..5772804) y escritura de las pruebas de US1 antes del código: prueba_costo_salidas (10 casos), prueba_datos_costo (9) y prueba_fuentes_costos. Fallaron todas por la razón esperada; se corrigieron dos defectos de las propias pruebas (un pasillo de 2 salas que termina la partida al llegar a la salida, y la propiedad ultimo_estado de VistaRegistradora, que tapaba el atributo de VistaNula). Después, T013 (convertidor), T014 (Salida) y T015 (Sala).
+
+## Entrada 117
+- **Fecha:** 01/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-implement` (Fase 3, US1)
+- **Prompt:** "retoma donde qudaste, antes verifica que los T anteriores de la fase si hayan quedado implementados"
+- **Uso:** comprobar que T010 a T015 estaban en el árbol de trabajo y funcionaban (prueba_reglas en verde y una comprobación directa de Salida y Sala), y terminar T016 (Mundo.enlazar), T017 (Partida.costo_de), T018 (EventoAccionActor), T019 (ControladorMenu sin cambios) y T020: las tres pruebas de US1 en verde, prueba_reglas OK, suite 37/37 y main.py --bench --rapido sin errores.

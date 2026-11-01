@@ -33,10 +33,28 @@ class Sala:
         # para decidir en O(salidas) y ocupa memoria constante por sala (§4.7).
         self.rastro = None                        # instante de la última presencia
         self.contenido_cargado = False
+        # Salidas de otras salas (o de esta) cuyo destino es esta sala. Las
+        # llena Mundo.enlazar(), en el orden en que se construyó el esqueleto
+        # (determinista). Permiten recorrer el grafo hacia atrás sin buscar
+        # salas por id (001-terreno-cazador, research R4, FR-011).
+        self._entrantes = ListaEnlazada()
 
     # ------------------------------------------------------------------
     # Salidas
     # ------------------------------------------------------------------
+
+    @property
+    def entrantes(self) -> ListaEnlazada:
+        """ListaEnlazada de las Salida que conducen a esta sala (tras el enlace)."""
+        return self._entrantes
+
+    def vaciar_entrantes(self) -> None:
+        """Olvida las entrantes; Mundo.enlazar() las vuelve a llenar."""
+        self._entrantes.vaciar()
+
+    def agregar_entrante(self, salida) -> None:
+        """Registra una salida que conduce a esta sala."""
+        self._entrantes.agregar_al_final(salida)
 
     def salida(self, direccion: str):
         """La Salida en esa dirección, o None si no existe. O(1)."""

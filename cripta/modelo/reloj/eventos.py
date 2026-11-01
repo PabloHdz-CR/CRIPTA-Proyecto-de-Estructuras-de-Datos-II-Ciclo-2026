@@ -19,9 +19,12 @@ class EventoAccionActor(Evento):
         if not actor.vivo or actor is partida.jugador:
             return
         accion = actor.comportamiento.decidir(actor, partida)
+        # DECISIÓN (R7): el costo se calcula ANTES de ejecutar, con la sala de
+        # origen; si se mueve, es el de la salida que cruza (FR-004).
+        costo = partida.costo_de(actor, accion)
         partida.ejecutar_accion_enemigo(actor, accion)
         if actor.vivo and not partida.terminada():
-            partida.programar_accion(actor, accion.costo_base)
+            partida.programar_accion(actor, costo)
 
 
 class EventoVeneno(Evento):

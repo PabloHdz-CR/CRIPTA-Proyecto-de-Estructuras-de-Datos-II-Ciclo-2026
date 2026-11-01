@@ -78,6 +78,9 @@ class Partida:
         for entrada in self.servicio.esqueleto():
             salas.agregar_al_final(entrada.sala)
         self.mundo.agregar_esqueleto(salas)
+        # Costos efectivos, entrantes y registro de puertas (001-terreno-cazador).
+        # Puede lanzar DatosInvalidos (FR-027): la partida no empieza.
+        self.mundo.enlazar()
         self.jugador = Jugador(self.datos.jugador, self.mundo.sala_inicial,
                                self.mundo.inventario_max)
 
@@ -155,10 +158,13 @@ class Partida:
         # DECISIÓN (SUPUESTO): se sigue el Apéndice B (el rastro de la sala actual se
         # refresca en cada acción); §2.9 dice 'al completar un movimiento'. Confirmar.
         self.mutador.asignar(self._sala_actual(), "rastro", self.reloj)   # Apéndice B
+        # DECISIÓN (R7): el costo se calcula ANTES de ejecutar, con la sala de
+        # origen: después de moverse el jugador ya está en la de destino (FR-028).
+        costo = self.costo_de(self.jugador, accion)
         self._ejecutar_accion_jugador(accion)
         self.mutador.asignar(self.jugador, "acciones", self.jugador.acciones + 1)
         if self.fin is None:
-            self.programar_accion(self.jugador, accion.costo_base)
+            self.programar_accion(self.jugador, costo)
         self._procesar_eventos()
         if self.diario is not None:
             self.diario.cerrar_intervalo()
@@ -254,6 +260,20 @@ class Partida:
             if evento.tiempo > self.reloj:
                 self.mutador.asignar(self, "reloj", evento.tiempo)
             evento.ejecutar(self)
+
+    def costo_de(self, actor, accion) -> int:
+        """Costo base de una acción de cualquier actor (FR-004, FR-006).
+
+        Si es Mover y existe la salida en esa dirección de la sala ACTUAL del
+        actor, es el costo de esa salida; si no, el COSTO_BASE de la acción,
+        igual que antes de 001-terreno-cazador. Se evalúa antes de ejecutar la
+        acción (research R7). O(1) más la búsqueda de la sala por id.
+        """
+        if isinstance(accion, Mover):
+            salida = self.mundo.sala(actor.sala).salida(accion.direccion)
+            if salida is not None:
+                return salida.costo
+        return accion.costo_base
 
     def programar_accion(self, actor, costo_base: int) -> None:
         """Programa el siguiente turno: tiempo + max(1, costo * 100 // velocidad)."""

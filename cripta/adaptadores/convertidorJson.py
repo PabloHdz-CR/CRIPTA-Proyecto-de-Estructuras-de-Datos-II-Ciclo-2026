@@ -1,5 +1,5 @@
 from ..modelo.estructuras.listaEnlazada import ListaEnlazada
-from ..modelo.puertos.errores import ErrorDeRed
+from ..modelo.puertos.errores import DatosInvalidos, ErrorDeRed
 from ..modelo.puertos.dto import (
     DIRECCIONES,
     ResumenCriptaDTO, JugadorDTO, DatosCriptaDTO,
@@ -52,16 +52,36 @@ def datos_cripta_desde_json(datos):
         jugador=jugador,
     )
 
-def _salida_desde_json(direccion, datos, operacion):
+def _costo_desde_json(id_sala, direccion, datos):
+    """El costo declarado de una salida, o None si no lo declara (FR-001).
+
+    Regla: entero >= 1; se rechazan bool, 0, negativos, decimales, texto y
+    null (FR-003). Un valor inválido nunca se sustituye en silencio: es un
+    error de datos que nombra la sala y la dirección.
+    """
+    if "costo" not in datos:
+        return None
+    costo = datos["costo"]
+    # DECISIÓN: type(...) is int y no isinstance: True y False son int en
+    # Python, y un bool en el JSON es un error de datos, no un costo 1 o 0.
+    if type(costo) is not int or costo < 1:
+        raise DatosInvalidos(
+            f"La salida {direccion} de la sala {id_sala} declara un costo inválido "
+            f"({costo!r}): debe ser un entero mayor o igual que 1")
+    return costo
+
+def _salida_desde_json(id_sala, direccion, datos, operacion):
     return SalidaDTO(
         direccion=direccion,
         sala=_requerido(datos, "sala", operacion),
         cerrada=bool(datos.get("cerrada", False)),
         llave=datos.get("llave"),
         cierre_automatico=datos.get("cierre_automatico"),
+        costo=_costo_desde_json(id_sala, direccion, datos),
     )
 
 def _sala_desde_json(datos, operacion):
+    id_sala = _requerido(datos, "id", operacion)
     salidas_json = _requerido(datos, "salidas", operacion)
     for clave in salidas_json:
         if clave not in DIRECCIONES:
@@ -70,9 +90,9 @@ def _sala_desde_json(datos, operacion):
     for direccion in DIRECCIONES:
         if direccion in salidas_json:
             salidas.agregar_al_final(
-                _salida_desde_json(direccion, salidas_json[direccion], operacion))
+                _salida_desde_json(id_sala, direccion, salidas_json[direccion], operacion))
     return SalaDTO(
-        id=_requerido(datos, "id", operacion),
+        id=id_sala,
         nombre=_requerido(datos, "nombre", operacion),
         salidas=salidas,
     )

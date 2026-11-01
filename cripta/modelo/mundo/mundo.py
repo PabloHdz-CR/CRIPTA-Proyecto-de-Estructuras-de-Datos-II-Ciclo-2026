@@ -3,7 +3,8 @@ from __future__ import annotations
 
 from ..estructuras.listaEnlazada import ListaEnlazada
 from ..puertos.dto import DIRECCIONES
-from ..puertos.errores import ErrorCripta
+from ..puertos.errores import DatosInvalidos, ErrorCripta
+from .registroPuertas import RegistroPuertas
 from .sala import Sala
 from .salida import Salida
 
@@ -24,6 +25,9 @@ class Mundo:
         # asume que los ids sean consecutivos, y el proyecto no usa una tabla de
         # búsqueda propia como sustituto de dict (§7; ver D32 en EsqueletoCripta).
         self._salas = ListaEnlazada()
+        # Uno por Mundo, compartido por todas sus salidas: avanza cada vez que
+        # cambia una puerta (001-terreno-cazador, FR-017, research R2).
+        self.registro_puertas = RegistroPuertas()
 
     def __len__(self) -> int:
         return len(self._salas)
@@ -51,6 +55,61 @@ class Mundo:
         for sala_dto in salas_dto:
             self._salas.agregar_al_final(Sala(
                 sala_dto.id, sala_dto.nombre, self._construir_salidas(sala_dto.salidas)))
+
+    def enlazar(self) -> None:
+        """Completa el esqueleto después de agregar_esqueleto() (y después de
+        cargar una partida guardada). Para cada salida:
+
+        - fija sus referencias directas: origen y sala_destino (research R4);
+        - la agrega a las entrantes de su sala de destino;
+        - resuelve su costo efectivo con su contraparte, la salida de la sala
+          de destino en la dirección opuesta (N↔S, E↔O) que conduce de vuelta
+          (research R8, contracts/datos-entrada.md):
+
+              A→B      B→A        costo de ambas
+              —        —          100
+              k        —          k
+              —        k          k
+              k        k          k
+              k₁       k₂ ≠ k₁    DatosInvalidos (la cripta se rechaza)
+              k        no existe  k (salida de un solo sentido)
+
+        - conecta el RegistroPuertas del mundo.
+
+        Es idempotente: antes de llenar vacía las entrantes de todas las salas,
+        así que llamarlo dos veces deja el mismo estado (FR-002).
+
+        Lanza DatosInvalidos si las dos caras de una puerta declaran costos
+        distintos (FR-027) y ErrorCripta si una salida conduce a una sala que
+        no existe. Costo: O(salas²) por la búsqueda lineal por id (D32), una
+        sola vez por partida.
+        """
+        for sala in self._salas:
+            sala.vaciar_entrantes()
+        for sala in self._salas:
+            for salida in sala.salidas:
+                if salida is None:
+                    continue
+                destino = self.sala(salida.destino)
+                destino.agregar_entrante(salida)
+                costo = self._costo_efectivo(sala, salida, destino)
+                salida.enlazar(sala, destino, costo, self.registro_puertas)
+
+    @staticmethod
+    def _costo_efectivo(sala, salida, destino) -> int:
+        """Costo de la salida según la tabla de enlazar()."""
+        declarado = salida.costo_declarado
+        contraparte = destino.salida(_opuesta(salida.direccion))
+        if contraparte is not None and contraparte.destino == sala.id:
+            otro = contraparte.costo_declarado
+            if declarado is not None and otro is not None and declarado != otro:
+                raise DatosInvalidos(
+                    f"Las caras de la puerta entre la sala {sala.id} "
+                    f"({salida.direccion}, costo {declarado}) y la sala {destino.id} "
+                    f"({contraparte.direccion}, costo {otro}) declaran costos distintos")
+            if declarado is None:
+                declarado = otro
+        return salida.costo if declarado is None else declarado
 
     def tiene_contenido(self, id_sala: int) -> bool:
         return self.sala(id_sala).contenido_cargado
@@ -80,7 +139,7 @@ class Mundo:
         norte = sur = este = oeste = None
         for dto in salidas_dto:
             salida = Salida(dto.direccion, dto.sala, dto.cerrada, dto.llave,
-                            dto.cierre_automatico)
+                            dto.cierre_automatico, dto.costo)
             if dto.direccion == DIRECCIONES[0]:
                 norte = salida
             elif dto.direccion == DIRECCIONES[1]:
@@ -90,3 +149,9 @@ class Mundo:
             elif dto.direccion == DIRECCIONES[3]:
                 oeste = salida
         return (norte, sur, este, oeste)
+
+
+def _opuesta(direccion: str) -> str:
+    """N↔S y E↔O. En DIRECCIONES = (N, S, E, O) las opuestas son los pares
+    (0, 1) y (2, 3), así que basta cambiar el último bit del índice."""
+    return DIRECCIONES[DIRECCIONES.index(direccion) ^ 1]

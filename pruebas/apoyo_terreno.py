@@ -404,7 +404,8 @@ def buscar_enemigo(partida: Partida, id_instancia: str):
 # ---------------------------------------------------------------------------
 
 class VistaRegistradora(VistaNula):
-    """VistaNula que guarda cada llamada para que las pruebas la revisen."""
+    """VistaNula que guarda cada llamada para que las pruebas la revisen. Sigue
+    llenando los ultimo_* de VistaNula (ultimo_estado, ultimo_error...)."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -413,18 +414,16 @@ class VistaRegistradora(VistaNula):
         self.fines = []
 
     def mostrar_error(self, mensaje: str) -> None:
+        super().mostrar_error(mensaje)
         self.errores.append(mensaje)
 
     def mostrar_estado(self, estado) -> None:
+        super().mostrar_estado(estado)
         self.estados.append(estado)
 
     def mostrar_fin(self, resultado) -> None:
+        super().mostrar_fin(resultado)
         self.fines.append(resultado)
-
-    @property
-    def ultimo_estado(self):
-        """El último estado mostrado, o None."""
-        return self.estados[-1] if self.estados else None
 
 
 if __name__ == "__main__":

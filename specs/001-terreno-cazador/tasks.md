@@ -107,7 +107,7 @@ heapq ni sorted (`prueba_reglas`).
 
 ### Tests for User Story 1 (escribir primero; deben fallar)
 
-- [ ] T010 [P] [US1] Crear `pruebas/prueba_costo_salidas.py`, con docstring que cite FR-001, FR-002, FR-004 a FR-008 y FR-028, y un caso por escenario con su marca:
+- [X] T010 [P] [US1] Crear `pruebas/prueba_costo_salidas.py`, con docstring que cite FR-001, FR-002, FR-004 a FR-008 y FR-028, y un caso por escenario con su marca:
   - **H1.E1**: sin costo declarado, velocidad 100 → +100.
   - **H1.E2**: costo 300, velocidad 100 → +300.
   - **H1.E3**: costo 1, velocidad 1000 → +1.
@@ -118,19 +118,19 @@ heapq ni sorted (`prueba_reglas`).
   Además:
   - Una puerta cruzada en los dos sentidos cuesta lo mismo (FR-002).
   - Durante el intervalo, el actor ya está en la sala de destino y puede ser atacado ahí (FR-028).
-- [ ] T011 [P] [US1] Crear `pruebas/prueba_datos_costo.py`, con docstring que cite FR-001, FR-003, FR-019 y FR-027:
+- [X] T011 [P] [US1] Crear `pruebas/prueba_datos_costo.py`, con docstring que cite FR-001, FR-003, FR-019 y FR-027:
   - **H1.E7**: caras con costos distintos (300 y 200) → `DatosInvalidos`; el mensaje nombra las dos salas y los dos costos.
   - **H1.E8**: solo A→B declara 300 → cuesta 300 en ambos sentidos.
   - Costo inválido (`0`, `-5`, `2.5`, `"100"`, `true`) → error de datos que nombra sala y dirección.
   - Contraparte inexistente (salida de un solo sentido) → vale el costo declarado.
   - `enlazar()` es idempotente: dos llamadas seguidas dejan las mismas entrantes en cada sala (misma cantidad, sin duplicados), los mismos costos y una sola versión de registro por salida (FR-002).
   - **Error en el Controlador**: `ControladorMenu` con `VistaRegistradora` (T005) sobre `pruebas/datos/terreno_cazador` inicia `terreno-caras-distintas`. Debe capturar `DatosInvalidos`, llamar una sola vez a `mostrar_error` con un texto que contenga "No se pudo iniciar la cripta", ambas salas y ambos costos, y dejar `_juego` en None (la partida no empieza).
-- [ ] T012 [P] [US1] Crear `pruebas/prueba_fuentes_costos.py`, con docstring que cite FR-019 y FR-021. Las mismas páginas de esqueleto de `terreno-a`, servidas por `ClienteHttp` contra `ServidorFalso` (de `pruebas/prueba_falso_1_6.py`, como en `prueba_falso_1_9`) y por `FuenteOffline` sobre `pruebas/datos/terreno_cazador`, deben dar el mismo `SalidaDTO.costo` en cada salida y el mismo costo efectivo después de `Mundo.enlazar()`.
+- [X] T012 [P] [US1] Crear `pruebas/prueba_fuentes_costos.py`, con docstring que cite FR-019 y FR-021. Las mismas páginas de esqueleto de `terreno-a`, servidas por `ClienteHttp` contra `ServidorFalso` (de `pruebas/prueba_falso_1_6.py`, como en `prueba_falso_1_9`) y por `FuenteOffline` sobre `pruebas/datos/terreno_cazador`, deben dar el mismo `SalidaDTO.costo` en cada salida y el mismo costo efectivo después de `Mundo.enlazar()`.
 
 ### Implementation for User Story 1
 
-- [ ] T013 [US1] En `cripta/adaptadores/convertidorJson.py`, hacer que `_salida_desde_json` lea `costo` (recibe también el id de la sala para el mensaje). Regla: "entero ≥ 1; se rechazan bool, 0, negativos, decimales y texto". Si no se cumple, lanza un error de datos de la jerarquía `ErrorCripta` que nombra la sala y la dirección. Si falta el campo, queda `None`. Cubre FR-001, FR-003 y FR-019.
-- [ ] T014 [US1] En `cripta/modelo/mundo/salida.py`:
+- [X] T013 [US1] En `cripta/adaptadores/convertidorJson.py`, hacer que `_salida_desde_json` lea `costo` (recibe también el id de la sala para el mensaje). Regla: "entero ≥ 1; se rechazan bool, 0, negativos, decimales y texto". Si no se cumple, lanza un error de datos de la jerarquía `ErrorCripta` que nombra la sala y la dirección. Si falta el campo, queda `None`. Cubre FR-001, FR-003 y FR-019.
+- [X] T014 [US1] En `cripta/modelo/mundo/salida.py`:
   - Nuevo parámetro `costo=None`, guardado como `_costo_declarado`.
   - Propiedad `costo`: el costo efectivo si ya se enlazó; si no, el declarado, o 100.
   - Propiedad `cerrada` sobre `_cerrada`; su *setter* llama a `_registro.avisar_cambio()` si `_registro` no es None.
@@ -140,8 +140,8 @@ heapq ni sorted (`prueba_reglas`).
   - `transitable()` sigue siendo `not cerrada`. Mutador, Diario y partidaBinaria siguen escribiendo `salida.cerrada` sin cambios.
 
   Cubre FR-001, FR-002 y FR-017.
-- [ ] T015 [US1] En `cripta/modelo/mundo/sala.py`, agregar `_entrantes` (ListaEnlazada de Salida) y la propiedad `entrantes`. Cubre FR-011 (research R4).
-- [ ] T016 [US1] En `cripta/modelo/mundo/mundo.py`:
+- [X] T015 [US1] En `cripta/modelo/mundo/sala.py`, agregar `_entrantes` (ListaEnlazada de Salida) y la propiedad `entrantes`. Cubre FR-011 (research R4).
+- [X] T016 [US1] En `cripta/modelo/mundo/mundo.py`:
   - `_construir_salidas` pasa `dto.costo`.
   - Nuevo atributo `registro_puertas` (un `RegistroPuertas` por Mundo).
   - Nuevo método `enlazar()`. Para cada salida: resuelve `origen` y `sala_destino`; la agrega a `entrantes` de su destino; busca la contraparte (la salida de la sala destino en la dirección opuesta, N↔S y E↔O, que conduce de vuelta); resuelve el costo efectivo con la tabla de `contracts/datos-entrada.md`; y conecta `_registro`.
@@ -150,16 +150,16 @@ heapq ni sorted (`prueba_reglas`).
   - Docstring con el costo: O(salas²), una sola vez.
 
   Cubre FR-002 y FR-027.
-- [ ] T017 [US1] En `cripta/modelo/nucleo/partida.py`:
+- [X] T017 [US1] En `cripta/modelo/nucleo/partida.py`:
   - `iniciar()` llama a `self.mundo.enlazar()` justo después de `agregar_esqueleto`.
   - Nuevo `costo_de(actor, accion) -> int`: si es `Mover` y existe la salida en esa dirección de la sala **actual** del actor, su `costo`; si no, `accion.costo_base`.
   - `aplicar_accion` calcula el costo **antes** de `_ejecutar_accion_jugador` y lo usa en `programar_accion`.
   - `cambiar_velocidad` no cambia.
 
   Cubre FR-004, FR-005, FR-006, FR-008 y FR-028.
-- [ ] T018 [US1] En `cripta/modelo/reloj/eventos.py`, `EventoAccionActor.ejecutar` calcula `costo = partida.costo_de(actor, accion)` **antes** de `partida.ejecutar_accion_enemigo` y reprograma con ese costo. Cubre FR-004 y FR-007.
-- [ ] T019 [US1] Confirmar que `cripta/controlador/controladorMenu.py` no necesita cambios: `_empezar_partida` ya captura `ErrorCripta` y llama a `mostrar_error`. Hacer que T011 pase. Si no pasa, ajustar solo el mensaje, sin capturar `DatosInvalidos` aparte. Cubre FR-027.
-- [ ] T020 [US1] Ejecutar `py -m pruebas.prueba_costo_salidas`, `py -m pruebas.prueba_datos_costo`, `py -m pruebas.prueba_fuentes_costos`, `py -m pruebas.prueba_reglas` y la suite completa con `py pruebas/ejecutar_pruebas.py`: todo en verde y sin regresiones, porque las criptas sin `costo` se comportan igual que antes. Cubre FR-006 y FR-007.
+- [X] T018 [US1] En `cripta/modelo/reloj/eventos.py`, `EventoAccionActor.ejecutar` calcula `costo = partida.costo_de(actor, accion)` **antes** de `partida.ejecutar_accion_enemigo` y reprograma con ese costo. Cubre FR-004 y FR-007.
+- [X] T019 [US1] Confirmar que `cripta/controlador/controladorMenu.py` no necesita cambios: `_empezar_partida` ya captura `ErrorCripta` y llama a `mostrar_error`. Hacer que T011 pase. Si no pasa, ajustar solo el mensaje, sin capturar `DatosInvalidos` aparte. Cubre FR-027.
+- [X] T020 [US1] Ejecutar `py -m pruebas.prueba_costo_salidas`, `py -m pruebas.prueba_datos_costo`, `py -m pruebas.prueba_fuentes_costos`, `py -m pruebas.prueba_reglas` y la suite completa con `py pruebas/ejecutar_pruebas.py`: todo en verde y sin regresiones, porque las criptas sin `costo` se comportan igual que antes. Cubre FR-006 y FR-007.
 
 **Checkpoint**: US1 completa y demostrable sola (MVP).
 
