@@ -34,11 +34,11 @@ heapq ni sorted (`prueba_reglas`).
 **Purpose**: dejar una línea base verde y los datos y ayudas que usan las pruebas de todas las historias. T001 a T003 van **antes de cambiar cualquier código** de `cripta/`.
 
 - [ ] T001 Confirmar la línea base en esta rama, antes de cambiar código, con `.venv` activado:
-  - En `PRUEBAS` de `pruebas/ejecutar_pruebas.py`, descomentar las pruebas comentadas que no usan la red: hoy, `prueba_falso_1_6` (servidor simulado).
+  - En `PRUEBAS` de `pruebas/ejecutar_pruebas.py`, revisar las pruebas comentadas que no usan la red. La única es `prueba_falso_1_6`, que **queda fuera**: no es una prueba, sino el módulo que define `ServidorFalso` (no tiene asserts y, corrido solo, sale con 0 sin verificar nada). Lo ejercita `prueba_falso_1_9`, que ya está en la suite. Se deja comentada, con un comentario que lo explica.
   - Las `prueba_real_1_6` y `prueba_real_1_9` siguen comentadas, con su comentario actual, porque llaman al API real y gastan `presupuesto_solicitudes` (principio IV). El README ya indica que se corren aparte.
   - Si una prueba descomentada falla, se corrige o se documenta por qué queda fuera, en el mismo commit.
-  - Ejecutar `py pruebas/ejecutar_pruebas.py` hasta que corra **completa y en verde**, y anotar el total de pruebas como línea base (se espera 38: las 37 de hoy más `prueba_falso_1_6`).
-  - En `README.md:27`, corregir "Corre las 36 pruebas" al total de la línea base (38).
+  - Ejecutar `py pruebas/ejecutar_pruebas.py` hasta que corra **completa y en verde**, y anotar el total de pruebas como línea base: **37**.
+  - En `README.md:27`, corregir "Corre las 36 pruebas" al total de la línea base (37).
 
   Cubre: protege FR-006 y FR-007 (sin regresiones) y es la base de SC-001.
 - [ ] T002 Ampliar `pruebas/prueba_reglas.py` para que haga cumplir todo el principio I sobre `cripta/`, antes de escribir código nuevo. Debe detectar:
@@ -95,7 +95,7 @@ heapq ni sorted (`prueba_reglas`).
 
   Cubre FR-017 (research R2).
 
-**Checkpoint**: los módulos nuevos se importan y `py pruebas/ejecutar_pruebas.py` sigue en verde, con el total de la línea base de T001.
+**Checkpoint**: los módulos nuevos se importan y `py pruebas/ejecutar_pruebas.py` sigue en verde, **37/37** (la línea base de T001).
 
 ---
 
@@ -349,7 +349,7 @@ heapq ni sorted (`prueba_reglas`).
 - [ ] T054 [P] En `README.md`:
   - Agregar una nota: los archivos de guardado del formato anterior se reportan incompatibles (`VersionIncompatible`) y no se migran; hay que empezar una partida nueva.
   - Mencionar el costo de las salidas y el cazador.
-  - En `README.md:27`, cambiar el conteo de pruebas de 38 (lo deja T001) a **47**: las 38 de la línea base más las 9 nuevas de T053. Confirmar que `py pruebas/ejecutar_pruebas.py` imprime "Todas las pruebas pasaron (47)" (47/47) antes de escribirlo.
+  - En `README.md:27`, cambiar el conteo de pruebas de 37 (lo deja T001) a **46**: las 37 de la línea base más las 9 nuevas de T053. Confirmar que `py pruebas/ejecutar_pruebas.py` imprime "Todas las pruebas pasaron (46)" (46/46) antes de escribirlo.
 
   Cubre FR-022.
 - [ ] T055 [P] En `DECISIONES.md`, **antes de numerar**, hacer `git pull` de `main` (otras features pueden haber agregado decisiones) y usar el **siguiente número D libre**, sin suponer D71. Agregar la sección del problema resuelto, con enlaces a `specs/001-terreno-cazador/spec.md` y `specs/001-terreno-cazador/plan.md`:
@@ -363,7 +363,7 @@ heapq ni sorted (`prueba_reglas`).
 - [ ] T056 [P] Registro en `PROMPTS_LLM.md`: **cada commit de fase incluye** la entrada de los prompts usados en esa fase (constitución, "Flujo y definición de hecho"), con el siguiente número libre de `## Entrada N` tal como está en el archivo en ese momento. Esta tarea verifica al final que ningún commit de fase quedó sin su entrada y que la numeración es continua. No cubre ningún FR: es un requisito de proceso de la constitución, no del producto.
 - [ ] T057 Comprobar la tabla de escenarios (SC-001): buscar en `pruebas/` las 21 marcas `H<historia>.E<escenario>` de la sección "Escenarios de aceptación → pruebas" y confirmar que cada una aparece en la prueba asignada. Cubre SC-001.
 - [ ] T058 Validación completa con `.venv` activado:
-  - `py pruebas/ejecutar_pruebas.py`: todas pasan, **47/47**.
+  - `py pruebas/ejecutar_pruebas.py`: todas pasan, **46/46**.
   - `py pruebas/prueba_reglas.py` (ampliada en T002): sin dict, set, list, heapq, bisect ni sorted en `cripta/`.
   - `py main.py --bench --rapido`.
   - quickstart.md §3 y §4.
