@@ -215,3 +215,4 @@ pequeño en criptas de tamaños distintos.
 - La verificación de resolubilidad de la cripta depende de qué salas son alcanzables, no de costos, por lo que no cambia.
 - La cripta de referencia para las mediciones es la misma usada por los límites de rendimiento de la constitución.
 - Los enemigos solo persiguen al jugador (no a otros enemigos).
+- El cazador usa la misma regla de activación que los demás enemigos (Parte I §2.4): está dormido y no actúa hasta que el jugador entra a su sala; una vez activo permanece activo aunque cambie de sala. Su primera acción se programa con costo base 100. La decisión de la ruta (FR-011 a FR-017) solo aplica a cazadores activos.
