@@ -47,6 +47,10 @@ CARPETA_TERRENO = RAIZ / "pruebas" / "datos" / "terreno_cazador"
 
 OPUESTA = {"N": "S", "S": "N", "E": "O", "O": "E"}
 COSTOS_AL_AZAR = (1, 50, 100, 250, 300)
+# Probabilidad de duplicar a propósito una conexión (ver cripta_al_azar).
+# Calibrada para que entre el 20 y el 30 % de las criptas tenga alguna sala
+# con dos salidas hacia la misma vecina; lo comprueba la autocomprobación.
+PROB_DUPLICADA = 0.04
 
 ID_CRIPTA = "c-sintetica"
 VERSION_CRIPTA = "v1"
@@ -124,18 +128,35 @@ def ruta_corta_cara() -> tuple:
     )
 
 
+def duplicadas_misma_vecina() -> tuple:
+    """Caso fijo del desempate de FR-014: la sala 1 tiene dos salidas abiertas
+    hacia la sala 2 (N y E), con el mismo costo 50, y la 2 vuelve por las dos
+    caras opuestas (S y O). Con el cazador en 1 y el jugador en 2, debe salir
+    por el N (la primera en el orden N, S, E, O) con costo 50. Además, la sala 1
+    tiene una salida al S hacia la 3, más cara, que no debe elegir."""
+    return (
+        (1, (salida("N", 2, 50), salida("S", 3, 100), salida("E", 2, 50))),
+        (2, (salida("S", 1, 50), salida("O", 1, 50))),
+        (3, (salida("N", 1, 100),)),
+    )
+
+
 def cripta_al_azar(azar: random.Random, salas_min: int = 4, salas_max: int = 12,
                    prob_un_sentido: float = 0.2, prob_cerrada: float = 0.2,
-                   prob_una_cara: float = 0.3, prob_duplicada: float = 0.25) -> tuple:
+                   prob_una_cara: float = 0.3,
+                   prob_duplicada: float = PROB_DUPLICADA) -> tuple:
     """Cripta pequeña al azar para la equivalencia con el oráculo (T022).
 
     - Costos al azar en COSTOS_AL_AZAR o sin declarar.
     - Puertas de doble sentido con costos coherentes entre caras (las dos
       iguales, o solo una declarada: FR-027), y salidas de un solo sentido.
     - Cada cara se cierra al azar por su cuenta (puertas direccionales).
-    - Con frecuencia fija (prob_duplicada), una segunda puerta entre las mismas
-      dos salas, en otra dirección y con el mismo costo, para ejercitar el
-      desempate N, S, E, O de FR-014.
+    - Dos salas se conectan una sola vez, salvo que, con frecuencia fija
+      (prob_duplicada), se agregue a propósito una segunda puerta entre ellas,
+      en otra dirección y con el mismo costo, para ejercitar el desempate
+      N, S, E, O de FR-014. Así solo una minoría de las criptas (entre 20 y
+      30 %) tiene alguna sala con dos salidas hacia la misma vecina; el caso
+      fijo es duplicadas_misma_vecina().
 
     Usa solo el Random que recibe (determinismo). No garantiza que el grafo
     sea conexo: "sin ruta" también es un caso que se prueba.
@@ -148,6 +169,11 @@ def cripta_al_azar(azar: random.Random, salas_min: int = 4, salas_max: int = 12,
         """Una dirección libre en a cuya opuesta esté libre en b, o None."""
         candidatas = [d for d in libres[a] if OPUESTA[d] in libres[b]]
         return azar.choice(candidatas) if candidatas else None
+
+    def ya_conectadas(a, b):
+        """True si a ya tiene una salida hacia b o b una hacia a."""
+        return (any(s[1] == b for s in salidas[a])
+                or any(s[1] == a for s in salidas[b]))
 
     def conectar(a, b, d, costo, un_sentido):
         libres[a].remove(d)
@@ -164,7 +190,7 @@ def cripta_al_azar(azar: random.Random, salas_min: int = 4, salas_max: int = 12,
     for _ in range(intentos):
         a = azar.randint(1, n)
         b = azar.randint(1, n)
-        if a == b:
+        if a == b or ya_conectadas(a, b):
             continue
         d = direccion_libre(a, b)
         if d is None:
@@ -406,11 +432,12 @@ if __name__ == "__main__":
     # azar son esqueletos válidos, reproducibles con la misma semilla, y una
     # parte tiene dos salidas hacia la misma vecina (FR-014).
     for constructor in (pasillo(5), pasillo(3, costo=250), malla(4), malla(3, costo=50),
-                        ruta_corta_cara()):
+                        ruta_corta_cara(), duplicadas_misma_vecina()):
         validar_descripcion(constructor)
     assert len(malla(32)) == 1024
+    MUESTRA = 1000
     con_duplicadas = 0
-    for semilla in range(300):
+    for semilla in range(MUESTRA):
         primera = cripta_al_azar(random.Random(semilla))
         assert primera == cripta_al_azar(random.Random(semilla)), semilla
         validar_descripcion(primera)
@@ -420,5 +447,8 @@ if __name__ == "__main__":
             if len(destinos) != len(set(destinos)):
                 con_duplicadas += 1
                 break
-    assert con_duplicadas > 30, f"pocas criptas con salidas duplicadas: {con_duplicadas}"
-    print(f"apoyo_terreno OK ({con_duplicadas} de 300 criptas con dos salidas a la misma vecina)")
+    porcentaje = 100 * con_duplicadas / MUESTRA
+    assert 20 <= porcentaje <= 30, (
+        f"{porcentaje:.1f} % de criptas con dos salidas a la misma vecina; se busca 20-30 %")
+    print(f"apoyo_terreno OK ({con_duplicadas} de {MUESTRA} criptas, {porcentaje:.1f} %, "
+          "con dos salidas a la misma vecina)")
