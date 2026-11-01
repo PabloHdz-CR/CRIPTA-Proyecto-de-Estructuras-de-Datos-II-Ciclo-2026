@@ -22,6 +22,7 @@ class Enemigo(Actor):
         """Pasa de dormido a activo y programa su primera acción (costo 100)."""
         sala = partida.mundo.sala(self.sala)
         partida.mutador.enemigo_activar(sala, self)
+        partida.registrar_activacion(self)
         partida.programar_accion(self, COSTO_PRIMERA_ACCION_ENEMIGO)
         if self.regeneracion > 0:
             EfectoRegeneracion(self, self.regeneracion).aplicar(partida)

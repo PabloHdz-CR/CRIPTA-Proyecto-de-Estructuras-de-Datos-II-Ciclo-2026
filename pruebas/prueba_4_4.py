@@ -133,9 +133,10 @@ for fila in reporte.tablas.obtener(2)[2]:
 
 # 7. benchTodo reúne todas las mediciones (agenda=3, listaDoble=2, historial=1,
 # bitácora=3, cache=3, ordenamiento=7, guardado=3, etiquetas=1, rastro=2,
-# precarga=1, datos=3)
+# precarga=1, datos=3, cazador=5 de 001-terreno-cazador: ciclo, cota, conteos,
+# comparación y enlace)
 todo = ejecutar_todo(Reporte(imprimir=False), rapido=True)
-assert len(todo.tablas) == 3 + 2 + 1 + 3 + 3 + 7 + 3 + 1 + 2 + 1 + 3, len(todo.tablas)
+assert len(todo.tablas) == 3 + 2 + 1 + 3 + 3 + 7 + 3 + 1 + 2 + 1 + 3 + 5, len(todo.tablas)
 assert time.perf_counter() - inicio < 120
 
 print("Sección 4.4 OK")

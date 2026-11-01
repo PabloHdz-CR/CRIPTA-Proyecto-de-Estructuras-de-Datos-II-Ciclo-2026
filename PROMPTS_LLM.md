@@ -1036,3 +1036,9 @@ Uso: decidir que un costo null equivale a no declarado, registrar la aclaración
 - **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-implement` (Fase 6, US4)
 - **Prompt:** "ya lo revisé, marca T038, haz push y empieza la Fase 6"
 - **Uso:** marcar T038 (el usuario hizo la revisión manual de quickstart §3), push de la Fase 5 y comienzo de la Fase 6.
+
+## Entrada 124
+- **Fecha:** 01/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-implement` (Fase 6, US4)
+- **Prompt:** respuestas a dos preguntas de la Fase 6: "¿Apruebas esta enmienda [de FR-026(b): R es el mayor rango entre los cazadores activos (los únicos que deciden) en el momento del cálculo]?" → "Sí, con este texto (Recomendado)"; "P3 necesita R_activos [...] ¿Cómo lo calcula la Partida?" → "Recorrer cazadores (Recomendado)".
+- **Uso:** Fase 6 (T039 a T046). Pruebas primero: prueba_conteo_cazador (pasó desde el inicio porque el mapa acotado ya existía; se comprobó que un mapa sin cota la hace fallar) y prueba_rendimiento_cazador (falló: no existía el bench, y después P1 dio 45 y 50 ms con 100 rangos distintos en la malla de 1024 salas). Se escribieron alternativasCazador (P1, P2 y BusquedaPorCazador, validada contra el oráculo en 4500 decisiones) y benchCazador, registrado en benchTodo. T044: solo P3 pasaba los 20 ms (P1 40,8 y 41,4 ms; P2 21,6 ms; P3 18,0 ms). T045: enmienda de FR-026(b) en su propio commit (859cf55), P3 en MapaDistancias y R_activos en la Partida. P3 quedaba en el límite (17,9 a 21,6 ms) por la búsqueda lineal de salas por id, repetida en cada turno de enemigo: Mundo.sala() recuerda la última sala y el movimiento de enemigos usa salida.sala_destino. Bench final: P3 15,8 ms como máximo en la malla. prueba_4_4 cuenta las 5 tablas nuevas de benchTodo. Suite 37/37.

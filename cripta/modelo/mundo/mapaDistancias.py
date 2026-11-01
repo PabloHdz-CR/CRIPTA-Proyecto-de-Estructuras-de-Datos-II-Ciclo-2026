@@ -2,7 +2,7 @@
 (001-terreno-cazador, FR-011, FR-015, FR-017, FR-026; research R1 a R6)."""
 from __future__ import annotations
 
-from typing import Optional
+from typing import Callable, Optional
 
 from ..estructuras.heapMinimo import HeapMinimo
 
@@ -53,12 +53,22 @@ class MapaDistancias:
     del jugador (las que fija) y sus vecinas inmediatas hacia atrás (las que
     anota sin llegar a fijar). No depende del tamaño total de la cripta.
 
+    Política de cota P3 (T044, plan.md "Política de cota del mapa"): al
+    recalcular con el mismo objetivo y la misma versión, la cota se duplica
+    para no recalcular una vez por cada rango distinto, pero nunca pasa de
+    R_activos, el mayor rango entre los cazadores activos (FR-026(b)).
+
     No es estado reversible (principio V): es caché derivada. Se invalida,
     nunca se restaura; deshacer o cargar cambian la versión de las puertas.
     """
 
-    def __init__(self, mundo) -> None:
+    def __init__(self, mundo,
+                 mayor_rango_activo: Optional[Callable[..., int]] = None) -> None:
+        """mayor_rango_activo: función que devuelve R_activos (la Partida pasa
+        Partida.mayor_rango_activo). Sin ella, el tope es el rango pedido: la
+        cota nunca pasa de lo que se consulta."""
         self._mundo = mundo
+        self._mayor_rango_activo = mayor_rango_activo
         self._registro = mundo.registro_puertas
         self._sello = 0                      # 0 = todavía no se calculó
         self._id_objetivo: Optional[int] = None
@@ -135,13 +145,21 @@ class MapaDistancias:
     def _cota_nueva(self, cota_minima: int) -> int:
         """Regla de la cota al recalcular (plan.md, "Política de cota del mapa").
 
-        Política P1: max(cota anterior si el objetivo y la versión no
-        cambiaron, cota_minima). Explora exactamente lo que se pide y cumple
-        FR-026(b) a la letra. Las subclases del bench (P2, P3) sobrescriben
-        solo este método. self._cota_reutilizable es la cota anterior si el
-        estado no cambió, o 0 si cambió.
+        Política P3, elegida con el bench (T044): duplicar con tope,
+        max(cota_minima, min(max(cota_minima, 2 × anterior), R_activos)).
+        'anterior' es la cota vigente si el objetivo y la versión no
+        cambiaron, o 0 si cambiaron (self._cota_reutilizable). Así, 100
+        cazadores con rangos distintos recalculan O(log2(R_max / R_min))
+        veces por ciclo y no una vez por rango, y la cota nunca pasa del
+        mayor rango entre los cazadores activos (FR-026(b) enmendado). Las
+        alternativas del bench (P1, P2) sobrescriben solo este método.
         """
-        return max(self._cota_reutilizable, cota_minima)
+        duplicada = max(cota_minima, 2 * self._cota_reutilizable)
+        if self._mayor_rango_activo is None:
+            tope = cota_minima
+        else:
+            tope = self._mayor_rango_activo()
+        return max(cota_minima, min(duplicada, tope))
 
     def _calcular(self, objetivo, version: int, cota: int) -> None:
         """Dijkstra hacia atrás desde 'objetivo', sin pasar de 'cota'."""

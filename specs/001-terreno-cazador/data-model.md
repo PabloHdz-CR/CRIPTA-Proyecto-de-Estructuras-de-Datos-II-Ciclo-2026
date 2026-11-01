@@ -76,6 +76,13 @@ lo único que importa es que *cambie* (R2).
 
 ### Mundo (`cripta/modelo/mundo/mundo.py`)
 
+- **`_ultima_sala`**: `sala(id)` recuerda la última sala encontrada (una sola
+  referencia, no un índice). En un turno de enemigo, decidir, `costo_de()` y
+  ejecutar buscan la misma sala; así solo la primera recorre la lista. D32 no
+  cambia (la búsqueda sigue siendo lineal). Medido con `benchCazador`.
+- `_ultima_sala = None` y `_sello_mapa = 0` también son valores por omisión a
+  nivel de clase, para los Mundo que la carga crea con `Mundo.__new__`.
+
 - **`registro_puertas`**: el RegistroPuertas de este mundo.
 - **`enlazar()`**: se ejecuta una vez, tras `agregar_esqueleto` y tras cargar
   una partida guardada. Para cada salida resuelve `origen` y `sala_destino`,
@@ -119,10 +126,14 @@ Operaciones:
   sigue siendo el suyo y la cota es ≥ `cota_minima`. Si no, recalcula desde
   cero con la cota que devuelve `_cota_nueva(cota_minima)`.
 - `_cota_nueva(cota_minima)`: la regla de la cota, aislada para que las
-  subclases del bench (P2, P3) sobrescriban solo este método. La política se
-  decide con el bench (research.md R3; plan.md, "Política de cota del mapa").
-  La base es P1: `max(cota_anterior si el objetivo y la versión no
-  cambiaron, cota_minima)`.
+  alternativas del bench (P1, P2) sobrescriban solo este método. **Política
+  P3**, elegida con el bench (T044): `max(cota_minima, min(max(cota_minima,
+  2 × anterior), R_activos))`, donde `anterior` es la cota vigente si el
+  objetivo y la versión no cambiaron (o 0) y `R_activos` es el mayor rango
+  entre los cazadores activos (FR-026(b) enmendado en `859cf55`).
+- Constructor `MapaDistancias(mundo, mayor_rango_activo=None)`:
+  `mayor_rango_activo` es una función que devuelve R_activos (la Partida pasa
+  `Partida.mayor_rango_activo`). Sin ella, el tope es el rango pedido.
 - El cálculo es un Dijkstra hacia atrás por `entrantes` abiertas, con el
   `HeapMinimo` y eliminación perezosa (R6), sin pasar de la cota: una vecina
   a más de la cota queda anotada (cuenta como examinada) pero no entra al
@@ -164,6 +175,14 @@ El paso "comparte sala, entonces ataca" ya lo hace `Comportamiento.decidir`
 construir `Cazador(rango)`, reconocido por el prefijo "cazad", en minúsculas.
 
 ### Costo de las acciones (`cripta/modelo/nucleo/partida.py`)
+
+- **`registrar_activacion(enemigo)`**: lo llama `Enemigo.activar()`; la
+  Partida recuerda a cada cazador activado (una vez).
+- **`mayor_rango_activo() -> int`**: R_activos, el mayor rango entre los
+  cazadores activos y vivos (0 si no hay). Filtra al consultar, así deshacer
+  o morir no lo desfasan. O(cazadores), no O(salas).
+- `ejecutar_accion_enemigo` mueve al destino por `salida.sala_destino` (la
+  referencia del enlace), sin buscarlo por id.
 
 - **`costo_de(actor, accion) -> int`**: si `accion` es `Mover` y existe la
   salida en esa dirección de la sala **actual** del actor, devuelve su `costo`.

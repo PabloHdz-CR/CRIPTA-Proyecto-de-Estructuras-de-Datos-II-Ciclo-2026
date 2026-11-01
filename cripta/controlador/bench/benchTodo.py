@@ -9,8 +9,9 @@ Más adelante el modo --bench del programa llamará a ejecutar_todo().
 import sys
 
 from . import (
-    benchAgenda, benchBitacora, benchCache, benchDatos, benchEtiquetas, benchGuardado,
-    benchHistorial, benchListaDoble, benchOrdenamiento, benchPrecarga, benchRastro)
+    benchAgenda, benchBitacora, benchCache, benchCazador, benchDatos, benchEtiquetas,
+    benchGuardado, benchHistorial, benchListaDoble, benchOrdenamiento, benchPrecarga,
+    benchRastro)
 from .reporte import Reporte
 
 
@@ -29,6 +30,7 @@ def ejecutar_todo(reporte=None, rapido=False):
     benchRastro.ejecutar(reporte, rapido)
     benchPrecarga.ejecutar(reporte, rapido)
     benchDatos.ejecutar(reporte, rapido)
+    benchCazador.ejecutar(reporte, rapido)     # 001-terreno-cazador (FR-025, FR-026)
     return reporte
 
 

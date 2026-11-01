@@ -15,6 +15,12 @@ class Mundo:
     en ningún punto del programa. Con las decenas o pocos cientos de salas de
     una cripta esto es aceptable. Guarda también los datos fijos."""
 
+    # Valores por omisión a nivel de clase (inmutables): un Mundo creado con
+    # Mundo.__new__ (la carga de partidaBinaria) también los tiene. Al
+    # asignarlos, cada instancia recibe el suyo.
+    _ultima_sala = None
+    _sello_mapa = 0
+
     def __init__(self, datos) -> None:
         self.sala_inicial = datos.sala_inicial
         self.sala_salida = datos.sala_salida
@@ -25,6 +31,11 @@ class Mundo:
         # asume que los ids sean consecutivos, y el proyecto no usa una tabla de
         # búsqueda propia como sustituto de dict (§7; ver D32 en EsqueletoCripta).
         self._salas = ListaEnlazada()
+        # La última sala encontrada por sala(id): una sola referencia, no un
+        # índice. En un turno de enemigo, decidir, costo_de() y ejecutar buscan
+        # la MISMA sala; así solo la primera recorre la lista (001-terreno-cazador,
+        # medido con benchCazador). D32 no cambia: la búsqueda sigue siendo lineal.
+        self._ultima_sala = None
         # Uno por Mundo, compartido por todas sus salidas: avanza cada vez que
         # cambia una puerta (001-terreno-cazador, FR-017, research R2).
         self.registro_puertas = RegistroPuertas()
@@ -57,9 +68,15 @@ class Mundo:
         return None
 
     def sala(self, id_sala: int) -> Sala:
+        """La sala con ese id. O(salas) en general; O(1) si es la misma de la
+        búsqueda anterior (las salas nunca se quitan y los ids no se repiten)."""
+        ultima = self._ultima_sala
+        if ultima is not None and ultima.id == id_sala:
+            return ultima
         sala = self._buscar(id_sala)
         if sala is None:
             raise ErrorCripta(f"La sala {id_sala} no existe en esta cripta")
+        self._ultima_sala = sala
         return sala
 
     def existe(self, id_sala: int) -> bool:

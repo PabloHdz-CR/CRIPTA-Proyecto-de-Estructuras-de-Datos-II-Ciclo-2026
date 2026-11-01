@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import random
 
+from ..actores.comportamientos import Cazador
 from ..actores.jugador import Jugador
 from ..estructuras.colaAcotada import ColaAcotada
 from ..estructuras.listaEnlazada import ListaEnlazada
@@ -55,6 +56,9 @@ class Partida:
         self.fin = None                        # None, "victoria" o "derrota"
         self._fabrica = FabricaEntidades(servicio)
         self._mapa_distancias = None           # lo crea iniciar(), tras enlazar()
+        # Cazadores que alguna vez se activaron, para R_activos (P3). Se filtran
+        # por activo y vivo al consultar, así deshacer o morir no lo desfasan.
+        self._cazadores = ListaEnlazada()
         self._mensajes = ListaEnlazada()
 
     # ------------------------------------------------------------------
@@ -83,7 +87,8 @@ class Partida:
         # Costos efectivos, entrantes y registro de puertas (001-terreno-cazador).
         # Puede lanzar DatosInvalidos (FR-027): la partida no empieza.
         self.mundo.enlazar()
-        self._mapa_distancias = MapaDistancias(self.mundo)
+        self._cazadores = ListaEnlazada()
+        self._mapa_distancias = MapaDistancias(self.mundo, self.mayor_rango_activo)
         self.jugador = Jugador(self.datos.jugador, self.mundo.sala_inicial,
                                self.mundo.inventario_max)
 
@@ -107,6 +112,22 @@ class Partida:
         (FR-011, FR-015, FR-018). Uno por partida. No es estado reversible: es
         caché derivada que se invalida sola (principio V, research R2)."""
         return self._mapa_distancias
+
+    def registrar_activacion(self, enemigo) -> None:
+        """Lo llama Enemigo.activar(): recuerda a los cazadores (una vez cada
+        uno) para calcular R_activos. O(cazadores)."""
+        if isinstance(enemigo.comportamiento, Cazador) and not self._cazadores.contiene(enemigo):
+            self._cazadores.agregar_al_final(enemigo)
+
+    def mayor_rango_activo(self) -> int:
+        """R_activos: el mayor rango entre los cazadores activos y vivos (0 si
+        no hay). Es el tope de la cota del mapa (FR-026(b), política P3).
+        O(cazadores), no O(salas): no crece con el tamaño de la cripta."""
+        mayor = 0
+        for cazador in self._cazadores:
+            if cazador.activo and cazador.vivo and cazador.comportamiento.rango > mayor:
+                mayor = cazador.comportamiento.rango
+        return mayor
 
     def conectar_diario(self, diario) -> None:
         """Engancha el Diario de retroceso al punto único de mutación."""
@@ -301,7 +322,11 @@ class Partida:
             # DECISIÓN: los enemigos no abren puertas: si la salida está cerrada no se
             # mueven, pero el turno igual se consume (se reprograma en el evento).
             if salida is not None and salida.transitable():    # no abren puertas
-                self.mutador.enemigo_mover(enemigo, origen, self.mundo.sala(salida.destino))
+                # Referencia directa del enlace (R4): sin buscar el destino por id.
+                destino = salida.sala_destino
+                if destino is None:
+                    destino = self.mundo.sala(salida.destino)
+                self.mutador.enemigo_mover(enemigo, origen, destino)
 
     # ------------------------------------------------------------------
     # Servicios que usan objetos, efectos y eventos
