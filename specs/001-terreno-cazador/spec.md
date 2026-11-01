@@ -196,7 +196,7 @@ pequeño en criptas de tamaños distintos.
 
 ### Measurable Outcomes
 
-- **SC-001**: Los 9 escenarios de aceptación de la descripción tienen una prueba automatizada que cita su requisito y pasa en el 100 % de las ejecuciones.
+- **SC-001**: Todos los escenarios de aceptación de las Historias 1 a 4 (21 en total: 8 de la Historia 1, 9 de la Historia 2, 2 de la Historia 3 y 2 de la Historia 4) tienen una verificación automatizada que cita la historia, el número de escenario y su requisito, y pasa en el 100 % de las ejecuciones.
 - **SC-002**: En al menos 1000 situaciones generadas al azar (con semilla fija) de criptas pequeñas con costos y puertas variadas, la decisión del cazador coincide en el 100 % de los casos con la de un cálculo independiente desde cero.
 - **SC-003**: Con 20, 50 y 100 cazadores activos en la cripta de referencia, el ciclo de eventos entre dos decisiones del jugador se resuelve en menos de 20 ms en el equipo local en las tres mediciones.
 - **SC-004**: Multiplicar por 10 el tamaño de la cripta sin cambiar la región alcanzable deja exactamente iguales los conteos de salas examinadas por decisión y por cálculo de distancias, y ambos respetan las cotas de FR-026 (medido con --bench).
