@@ -857,3 +857,8 @@ Fecha: 31/10/2026
 Herramienta: Claude
 Prompt: “Actúa como un Arquitecto de Software Principal experto en Spec-Driven Development (SDD). Tu primera tarea es redactar la “Constitución del Proyecto”...”
 Uso: revisar el prompt de constitución propuesto contra el enunciado, señalar lo que falta y lo que choca con el proyecto, y entregar una versión combinada.
+## Entrada 94
+- **Fecha:** 31/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5), comando de spec-kit `/speckit-specify`
+- **Prompt:** "Terreno y cazador: las salidas de una sala tienen costo de tránsito y aparece un nuevo enemigo, el cazador, que calcula la ruta más barata hacia el jugador. ..." (texto completo con reglas del juego, contrato de datos, interfaz, rendimiento y escenarios de aceptación).
+- **Uso:** generar specs/001-terreno-cazador/spec.md y su checklist de calidad (checklists/requirements.md).
