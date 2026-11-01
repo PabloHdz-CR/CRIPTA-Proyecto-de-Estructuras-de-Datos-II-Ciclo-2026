@@ -874,3 +874,15 @@ Uso: revisar el prompt de constitución propuesto contra el enunciado, señalar 
 - **Herramienta:** Claude Code (Claude Opus 5.5), comando de spec-kit `/speckit-clarify`
 - **Prompt:** "/speckit-clarify" (sin texto), con respuestas "A", "D" y "A" a tres preguntas.
 - **Uso:** aclarar el spec 001-terreno-cazador: el actor pasa a la sala de destino al iniciar el movimiento (FR-028); el límite de 20 ms se mide con 20, 50 y 100 cazadores (FR-025, SC-003); el costo de la decisión de un cazador se demuestra contando salas examinadas (FR-026, SC-004).
+
+## Entrada 97
+- **Fecha:** 31/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5), comando de spec-kit `/speckit-plan`
+- **Prompt:** "/speckit-plan" (sin texto).
+- **Uso:** generar plan.md, research.md, data-model.md, quickstart.md y contracts/ de 001-terreno-cazador; medir antes de decidir (búsqueda por cazador frente a mapa de distancias compartido) y proponer la enmienda de FR-026/SC-004.
+
+## Entrada 98
+- **Fecha:** 31/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "corrige y has los commit y push para revisar los archivos"
+- **Uso:** aplicar la enmienda de FR-026/SC-004 al spec en un commit propio, actualizar el plan y confirmar los artefactos de la fase plan, con push.
