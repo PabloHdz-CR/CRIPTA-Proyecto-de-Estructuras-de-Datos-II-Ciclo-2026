@@ -1,6 +1,9 @@
-# Contrato del archivo de partida guardada: versión de formato 2
+# Contrato del archivo de partida guardada: costo por salida
 
-Cambio respecto de la versión 1 (`cripta/adaptadores/partidaBinaria.py`):
+Cambio respecto del formato vigente (`FORMATO_VERSION = 1` en
+`cripta/adaptadores/partidaBinaria.py`). El número de la versión nueva **queda
+pendiente de coordinar** con las otras features que cambian el formato
+(plan.md, "Formato de guardado"). Aquí se llama `VERSION_NUEVA`.
 
 ```text
 SALA (por cada una de las 4 direcciones):
@@ -10,13 +13,14 @@ SALA (por cada una de las 4 direcciones):
     cerrada:           booleano
     llave:             texto opcional
     cierre_automatico: entero opcional
-    costo:             entero          # NUEVO en v2: costo EFECTIVO (≥ 1)
+    costo:             entero          # NUEVO en VERSION_NUEVA: costo EFECTIVO (≥ 1)
 ```
 
-- `FORMATO_VERSION = 2`.
-- Al cargar un archivo de versión 1 se lanza `VersionIncompatible("formato de
-  archivo de partida", 2, 1)`, el comportamiento que ya existe para cualquier
-  versión distinta. No hay migración silenciosa (principio V).
+- `FORMATO_VERSION = VERSION_NUEVA`, el número acordado entre las features.
+- Al cargar un archivo de una versión distinta (por ejemplo, la 1) se lanza
+  `VersionIncompatible("formato de archivo de partida", VERSION_NUEVA,
+  version_leida)`, el comportamiento que ya existe para cualquier versión
+  distinta. No hay migración silenciosa (principio V).
 - Se guarda el costo efectivo, no el declarado. Al cargar, `Mundo.enlazar()`
   vuelve a validar las caras: si fueron guardadas por esta versión, siempre
   coinciden.

@@ -149,7 +149,7 @@ política elegida.
 ## Formato de guardado (pendiente de coordinar)
 
 Esta capacidad agrega el **costo efectivo** de cada salida al archivo de
-partida ([contracts/partida-binaria-v2.md](contracts/partida-binaria-v2.md)).
+partida ([contracts/partida-binaria.md](contracts/partida-binaria.md)).
 Eso exige un número nuevo de `FORMATO_VERSION`, pero **queda pendiente de
 coordinar** con las otras features que también cambian el formato, para no
 asignar dos veces el mismo número a formatos distintos. Hasta acordarlo:
@@ -174,7 +174,7 @@ specs/001-terreno-cazador/
 ├── contracts/           # Fase 1
 │   ├── datos-entrada.md
 │   ├── vista.md
-│   └── partida-binaria-v2.md
+│   └── partida-binaria.md
 ├── checklists/requirements.md
 └── tasks.md             # Fase 2 (/speckit-tasks; no lo crea este comando)
 ```

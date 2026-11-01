@@ -103,10 +103,13 @@ Lo posee la Partida; hay uno por partida.
 Operaciones:
 
 - `asegurar(sala_objetivo, cota_minima)`: si la clave (objetivo, versión,
-  cota ≥ cota_minima) no se cumple, recalcula desde cero con
-  `cota = max(cota_anterior si el objetivo y la versión no cambiaron, cota_minima)`.
-  El cálculo es un Dijkstra hacia atrás por `entrantes` abiertas, con el
-  `HeapMinimo` y eliminación perezosa (R6), sin pasar de la cota.
+  cota ≥ cota_minima) no se cumple, recalcula desde cero con una cota nueva
+  ≥ `cota_minima`. La regla que elige esa cota (P1, P2 o P3) se decide con el
+  bench (research.md R3; plan.md, "Política de cota del mapa"). P1, el punto
+  de partida, es `max(cota_anterior si el objetivo y la versión no cambiaron,
+  cota_minima)`. El cálculo es un Dijkstra hacia atrás por `entrantes`
+  abiertas, con el `HeapMinimo` y eliminación perezosa (R6), sin pasar de la
+  cota.
 - `distancia(sala) -> int | None`: la distancia si el sello de la sala
   coincide con el del mapa; si no, None (infinito o fuera de la cota). O(1).
 

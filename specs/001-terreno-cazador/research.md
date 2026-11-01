@@ -108,11 +108,22 @@ columna lenta de R1); comparar el estado de todas las puertas en cada consulta
 
 ## R3. Cota del mapa
 
-**Decisión**: al recalcular por falta de cota, la nueva cota es
-`max(cota_anterior, rango_del_cazador)`. Las salas a costo mayor que la cota
-quedan "sin distancia" (infinito).
+**Decisión**: las salas a costo mayor que la cota quedan "sin distancia"
+(infinito). La regla para elegir la cota nueva al recalcular **se decide con el
+bench** (plan.md, "Política de cota del mapa"). Hay tres candidatas:
 
-**Justificación (corrección)**: si un cazador de rango `r ≤ cota` puede moverse,
+- **P1** (punto de partida): `max(cota_anterior, rango_del_cazador)`.
+- **P2**: duplicar, `max(rango, 2 × cota_anterior)`.
+- **P3**: duplicar con tope, `min(max(rango, 2 × cota_anterior), R_activos)`,
+  donde R_activos es el mayor rango entre los cazadores activos.
+
+P1 puede recalcular una vez por cada rango distinto dentro de un ciclo; P2 y P3,
+O(log₂(R_max / R_min)) veces. P2 explora hasta casi el doble de R y exigiría
+enmendar FR-026(b) antes de adoptarla (principio VII).
+
+**Justificación (corrección, vale para las tres políticas)**: las tres
+garantizan que, después de `asegurar`, la cota es ≥ al rango del cazador que
+consulta. Si un cazador de rango `r ≤ cota` puede moverse,
 existe `u → v` con `costo + dist(v) ≤ r`. Entonces `dist(v) < r ≤ cota` y `v`
 está en el mapa con su distancia exacta. Una `v` fuera del mapa tiene
 `dist(v) > cota ≥ r`, así que nunca forma parte de una ruta admisible. Leer
@@ -243,10 +254,12 @@ invalidación del mapa (R2), que es donde puede fallar la equivalencia.
 **Decisión**:
 
 - **Partida guardada**: hoy guarda cada salida (destino, cerrada, llave,
-  cierre automático). Se agrega el **costo efectivo** y `FORMATO_VERSION` pasa
-  de 1 a 2. Un archivo de versión 1 se reporta incompatible con el error que
-  ya existe (`VersionIncompatible`), sin migrarlo. Tras cargar, se ejecuta el
-  mismo paso de enlace (R4).
+  cierre automático). Se agrega el **costo efectivo**, lo que exige un número
+  nuevo de `FORMATO_VERSION`. Ese número **queda pendiente de coordinar** con
+  las otras features que cambian el formato (plan.md, "Formato de guardado").
+  Un archivo con una versión distinta de la vigente se reporta incompatible con
+  el error que ya existe (`VersionIncompatible`), sin migrarlo. Tras cargar, se
+  ejecuta el mismo paso de enlace (R4).
 - **Caché local de fichas** (`almacenLocalDisco`): se escribe y se lee `rango`.
   Una ficha con comportamiento cazador sin `rango` válido es un error de datos.
 - **partida.log y --replay**: no cambian. Las acciones se registran como hoy
@@ -257,7 +270,7 @@ invalidación del mapa (R2), que es donde puede fallar la equivalencia.
   (`ServicioDatos.iniciar_cripta`). El campo `costo` solo se agrega al
   convertidor y al DTO.
 
-**Alternativa descartada**: migrar archivos de versión 1 suponiendo costo 100.
+**Alternativa descartada**: migrar archivos del formato anterior suponiendo costo 100.
 Sería cargar en silencio datos que quizá no coinciden con la cripta, y el
 principio V lo prohíbe.
 
@@ -293,3 +306,8 @@ el Modelo (principio III).
 3. **Comparación con la alternativa descartada** (búsqueda por cazador desde
    cero), para dejar la evidencia de R1 en DECISIONES.md.
 4. **Costo del enlace** (R4) al cargar la cripta.
+5. **Rangos distintos y política de cota** (R3): 100 cazadores con rangos
+   distintos, activados en orden creciente, decreciente y al azar con semilla
+   fija. Para P1, P2 y P3 reporta los recálculos del mapa por ciclo, las salas
+   examinadas y el tiempo del ciclo. Se elige la política más simple que quede
+   por debajo de 20 ms.
