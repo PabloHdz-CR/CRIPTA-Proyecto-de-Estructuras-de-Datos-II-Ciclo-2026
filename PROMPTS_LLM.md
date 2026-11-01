@@ -922,3 +922,15 @@ Uso: aclarar cómo se escribe /speckit-tasks junto con el texto de instrucciones
 - **Herramienta:** Claude Code (Claude Opus 5.5), comando de spec-kit `/speckit-tasks`
 - **Prompt:** "/speckit-tasks Genera tasks.md para 001-terreno-cazador. Cada tarea debe citar los FR-xxx que cubre. Incluye estas tareas de forma explícita: 1. Pruebas, antes del código que las hace pasar ... 2. La tabla de los 21 escenarios de aceptación ... 3. El bench de la cota con las reglas P1, P2 y P3 ... 4. Tarea condicional ... FR-026(b) ... 5. La equivalencia con el oráculo Bellman-Ford ... 6. modoReplay ... 7. El paquete sin conexión de prueba ... 8. benchCazador.py ejecutable con -m ... 9. Registrar las 9 pruebas nuevas ... 10. README ... 11. DECISIONES.md ... PROMPTS_LLM.md. 12. FORMATO_VERSION queda como tarea pendiente de coordinar con Pablo ..." (texto completo en la conversación).
 - **Uso:** generar specs/001-terreno-cazador/tasks.md: 56 tareas en 8 fases, con pruebas antes del código, la tabla de los 21 escenarios, la cobertura de FR-001 a FR-028 y la tarea de cierre al final.
+
+## Entrada 105
+Fecha: 31/10/2026
+Herramienta: Claude
+Prompt: “[tasks.md adjunto] antes de analyze revisemos esto bien pq el paso que sigue es implementar y quiero que todo quede de la mejor manera”
+Uso: revisar tasks.md de 001-terreno-cazador antes de /speckit-analyze, señalar 9 ajustes y dar el prompt para aplicarlos.
+
+## Entrada 106
+- **Fecha:** 31/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "corrige esto: Aplica estos ajustes a specs/001-terreno-cazador/tasks.md en un commit propio: 1) Fase 1: agrega una tarea al inicio que confirme que `py pruebas/ejecutar_pruebas.py` corre completa y en verde ... y otra que genere con el código ACTUAL un archivo de guardado del formato anterior como fixture ... 2) T013: enlazar() debe ser idempotente ... 3) T025: aísla la regla de la cota en un método `_cota_nueva(cota_minima)` ... 4) T003: el oráculo corre Bellman-Ford desde cada vecina abierta v ... 5) T053: mover el registro en PROMPTS_LLM.md a cada commit de fase ... 6) T051 ... T052 ... git pull de main y usar el siguiente número D libre. 7) T038 y T039: ... prueba_reglas lo revisa ... 8) Actualiza la tabla de cobertura y las dependencias si cambia algún ID." (texto completo en la conversación).
+- **Uso:** aplicar los ocho ajustes a tasks.md: dos tareas nuevas al inicio (línea base verde y fixture del formato anterior), renumerar a T001–T058 y actualizar la tabla de escenarios, la cobertura y las dependencias. Las prueba_real_* siguen comentadas porque usan el API real y gastan presupuesto.
