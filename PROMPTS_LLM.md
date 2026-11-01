@@ -868,3 +868,9 @@ Uso: revisar el prompt de constitución propuesto contra el enunciado, señalar 
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "dejalo en la spec como requisito con su FR-xxx y como escenario de aceptación (“las dos caras declaran costos distintos: la cripta se rechaza con un error claro”). y haz el git commit y push"
 - **Uso:** resolver la aclaración pendiente del spec 001-terreno-cazador agregando FR-027 y sus escenarios de aceptación, y actualizar el checklist de calidad.
+
+## Entrada 96
+- **Fecha:** 31/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5), comando de spec-kit `/speckit-clarify`
+- **Prompt:** "/speckit-clarify" (sin texto), con respuestas "A", "D" y "A" a tres preguntas.
+- **Uso:** aclarar el spec 001-terreno-cazador: el actor pasa a la sala de destino al iniciar el movimiento (FR-028); el límite de 20 ms se mide con 20, 50 y 100 cazadores (FR-025, SC-003); el costo de la decisión de un cazador se demuestra contando salas examinadas (FR-026, SC-004).

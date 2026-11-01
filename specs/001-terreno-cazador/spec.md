@@ -8,6 +8,14 @@
 
 **Input**: User description: "Terreno y cazador: las salidas de una sala tienen costo de tránsito y aparece un nuevo enemigo, el cazador, que calcula la ruta más barata hacia el jugador." (descripción completa con reglas, contrato de datos, interfaz, rendimiento y escenarios de aceptación en el comando `/speckit-specify` del 2026-10-31, registrado en PROMPTS_LLM.md).
 
+## Clarifications
+
+### Session 2026-10-31
+
+- Q: Cuando un actor atraviesa una salida costosa, ¿en qué momento pasa a estar en la sala de destino? → A: Llega a la sala de destino en cuanto inicia el movimiento; durante el intervalo ya está en la sala nueva, donde lo pueden atacar y donde el cazador lo busca (FR-028).
+- Q: ¿Con cuántos cazadores activos a la vez se mide el límite de 20 ms del ciclo de eventos? → A: Se mide con 20, 50 y 100 cazadores activos, y los tres casos deben quedar por debajo de 20 ms (FR-025, SC-003).
+- Q: ¿Cómo se comprueba que la decisión de un cazador de rango pequeño no crece con el tamaño de la cripta? → A: Contando las salas que examina la decisión: nunca más que las salas a distancia ≤ rango más sus vecinas inmediatas, y el conteo es idéntico en una cripta 10 veces más grande con la misma región a su alcance (FR-026, SC-004).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Atravesar salidas con costo de tránsito (Priority: P1)
@@ -94,7 +102,7 @@ cazador se distingue.
 
 ### User Story 4 - Rendimiento con muchos cazadores (Priority: P2)
 
-Una cripta grande con decenas de cazadores activos que persiguen al jugador
+Una cripta grande con decenas de cazadores activos (medido con 20, 50 y 100) que persiguen al jugador
 sigue respondiendo sin demora perceptible entre una decisión del jugador y la
 siguiente.
 
@@ -102,14 +110,14 @@ siguiente.
 el límite del ciclo de eventos; pero es posterior a tener reglas correctas.
 
 **Independent Test**: Ejecutar el modo de medición sobre la cripta de
-referencia con decenas de cazadores y medir el ciclo de eventos entre dos
+referencia con 20, 50 y 100 cazadores y medir el ciclo de eventos entre dos
 decisiones del jugador; además, comparar el trabajo de un cazador de rango
 pequeño en criptas de tamaños distintos.
 
 **Acceptance Scenarios**:
 
-1. **Given** la cripta de referencia con decenas de cazadores activos persiguiendo al jugador, **When** se resuelve un ciclo completo de eventos entre dos decisiones del jugador, **Then** toma menos de 20 ms medidos con el modo de medición.
-2. **Given** un cazador de rango pequeño, **When** decide en criptas de tamaños muy distintos pero con la misma región a su alcance, **Then** el trabajo de su decisión es esencialmente el mismo (proporcional a la región dentro de su rango, no al total de salas).
+1. **Given** la cripta de referencia con 20, 50 y 100 cazadores activos (tres mediciones separadas) persiguiendo al jugador, **When** se resuelve un ciclo completo de eventos entre dos decisiones del jugador, **Then** en cada una de las tres mediciones toma menos de 20 ms medidos con el modo de medición.
+2. **Given** un cazador de rango pequeño, **When** decide en criptas de tamaños muy distintos pero con la misma región a su alcance, **Then** la cantidad de salas que examina su decisión es idéntica en ambas criptas y nunca supera las salas a distancia ≤ rango más sus vecinas inmediatas.
 
 ---
 
@@ -127,6 +135,7 @@ pequeño en criptas de tamaños distintos.
 - Jugador muerto: el cazador no ataca (igual que los demás enemigos); la partida termina según las reglas existentes.
 - Primera acción de un cazador al aparecer: mismo costo inicial que el resto de los enemigos.
 - Cambio de velocidad cuando el próximo turno del actor no está agendado: se aplica la regla existente sin cambios.
+- Jugador que acaba de iniciar el cruce de una salida de costo 500 hacia la sala de un cazador: ya está en esa sala, así que en el siguiente turno del cazador este lo ataca aunque el intervalo del jugador no haya terminado (FR-028).
 
 ## Requirements *(mandatory)*
 
@@ -138,6 +147,7 @@ pequeño en criptas de tamaños distintos.
 - **FR-002**: El costo de una salida MUST ser el mismo en ambos sentidos de la conexión que representa.
 - **FR-003**: Un costo declarado que no sea un entero ≥ 1 MUST provocar un error de datos explícito que identifique la sala y la salida; nunca se sustituye en silencio.
 - **FR-027**: Si las dos caras de una misma puerta declaran costos distintos, la cripta MUST rechazarse al cargarse con un error de datos claro que identifique ambas salas y ambos costos; nunca se elige uno en silencio. Si solo una de las dos caras declara costo, ese costo MUST valer para ambos sentidos.
+- **FR-028**: Al moverse, un actor MUST pasar a la sala de destino en el instante en que inicia el movimiento; el intervalo max(1, costo_salida × 100 // velocidad) es la espera hasta su próxima acción, durante la cual ya está en la sala de destino a todos los efectos (puede ser atacado allí y es la "sala actual" que usa el cazador). No existe un estado intermedio "en tránsito".
 - **FR-004**: El costo base de la acción de moverse a través de una salida MUST ser el costo de esa salida (en lugar del 100 fijo) para todos los actores que se mueven: jugador, errantes, rastreadores y cazadores.
 - **FR-005**: El intervalo hasta la próxima acción tras un movimiento MUST ser max(1, costo_salida × 100 // velocidad).
 - **FR-006**: El costo de atacar, esperar y las demás acciones que no son moverse MUST permanecer igual que antes de esta capacidad.
@@ -171,8 +181,8 @@ pequeño en criptas de tamaños distintos.
 
 **Rendimiento**
 
-- **FR-025**: Con decenas de cazadores activos persiguiendo al mismo objetivo en la cripta de referencia, resolver un ciclo completo de eventos entre dos decisiones del jugador MUST tomar menos de 20 ms, medido con --bench.
-- **FR-026**: El trabajo de la decisión de un cazador con rango pequeño MUST crecer con la región que queda dentro de su rango y no con el tamaño total de la cripta, demostrado con mediciones en criptas de tamaños distintos.
+- **FR-025**: Con 20, 50 y 100 cazadores activos persiguiendo al mismo objetivo en la cripta de referencia (tres mediciones separadas), resolver un ciclo completo de eventos entre dos decisiones del jugador MUST tomar menos de 20 ms en cada una, medido con --bench.
+- **FR-026**: La cantidad de salas que examina la decisión de un cazador MUST NOT superar las salas a distancia ≤ rango de su sala más sus vecinas inmediatas, y MUST ser idéntica en criptas de tamaños distintos que comparten la misma región a su alcance; se demuestra contando salas examinadas (no midiendo tiempo).
 
 ### Key Entities *(include if feature involves data)*
 
@@ -188,8 +198,8 @@ pequeño en criptas de tamaños distintos.
 
 - **SC-001**: Los 9 escenarios de aceptación de la descripción tienen una prueba automatizada que cita su requisito y pasa en el 100 % de las ejecuciones.
 - **SC-002**: En al menos 1000 situaciones generadas al azar (con semilla fija) de criptas pequeñas con costos y puertas variadas, la decisión del cazador coincide en el 100 % de los casos con la de un cálculo independiente desde cero.
-- **SC-003**: Con decenas de cazadores activos en la cripta de referencia, el ciclo de eventos entre dos decisiones del jugador se resuelve en menos de 20 ms en el equipo local.
-- **SC-004**: Para un cazador de rango fijo, multiplicar por 10 el tamaño de la cripta sin cambiar la región a su alcance no multiplica de forma proporcional el trabajo de su decisión (medido con --bench).
+- **SC-003**: Con 20, 50 y 100 cazadores activos en la cripta de referencia, el ciclo de eventos entre dos decisiones del jugador se resuelve en menos de 20 ms en el equipo local en las tres mediciones.
+- **SC-004**: Para un cazador de rango fijo, multiplicar por 10 el tamaño de la cripta sin cambiar la región a su alcance deja exactamente igual la cantidad de salas que examina su decisión, y esa cantidad nunca supera las salas a distancia ≤ rango más sus vecinas inmediatas (medido con --bench).
 - **SC-005**: Reproducir con --replay una partida con costos y cazadores produce exactamente la misma secuencia de acciones y estado final que la partida original.
 - **SC-006**: Un jugador puede leer en la vista el costo de cada salida de su sala y reconocer a un cazador sin consultar ayuda externa.
 
@@ -198,7 +208,7 @@ pequeño en criptas de tamaños distintos.
 - La regla de reescalado por cambio de velocidad es la vigente (restante × velocidad_anterior // velocidad_nueva, mínimo 1) y no se modifica.
 - Guardianes no se mueven, por lo que el costo de salida no les afecta.
 - El costo de la primera acción de un enemigo al aparecer no cambia.
-- "Sala actual del jugador" es la sala donde está registrado en el instante de la decisión del cazador; el jugador cambia de sala al ejecutar su movimiento.
+- "Sala actual del jugador" es la sala donde está registrado en el instante de la decisión del cazador; según FR-028, es la sala de destino de su último movimiento.
 - Un cazador con rango 0 solo ataca si comparte sala; no se mueve nunca.
 - Las indicaciones de la vista que hoy traducen tiempo a "movimientos" (por ejemplo, la duración de la antorcha) siguen usando 100 como referencia aproximada.
 - La verificación de resolubilidad de la cripta depende de qué salas son alcanzables, no de costos, por lo que no cambia.
