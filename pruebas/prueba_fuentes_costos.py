@@ -1,8 +1,10 @@
 """Fuente en línea y sin conexión entregan los mismos costos (001-terreno-cazador).
 
-Requisitos que ejerce: FR-019 (el esqueleto acepta el campo costo opcional) y
-FR-021 (las fuentes en línea y sin conexión entregan los mismos costos para
-la misma versión de cripta).
+Requisitos que ejerce: FR-019 (el esqueleto acepta el campo costo opcional),
+FR-020 (el catálogo acepta fichas de cazador con rango, y la caché local de
+fichas lo guarda y lo devuelve igual) y FR-021 (las fuentes en línea y sin
+conexión entregan los mismos costos y rangos para la misma versión de cripta
+y de catálogo).
 
 La fuente en línea es ClienteHttp contra ServidorFalso (de
 pruebas/prueba_falso_1_6.py, como en prueba_falso_1_9), con una subclase que
@@ -15,10 +17,13 @@ Ejecutar desde la raíz del proyecto:
     py -m pruebas.prueba_fuentes_costos
 """
 import json
+import tempfile
 
+from cripta.adaptadores.almacenLocalDisco import AlmacenLocalDisco
 from cripta.adaptadores.clienteHttp import ClienteHttp
 from cripta.adaptadores.contadorSolicitudes import ContadorSolicitudes
 from cripta.adaptadores.fuenteOffline import FuenteOffline
+from cripta.modelo.estructuras.listaEnlazada import ListaEnlazada
 from cripta.modelo.mundo.mundo import Mundo
 from pruebas.apoyo_terreno import CARPETA_TERRENO
 from pruebas.prueba_falso_1_6 import ServidorFalso
@@ -49,6 +54,24 @@ class ServidorTerreno(ServidorFalso):
         if not ruta.exists():
             return 404, {"detail": "página fuera de rango"}
         return 200, json.loads(ruta.read_text(encoding="utf-8"))
+
+    def _catalogo(self, consulta):
+        """Las fichas del paquete (catalogo/<id>.json), en orden inverso al
+        pedido como el ServidorFalso original."""
+        respuesta = []
+        for id_ficha in reversed(consulta.get("ids", [""])[0].split(",")):
+            ruta = CARPETA_TERRENO / f"catalogo/{id_ficha}.json"
+            if not ruta.exists():
+                return 404, {"detail": f"ficha {id_ficha} no existe"}
+            respuesta.append(json.loads(ruta.read_text(encoding="utf-8")))
+        return 200, {"entidades": respuesta}
+
+
+def resumen_ficha(ficha):
+    """Los campos de una ficha de enemigo, con suelta como tupla: ListaEnlazada
+    no define ==, así que dos fichas iguales no se pueden comparar directo."""
+    return (ficha.id, ficha.nombre, ficha.vida_max, ficha.ataque, ficha.defensa,
+            ficha.velocidad, ficha.comportamiento, tuple(ficha.suelta), ficha.rango)
 
 
 def costos_declarados(fuente, datos):
@@ -117,6 +140,24 @@ def main():
         efectivos_offline = costos_efectivos(offline, datos_offline)
         assert efectivos_linea == efectivos_offline, (efectivos_linea, efectivos_offline)
         assert efectivos_offline == EFECTIVOS, efectivos_offline
+
+        # FR-020, FR-021: la misma ficha de cazador, con el mismo rango, por las
+        # dos fuentes; y la caché local de fichas lo guarda y lo devuelve igual.
+        ids = ListaEnlazada()
+        for id_ficha in ("ent_cazador_terreno", "ent_errante_terreno"):
+            ids.agregar_al_final(id_ficha)
+        en_linea = {f.id: f for f in cliente.catalogo(ids)}
+        sin_conexion = {f.id: f for f in offline.catalogo(ids)}
+        assert ({i: resumen_ficha(f) for i, f in en_linea.items()}
+                == {i: resumen_ficha(f) for i, f in sin_conexion.items()}), (en_linea, sin_conexion)
+        assert sin_conexion["ent_cazador_terreno"].rango == 400
+        assert sin_conexion["ent_errante_terreno"].rango is None
+        almacen = AlmacenLocalDisco(tempfile.mkdtemp(prefix="prueba_fuentes_costos_"))
+        version = offline.version_catalogo()
+        for ficha in sin_conexion.values():
+            almacen.guardar_ficha(ficha, version)
+            leida = almacen.cargar_ficha(ficha.id, version)
+            assert resumen_ficha(leida) == resumen_ficha(ficha), (leida, ficha)
     finally:
         servidor.cerrar()
     print("prueba_fuentes_costos OK")

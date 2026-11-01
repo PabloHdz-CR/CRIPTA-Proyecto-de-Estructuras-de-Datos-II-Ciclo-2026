@@ -173,7 +173,7 @@ heapq ni sorted (`prueba_reglas`).
 
 ### Tests for User Story 2 (escribir primero; deben fallar)
 
-- [ ] T021 [P] [US2] Crear `pruebas/prueba_cazador.py`, con docstring que cite FR-010 a FR-016, y un caso por escenario con su marca:
+- [X] T021 [P] [US2] Crear `pruebas/prueba_cazador.py`, con docstring que cite FR-010 a FR-016, y un caso por escenario con su marca:
   - **H2.E1**: comparte sala → `Atacar` y no se mueve.
   - **H2.E2**: sin ruta abierta → `Esperar`, costo 100.
   - **H2.E3**: rango 500 y d = 600 → `Esperar`, costo 100.
@@ -191,28 +191,28 @@ heapq ni sorted (`prueba_reglas`).
     - **BORDE** jugador muerto: el cazador no lo ataca (FR-010).
     - **BORDE** varios cazadores en la misma sala con el mismo objetivo: cada uno decide por su cuenta y, con rangos que lo permiten, todos toman la misma decisión (FR-014, FR-018).
     - **BORDE** primer costo del cazador al aparecer: su primera acción se agenda con el mismo costo inicial que la de los demás enemigos (FR-009).
-- [ ] T022 [P] [US2] Crear `pruebas/prueba_cazador_equivalencia.py`, con docstring que cite FR-017, FR-018 y SC-002:
+- [X] T022 [P] [US2] Crear `pruebas/prueba_cazador_equivalencia.py`, con docstring que cite FR-017, FR-018 y SC-002:
   - Al menos **1000 situaciones** al azar con `random.Random(semilla fija)`: criptas de 4 a 12 salas, costos al azar en {1, 50, 100, 250, 300}, puertas cerradas al azar, salidas de un solo sentido y rangos entre 0 y la suma de todos los costos.
   - El generador también crea, con una frecuencia fija, salas con dos salidas hacia la misma vecina y con el mismo costo, para ejercitar el desempate N, S, E, O de FR-014. Cazador y oráculo siguen la misma regla: id de la vecina y, después, orden N, S, E, O.
   - En cada situación se encadenan varios turnos con cambios entre ellos: el jugador se mueve, una puerta se abre o se cierra (por el Mutador) y se deshace una acción (con el Diario).
   - En cada turno se exige que la acción y el costo del cazador sean **idénticos** a los del oráculo Bellman-Ford independiente de `pruebas/oraculo_rutas.py` (T006).
   - Una segunda pasada con la misma semilla debe dar exactamente la misma secuencia (FR-018).
   - Al fallar, reporta la semilla y la situación.
-- [ ] T023 [P] [US2] Ampliar `pruebas/prueba_datos_costo.py` con los casos del rango:
+- [X] T023 [P] [US2] Ampliar `pruebas/prueba_datos_costo.py` con los casos del rango:
   - Ficha de cazador sin `rango`, con `-1`, `true` o `2.5` → error de datos que nombra la ficha.
   - `rango: 0` es válido.
   - En un errante, `rango` se ignora.
   - `terreno-sin-rango` no puede iniciarse y el Controlador lo informa con `mostrar_error`.
 
   Cubre FR-009 y FR-020.
-- [ ] T024 [P] [US2] Ampliar `pruebas/prueba_fuentes_costos.py`: la ficha de cazador servida por `ServidorFalso` y por `FuenteOffline` da el mismo `rango`, y la caché local de fichas (`AlmacenLocalDisco`) lo guarda y lo devuelve igual. Cubre FR-020 y FR-021.
+- [X] T024 [P] [US2] Ampliar `pruebas/prueba_fuentes_costos.py`: la ficha de cazador servida por `ServidorFalso` y por `FuenteOffline` da el mismo `rango`, y la caché local de fichas (`AlmacenLocalDisco`) lo guarda y lo devuelve igual. Cubre FR-020 y FR-021.
 
 ### Implementation for User Story 2
 
-- [ ] T025 [US2] En `cripta/adaptadores/convertidorJson.py`, leer `rango` en las fichas de clase enemigo. Si el comportamiento empieza por "cazad" (en minúsculas), exige "entero ≥ 0, sin bool" y, si falta o no lo cumple, lanza un error de datos que nombra la ficha. En otros comportamientos lo ignora. Cubre FR-009 y FR-020.
-- [ ] T026 [P] [US2] En `cripta/adaptadores/almacenLocalDisco.py`, hacer que `_ficha_a_dict` escriba `rango` y `_dict_a_ficha` lo lea con `.get("rango")`. Cubre FR-020.
-- [ ] T027 [US2] En `cripta/modelo/mundo/sala.py`, agregar `_sello_mapa: int = 0` y `_distancia_mapa: int = 0` para la búsqueda sin diccionarios (research R5). Cubre FR-011.
-- [ ] T028 [US2] Crear `cripta/modelo/mundo/mapaDistancias.py`:
+- [X] T025 [US2] En `cripta/adaptadores/convertidorJson.py`, leer `rango` en las fichas de clase enemigo. Si el comportamiento empieza por "cazad" (en minúsculas), exige "entero ≥ 0, sin bool" y, si falta o no lo cumple, lanza un error de datos que nombra la ficha. En otros comportamientos lo ignora. Cubre FR-009 y FR-020.
+- [X] T026 [P] [US2] En `cripta/adaptadores/almacenLocalDisco.py`, hacer que `_ficha_a_dict` escriba `rango` y `_dict_a_ficha` lo lea con `.get("rango")`. Cubre FR-020.
+- [X] T027 [US2] En `cripta/modelo/mundo/sala.py`, agregar `_sello_mapa: int = 0` y `_distancia_mapa: int = 0` para la búsqueda sin diccionarios (research R5). Cubre FR-011.
+- [X] T028 [US2] Crear `cripta/modelo/mundo/mapaDistancias.py`:
   - Clase interna `EntradaMapa(distancia, sala)` con `__lt__` por `(distancia, sala.id)`.
   - `class MapaDistancias` con `_sello`, `_id_objetivo`, `_version_puertas`, `_cota`, `_salas_examinadas` y `_calculos`.
   - La regla de la cota vive **aislada** en el método `_cota_nueva(cota_minima) -> int`, pensado para que las subclases lo sobrescriban. La versión base es la política **P1**: `max(cota_anterior si el objetivo y la versión no cambiaron, cota_minima)`.
@@ -222,7 +222,7 @@ heapq ni sorted (`prueba_reglas`).
   - Sin dict, set, list ni heapq.
 
   Cubre FR-011, FR-015 y FR-017.
-- [ ] T029 [US2] En `cripta/modelo/actores/comportamientos.py`:
+- [X] T029 [US2] En `cripta/modelo/actores/comportamientos.py`:
   - `class Cazador(Comportamiento)` con `NOMBRE = "cazador"` y `_rango`.
   - `decidir_sin_jugador`:
     1. `partida.mapa_distancias.asegurar(sala del jugador, rango)`.
@@ -231,9 +231,9 @@ heapq ni sorted (`prueba_reglas`).
   - `crear_comportamiento(nombre, rango=None)` reconoce el prefijo "cazad" y lanza un error de datos si el rango es None.
 
   Cubre FR-009, FR-010, FR-012, FR-013, FR-014 y FR-016.
-- [ ] T030 [US2] En `cripta/modelo/nucleo/fabricaEntidades.py`, llamar a `crear_comportamiento(ficha.comportamiento, ficha.rango)`. Cubre FR-009.
-- [ ] T031 [US2] En `cripta/modelo/nucleo/partida.py`, crear `self.mapa_distancias = MapaDistancias(self.mundo)` en `iniciar()` después de `enlazar()`, con su propiedad y docstring. No es estado reversible: es caché derivada (principio V). Cubre FR-011, FR-015 y FR-018.
-- [ ] T032 [US2] Ejecutar T021 a T024 y `prueba_reglas` hasta tenerlos en verde, más la suite completa sin regresiones. Cubre FR-009 a FR-018, FR-020 y FR-021.
+- [X] T030 [US2] En `cripta/modelo/nucleo/fabricaEntidades.py`, llamar a `crear_comportamiento(ficha.comportamiento, ficha.rango)`. Cubre FR-009.
+- [X] T031 [US2] En `cripta/modelo/nucleo/partida.py`, crear `self.mapa_distancias = MapaDistancias(self.mundo)` en `iniciar()` después de `enlazar()`, con su propiedad y docstring. No es estado reversible: es caché derivada (principio V). Cubre FR-011, FR-015 y FR-018.
+- [X] T032 [US2] Ejecutar T021 a T024 y `prueba_reglas` hasta tenerlos en verde, más la suite completa sin regresiones. Cubre FR-009 a FR-018, FR-020 y FR-021.
 
 **Checkpoint**: US1 y US2 funcionan juntas; el cazador persigue en `terreno-a`.
 

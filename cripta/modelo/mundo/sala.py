@@ -38,6 +38,12 @@ class Sala:
         # (determinista). Permiten recorrer el grafo hacia atrás sin buscar
         # salas por id (001-terreno-cazador, research R4, FR-011).
         self._entrantes = ListaEnlazada()
+        # Estado de la búsqueda del mapa de distancias, sin diccionarios
+        # (research R5): la distancia vale solo si el sello coincide con el del
+        # mapa vigente. Empezar un cálculo nuevo es avanzar el sello: O(1).
+        # No es estado reversible: es caché derivada (principio V).
+        self._sello_mapa = 0
+        self._distancia_mapa = 0
 
     # ------------------------------------------------------------------
     # Salidas
@@ -55,6 +61,21 @@ class Sala:
     def agregar_entrante(self, salida) -> None:
         """Registra una salida que conduce a esta sala."""
         self._entrantes.agregar_al_final(salida)
+
+    @property
+    def sello_mapa(self) -> int:
+        """Número del último cálculo del mapa de distancias que la tocó."""
+        return self._sello_mapa
+
+    @property
+    def distancia_mapa(self) -> int:
+        """Distancia anotada por ese cálculo (vale solo con su sello)."""
+        return self._distancia_mapa
+
+    def anotar_distancia(self, sello: int, distancia: int) -> None:
+        """La usa MapaDistancias: fija el sello y la distancia en O(1)."""
+        self._sello_mapa = sello
+        self._distancia_mapa = distancia
 
     def salida(self, direccion: str):
         """La Salida en esa dirección, o None si no existe. O(1)."""

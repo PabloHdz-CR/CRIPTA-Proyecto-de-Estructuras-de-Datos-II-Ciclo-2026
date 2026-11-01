@@ -3,9 +3,10 @@
 Requisitos que ejerce: FR-001 (el campo costo es opcional; sin él vale 100),
 FR-002 (mismo costo en los dos sentidos, enlace idempotente), FR-003 (un
 costo que no es entero ≥ 1 es un error de datos que nombra sala y salida),
-FR-019 (el esqueleto acepta el campo costo) y FR-027 (caras de una puerta con
+FR-019 (el esqueleto acepta el campo costo), FR-027 (caras de una puerta con
 costos distintos: la cripta se rechaza; una sola cara declarada vale para las
-dos).
+dos), FR-009 y FR-020 (la ficha de un cazador trae un rango entero >= 0
+obligatorio; en los demás comportamientos se ignora).
 
 Escenarios de aceptación: H1.E7 y H1.E8 (cada caso lleva su marca).
 
@@ -217,6 +218,67 @@ def caso_controlador_terreno_valido():
     assert menu._juego is not None
 
 
+# ---------------------------------------------------------------------------
+# Rango de las fichas de cazador (FR-009, FR-020)
+# ---------------------------------------------------------------------------
+
+def ficha_json(comportamiento, **extra):
+    datos = {"id": "ent_prueba", "nombre": "Prueba", "clase": "enemigo", "vida_max": 10,
+             "ataque": 2, "defensa": 1, "velocidad": 100, "comportamiento": comportamiento,
+             "suelta": []}
+    datos.update(extra)
+    return datos
+
+
+def una_ficha(datos):
+    fichas = a_lista(convertidorJson.fichas_desde_json({"entidades": [datos]}))
+    assert len(fichas) == 1
+    return fichas[0]
+
+
+def caso_rango_de_cazador():
+    """FR-009, FR-020: la ficha de un cazador trae su rango; 0 es válido."""
+    assert una_ficha(ficha_json("cazador", rango=400)).rango == 400
+    assert una_ficha(ficha_json("cazador", rango=0)).rango == 0
+    assert una_ficha(ficha_json("Cazadora", rango=7)).rango == 7     # prefijo, sin mayúsculas
+
+
+def caso_rango_invalido_o_ausente():
+    """FR-009: un cazador sin rango, o con un rango que no es entero >= 0
+    (incluidos null, bool, decimales y texto), es un error de datos que nombra
+    la ficha. A diferencia del costo, null no vale como "no declarado"."""
+    casos = [ficha_json("cazador")] + [ficha_json("cazador", rango=valor)
+                                       for valor in (-1, True, False, 2.5, None, "400")]
+    for datos in casos:
+        try:
+            una_ficha(datos)
+        except ErrorCripta as error:
+            assert "ent_prueba" in str(error), str(error)
+        else:
+            raise AssertionError(f"la ficha {datos} debía rechazarse")
+
+
+def caso_rango_ignorado_en_otros():
+    """FR-009: en los demás comportamientos el rango se ignora (aunque sea raro)."""
+    for comportamiento in ("errante", "rastreador", "guardián"):
+        for extra in ({}, {"rango": 300}, {"rango": "x"}):
+            assert una_ficha(ficha_json(comportamiento, **extra)).rango is None
+
+
+def caso_controlador_sin_rango():
+    """FR-009 de punta a punta: terreno-sin-rango (su cazador sin rango está en
+    la sala inicial) no puede iniciarse; el Controlador lo informa con
+    mostrar_error, nombrando la ficha, y la partida no empieza."""
+    vista = VistaRegistradora()
+    menu = nuevo_menu(vista)
+    menu.iniciar()
+    menu.procesar(Comando("jugar", ("terreno-sin-rango",)))
+    assert len(vista.errores) == 1, vista.errores
+    texto = vista.errores[0]
+    assert "No se pudo iniciar la cripta" in texto and "ent_cazador_sin_rango" in texto, texto
+    assert menu._juego is None
+
+
 CASOS = (
     caso_convertidor_lee_costo,
     caso_convertidor_rechaza_costos_invalidos,
@@ -228,6 +290,10 @@ CASOS = (
     caso_enlazar_idempotente,
     caso_controlador_caras_distintas,
     caso_controlador_terreno_valido,
+    caso_rango_de_cazador,
+    caso_rango_invalido_o_ausente,
+    caso_rango_ignorado_en_otros,
+    caso_controlador_sin_rango,
 )
 
 

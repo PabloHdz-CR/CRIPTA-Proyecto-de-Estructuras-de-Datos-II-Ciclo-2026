@@ -352,12 +352,24 @@ class FuenteMemoria(FuenteDatos):
         pass
 
 
+_FUENTES_ASINCRONAS = []     # las que creó servicio_sobre(), para cerrarlas
+
+
 def servicio_sobre(fuente: FuenteDatos) -> ServicioDatos:
     """ServicioDatos real sobre la fuente dada, con la caché de fichas en una
-    carpeta temporal (nunca en la del juego)."""
+    carpeta temporal (nunca en la del juego). Cada uno arranca un hilo de
+    FuenteAsincrona: una prueba que crea muchas partidas llama después a
+    cerrar_fuentes()."""
     carpeta = Path(tempfile.mkdtemp(prefix="apoyo_terreno_"))
-    return ServicioDatos(fuente, FuenteAsincrona(fuente), CacheFichas(25),
-                         AlmacenLocalDisco(carpeta))
+    asincrona = FuenteAsincrona(fuente)
+    _FUENTES_ASINCRONAS.append(asincrona)
+    return ServicioDatos(fuente, asincrona, CacheFichas(25), AlmacenLocalDisco(carpeta))
+
+
+def cerrar_fuentes() -> None:
+    """Detiene los hilos de FuenteAsincrona creados hasta ahora."""
+    while _FUENTES_ASINCRONAS:
+        _FUENTES_ASINCRONAS.pop().cerrar()
 
 
 def servicio_terreno() -> ServicioDatos:
@@ -384,9 +396,15 @@ def partida_minima(descripcion, sala_inicial: int = 1, enemigos=(), fichas=(),
 
 def activar_sala(partida: Partida, id_sala: int) -> None:
     """Carga el contenido de la sala (si falta) y activa a sus enemigos, como
-    cuando el jugador entra en ella."""
-    partida._asegurar_contenido(id_sala)
-    partida.mundo.sala(id_sala).activar_enemigos(partida)
+    cuando el jugador entra en ella. Es preparación de la prueba, no una acción
+    del juego: corre con el Mutador en pausa, como Partida.iniciar(), así no
+    queda en el Diario ni se puede deshacer."""
+    partida.mutador.pausar()
+    try:
+        partida._asegurar_contenido(id_sala)
+        partida.mundo.sala(id_sala).activar_enemigos(partida)
+    finally:
+        partida.mutador.reanudar()
 
 
 def buscar_enemigo(partida: Partida, id_instancia: str):

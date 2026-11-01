@@ -14,7 +14,8 @@ def _ficha_a_dict(ficha):
             suelta.append(id_objeto)
         base.update(vida_max=ficha.vida_max, ataque=ficha.ataque,
                     defensa=ficha.defensa, velocidad=ficha.velocidad,
-                    comportamiento=ficha.comportamiento, suelta=suelta)
+                    comportamiento=ficha.comportamiento, suelta=suelta,
+                    rango=ficha.rango)                 # FR-020: None si no es cazador
     elif isinstance(ficha, FichaTrampaDTO):
         base.update(dano=ficha.dano, rearme=ficha.rearme)
     else:
@@ -44,7 +45,8 @@ def _dict_a_ficha(datos):
         suelta = ListaEnlazada()
         suelta.agregar_todos(datos.get("suelta", ()))
         return FichaEnemigoDTO(id=datos["id"], nombre=datos["nombre"],vida_max=datos["vida_max"], ataque=datos["ataque"],
-                               defensa=datos["defensa"], velocidad=datos["velocidad"],comportamiento=datos["comportamiento"], suelta=suelta)
+                               defensa=datos["defensa"], velocidad=datos["velocidad"],comportamiento=datos["comportamiento"], suelta=suelta,
+                               rango=datos.get("rango"))   # FR-020; .get: cachés de antes no lo traen
     if clase == "trampa":
         return FichaTrampaDTO(id=datos["id"], nombre=datos["nombre"], dano=datos["dano"], rearme=datos.get("rearme"))
 

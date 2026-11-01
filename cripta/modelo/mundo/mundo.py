@@ -28,6 +28,21 @@ class Mundo:
         # Uno por Mundo, compartido por todas sus salidas: avanza cada vez que
         # cambia una puerta (001-terreno-cazador, FR-017, research R2).
         self.registro_puertas = RegistroPuertas()
+        # Último sello que usó un cálculo de distancias sobre este mundo (R5).
+        # Vive aquí y no en cada MapaDistancias: si dos mapas usan el mismo
+        # mundo (el bench compara políticas), cada uno detecta que otro
+        # sobrescribió los campos de las salas y recalcula.
+        self._sello_mapa = 0
+
+    @property
+    def sello_mapa(self) -> int:
+        """Sello del último cálculo de distancias hecho sobre este mundo."""
+        return self._sello_mapa
+
+    def nuevo_sello_mapa(self) -> int:
+        """Reserva un sello nuevo para un cálculo de distancias. O(1)."""
+        self._sello_mapa += 1
+        return self._sello_mapa
 
     def __len__(self) -> int:
         return len(self._salas)

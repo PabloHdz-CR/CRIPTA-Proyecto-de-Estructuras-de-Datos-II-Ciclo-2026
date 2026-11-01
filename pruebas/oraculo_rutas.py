@@ -40,37 +40,62 @@ def _celda(distancias: ListaEnlazada, id_sala: int) -> _Distancia:
     return None
 
 
-def distancia(mundo, id_origen: int, id_destino: int):
-    """Costo mínimo de id_origen a id_destino usando solo salidas abiertas en
-    el sentido del recorrido (FR-011), o None si no hay ruta. Bellman-Ford sin
-    cota: |salas| - 1 rondas de relajación sobre todas las salidas abiertas."""
-    distancias = ListaEnlazada()
-    for sala in mundo:
-        distancias.agregar_al_final(_Distancia(sala.id))
-    inicio = _celda(distancias, id_origen)
-    if inicio is None:
-        return None
-    inicio.valor = 0
-    for _ in range(len(mundo) - 1):
-        cambio = False
+class _Arista:
+    """Una salida abierta, con las celdas de distancia de sus dos extremos."""
+
+    def __init__(self, desde: _Distancia, hasta: _Distancia, costo: int) -> None:
+        self.desde = desde
+        self.hasta = hasta
+        self.costo = costo
+
+
+class _Grafo:
+    """Las salas y las salidas ABIERTAS del mundo en este instante (FR-011),
+    resueltas una sola vez: cada arista ya apunta a sus celdas, así cada ronda
+    de Bellman-Ford no vuelve a buscar salas por id."""
+
+    def __init__(self, mundo) -> None:
+        self.celdas = ListaEnlazada()
         for sala in mundo:
-            desde = _celda(distancias, sala.id)
-            if desde.valor is None:
-                continue
+            self.celdas.agregar_al_final(_Distancia(sala.id))
+        self.aristas = ListaEnlazada()
+        for sala in mundo:
+            desde = _celda(self.celdas, sala.id)
             for salida in sala.salidas:
                 if salida is None or salida.cerrada:
                     continue
-                hasta = _celda(distancias, salida.destino)
-                if hasta is None:
+                hasta = _celda(self.celdas, salida.destino)
+                if hasta is not None:
+                    self.aristas.agregar_al_final(_Arista(desde, hasta, salida.costo))
+
+    def distancia(self, id_origen: int, id_destino: int):
+        """Bellman-Ford sin cota desde id_origen: |salas| - 1 rondas de
+        relajación sobre todas las aristas. None si no hay ruta."""
+        for celda in self.celdas:
+            celda.valor = None
+        inicio = _celda(self.celdas, id_origen)
+        destino = _celda(self.celdas, id_destino)
+        if inicio is None or destino is None:
+            return None
+        inicio.valor = 0
+        for _ in range(len(self.celdas) - 1):
+            cambio = False
+            for arista in self.aristas:
+                if arista.desde.valor is None:
                     continue
-                candidata = desde.valor + salida.costo
-                if hasta.valor is None or candidata < hasta.valor:
-                    hasta.valor = candidata
+                candidata = arista.desde.valor + arista.costo
+                if arista.hasta.valor is None or candidata < arista.hasta.valor:
+                    arista.hasta.valor = candidata
                     cambio = True
-        if not cambio:
-            break
-    destino = _celda(distancias, id_destino)
-    return None if destino is None else destino.valor
+            if not cambio:
+                break
+        return destino.valor
+
+
+def distancia(mundo, id_origen: int, id_destino: int):
+    """Costo mínimo de id_origen a id_destino usando solo salidas abiertas en
+    el sentido del recorrido (FR-011), o None si no hay ruta."""
+    return _Grafo(mundo).distancia(id_origen, id_destino)
 
 
 def decidir(mundo, sala_cazador: int, sala_jugador: int, jugador_vivo: bool,
@@ -85,6 +110,7 @@ def decidir(mundo, sala_cazador: int, sala_jugador: int, jugador_vivo: bool,
         accion = Atacar(id_jugador)
         return accion, accion.costo_base
     u = mundo.sala(sala_cazador)
+    grafo = _Grafo(mundo)
     mejor_t = None
     mejor_id = None
     mejor_direccion = None
@@ -93,7 +119,7 @@ def decidir(mundo, sala_cazador: int, sala_jugador: int, jugador_vivo: bool,
         salida = u.salidas[indice]
         if salida is None or salida.cerrada:
             continue
-        resto = distancia(mundo, salida.destino, sala_jugador)
+        resto = grafo.distancia(salida.destino, sala_jugador)
         if resto is None:
             continue
         t = salida.costo + resto

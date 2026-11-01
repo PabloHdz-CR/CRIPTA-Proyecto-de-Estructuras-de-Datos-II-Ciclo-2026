@@ -71,7 +71,7 @@ class FabricaEntidades:
             ficha = _buscar_ficha(fichas, dto.tipo)
             vida = dto.vida if dto.vida is not None else ficha.vida_max
             enemigo = Enemigo(dto.instancia, ficha, vida, id_sala,
-                              crear_comportamiento(ficha.comportamiento))
+                              crear_comportamiento(ficha.comportamiento, ficha.rango))
             for id_ficha in ficha.suelta:
                 enemigo.suelta.agregar_al_final(_buscar_ficha(fichas, id_ficha))
             enemigos.agregar_al_final(enemigo)

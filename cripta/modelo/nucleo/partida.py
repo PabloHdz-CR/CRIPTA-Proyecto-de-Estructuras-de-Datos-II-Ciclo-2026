@@ -6,6 +6,7 @@ import random
 from ..actores.jugador import Jugador
 from ..estructuras.colaAcotada import ColaAcotada
 from ..estructuras.listaEnlazada import ListaEnlazada
+from ..mundo.mapaDistancias import MapaDistancias
 from ..mundo.mundo import Mundo
 from ..reloj.agenda import Agenda
 from ..reloj.efecto import EfectoAntorcha, EfectoVelocidad, EfectoVeneno
@@ -53,6 +54,7 @@ class Partida:
         self.datos = None
         self.fin = None                        # None, "victoria" o "derrota"
         self._fabrica = FabricaEntidades(servicio)
+        self._mapa_distancias = None           # lo crea iniciar(), tras enlazar()
         self._mensajes = ListaEnlazada()
 
     # ------------------------------------------------------------------
@@ -81,6 +83,7 @@ class Partida:
         # Costos efectivos, entrantes y registro de puertas (001-terreno-cazador).
         # Puede lanzar DatosInvalidos (FR-027): la partida no empieza.
         self.mundo.enlazar()
+        self._mapa_distancias = MapaDistancias(self.mundo)
         self.jugador = Jugador(self.datos.jugador, self.mundo.sala_inicial,
                                self.mundo.inventario_max)
 
@@ -97,6 +100,13 @@ class Partida:
         self.servicio.precargar(inicial)
         self._procesar_eventos()
         self.mutador.reanudar()
+
+    @property
+    def mapa_distancias(self) -> MapaDistancias:
+        """Mapa de distancias hacia el jugador que comparten todos los cazadores
+        (FR-011, FR-015, FR-018). Uno por partida. No es estado reversible: es
+        caché derivada que se invalida sola (principio V, research R2)."""
+        return self._mapa_distancias
 
     def conectar_diario(self, diario) -> None:
         """Engancha el Diario de retroceso al punto único de mutación."""

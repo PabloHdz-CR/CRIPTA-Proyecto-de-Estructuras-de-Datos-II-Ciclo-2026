@@ -137,6 +137,33 @@ def contenido_desde_json(datos):
         ))
     return resultado
 
+# Prefijo con que se reconoce al cazador, igual que crear_comportamiento
+# (en minúsculas y por prefijo, como "guard" o "rastread").
+PREFIJO_CAZADOR = "cazad"
+
+def _rango_desde_json(id_ficha, comportamiento, datos):
+    """El rango de una ficha de enemigo (FR-009, FR-020).
+
+    Si el comportamiento es cazador, el rango es obligatorio: entero >= 0. Si
+    falta, es null o no lo cumple (bool, negativo, decimal, texto), es un
+    error de datos que nombra la ficha. A diferencia del costo de una
+    salida, null no equivale a un valor por omisión. En los demás
+    comportamientos el rango se ignora (queda None).
+    """
+    if not str(comportamiento).lower().startswith(PREFIJO_CAZADOR):
+        return None
+    rango = datos.get("rango")
+    if rango is None:
+        raise DatosInvalidos(
+            f"La ficha '{id_ficha}' es de un cazador y no declara su rango "
+            "(entero mayor o igual que 0)")
+    # DECISIÓN: type(...) is int, igual que en el costo: True y False no son rangos.
+    if type(rango) is not int or rango < 0:
+        raise DatosInvalidos(
+            f"La ficha '{id_ficha}' declara un rango inválido ({rango!r}): debe "
+            "ser un entero mayor o igual que 0")
+    return rango
+
 def _ficha_desde_json(datos, operacion):
     id_ = _requerido(datos, "id", operacion)
     nombre = _requerido(datos, "nombre", operacion)
@@ -145,14 +172,16 @@ def _ficha_desde_json(datos, operacion):
     if clase == "enemigo":
         suelta = ListaEnlazada()
         suelta.agregar_todos(datos.get("suelta", ()))
+        comportamiento = _requerido(datos, "comportamiento", operacion)
         return FichaEnemigoDTO(
             id=id_, nombre=nombre,
             vida_max=_requerido(datos, "vida_max", operacion),
             ataque=_requerido(datos, "ataque", operacion),
             defensa=_requerido(datos, "defensa", operacion),
             velocidad=_requerido(datos, "velocidad", operacion),
-            comportamiento=_requerido(datos, "comportamiento", operacion),
+            comportamiento=comportamiento,
             suelta=suelta,
+            rango=_rango_desde_json(id_, comportamiento, datos),
         )
     if clase == "trampa":
         return FichaTrampaDTO(

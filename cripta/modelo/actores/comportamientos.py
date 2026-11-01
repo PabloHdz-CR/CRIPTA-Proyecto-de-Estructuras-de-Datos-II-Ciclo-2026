@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from ..nucleo.accion import Atacar, Esperar, Mover
-from ..puertos.errores import ErrorCripta
+from ..puertos.errores import DatosInvalidos, ErrorCripta
 
 
 class Comportamiento:
@@ -60,8 +60,64 @@ class Rastreador(Comportamiento):
         return Mover(mejor_salida.direccion)
 
 
-def crear_comportamiento(nombre: str) -> Comportamiento:
-    """Elige la estrategia por el texto de la ficha ('guardián', 'errante'...)."""
+class Cazador(Comportamiento):
+    """Persigue al jugador por la ruta de costo mínimo si no supera su rango
+    (001-terreno-cazador, FR-009 a FR-016).
+
+    Comportamiento.decidir ya resuelve "comparte sala con el jugador vivo,
+    entonces ataca" (FR-010). Si no, consulta el mapa de distancias compartido
+    de la partida, que asegura cota >= rango, y examina solo las salidas de su
+    sala y sus destinos (FR-026(a)): O(salidas).
+
+    No usa azar (FR-018): orden fijo N, S, E, O y desempate por menor id.
+    """
+
+    NOMBRE = "cazador"
+
+    def __init__(self, rango: int) -> None:
+        self._rango = rango
+
+    @property
+    def rango(self) -> int:
+        """Costo máximo de ruta que está dispuesto a recorrer (entero >= 0)."""
+        return self._rango
+
+    def decidir_sin_jugador(self, enemigo, partida):
+        """Un paso por una ruta de costo d hacia el jugador si d <= rango
+        (FR-013); si no hay ruta o d > rango, Esperar (FR-012).
+
+        d = min sobre las salidas abiertas u → v de costo + dist(v, jugador)
+        (FR-011, FR-014). Ante un empate gana la vecina de menor id y, si dos
+        salidas llevan a la misma vecina, la primera en el orden N, S, E, O:
+        solo se reemplaza la candidata si la nueva es estrictamente mejor por
+        (t, id de la vecina). Una salida cerrada es intransitable (FR-016).
+        """
+        mapa = partida.mapa_distancias
+        mapa.asegurar(partida.jugador.sala, self._rango)
+        mejor_salida = None
+        mejor_t = None
+        mejor_id = None
+        for salida in partida.mundo.sala(enemigo.sala).salidas:      # N, S, E, O
+            if salida is None or salida.cerrada:
+                continue
+            vecina = salida.sala_destino
+            resto = mapa.distancia(vecina)
+            if resto is None:
+                continue
+            t = salida.costo + resto
+            if (mejor_t is None or t < mejor_t
+                    or (t == mejor_t and vecina.id < mejor_id)):
+                mejor_salida = salida
+                mejor_t = t
+                mejor_id = vecina.id
+        if mejor_salida is None or mejor_t > self._rango:
+            return Esperar()
+        return Mover(mejor_salida.direccion)
+
+
+def crear_comportamiento(nombre: str, rango: int = None) -> Comportamiento:
+    """Elige la estrategia por el texto de la ficha ('guardián', 'errante'...).
+    El rango solo lo usa el cazador, para quien es obligatorio (FR-009)."""
     # DECISIÓN: se compara por prefijo y en minúsculas para tolerar 'guardián' y
     # 'guardian' (con o sin tilde) sin depender de la forma exacta que mande el API.
     texto = nombre.lower()
@@ -71,4 +127,9 @@ def crear_comportamiento(nombre: str) -> Comportamiento:
         return Errante()
     if texto.startswith("rastread"):
         return Rastreador()
+    if texto.startswith("cazad"):
+        if rango is None:
+            raise DatosInvalidos(
+                f"El comportamiento '{nombre}' es de un cazador y necesita un rango")
+        return Cazador(rango)
     raise ErrorCripta(f"Comportamiento de enemigo desconocido: '{nombre}'")
