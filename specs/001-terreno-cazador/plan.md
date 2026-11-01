@@ -39,7 +39,7 @@ otras features, ver "Formato de guardado"),
 del catálogo (agrega `rango`).
 
 **Testing**: scripts `pruebas/prueba_*.py` ejecutados por
-`python -m pruebas.ejecutar_pruebas`, uno por proceso. Incluye
+`py pruebas/ejecutar_pruebas.py`, uno por proceso. Incluye
 `prueba_reglas`, que verifica las reglas de la constitución leyendo el AST.
 
 **Target Platform**: escritorio, en el equipo local de la defensa (Windows 11).
@@ -74,7 +74,7 @@ cazadores activos. Estrés medido con 1024 salas.
 | VI. Medir antes de afirmar | Mediciones previas en research.md R1; el bench nuevo (R12) da la evidencia definitiva, incluido el escenario de rangos distintos que decide la política de cota; la reutilización del mapa se justifica en R2/R3 y se demuestra con la prueba de equivalencia (R9) | ✅ |
 | VII. La spec precede al código | spec.md está confirmada en git. La enmienda de FR-026 y SC-004 que exige el diseño ya se aplicó en un commit propio (`d944688`), antes del plan | ✅ |
 | Restricciones | Anotaciones de tipo, docstrings y `_` con propiedades en el código nuevo; nombres camelCase en archivos (`mapaDistancias.py`, `registroPuertas.py`, `benchCazador.py`); excepción propia `DatosInvalidos(ErrorCripta)` | ✅ |
-| Flujo y hecho | Cada FR tiene una prueba automatizada que lo cita, incluidos FR-021, FR-025 y FR-026; los 21 escenarios de aceptación están mapeados a pruebas (SC-001, quickstart.md); se agregan secciones D71 en adelante a DECISIONES.md; PROMPTS_LLM.md queda registrado | ✅ |
+| Flujo y hecho | Cada FR tiene una prueba automatizada que lo cita, incluidos FR-021, FR-025 y FR-026; los 21 escenarios de aceptación están mapeados a pruebas (SC-001, quickstart.md); se agregan secciones a DECISIONES.md con el siguiente número D libre después de `git pull` de `main`; PROMPTS_LLM.md queda registrado | ✅ |
 
 **Resultado del gate (antes y después del diseño)**: pasa. La enmienda de
 FR-026/SC-004 ya está confirmada en la spec.
@@ -209,6 +209,7 @@ cripta/
 │   ├── modoReplay.py               # verificar que reporte DatosInvalidos y salga con 1
 │   ├── constructorEstadoVista.py   # SalidaVisible.costo, ActorVisible.es_cazador
 │   └── bench/
+│       ├── alternativasCazador.py  # NUEVO: MapaDistanciasP2, MapaDistanciasP3 y BusquedaPorCazador (solo para medir)
 │       ├── benchCazador.py         # NUEVO: ciclo con 20/50/100, rangos distintos, políticas de cota, conteos, comparación
 │       └── benchTodo.py            # registra benchCazador
 └── vista/
@@ -226,6 +227,10 @@ pruebas/
 ├── prueba_conteo_cazador.py        # NUEVO: FR-026/SC-004, conteos de salas examinadas
 ├── prueba_rendimiento_cazador.py   # NUEVO: FR-025/SC-003, verificación automática del ciclo < 20 ms
 ├── prueba_vista_costos.py          # NUEVO
+├── apoyo_terreno.py                # NUEVO: mundos sintéticos, Partida mínima y VistaRegistradora
+├── oraculo_rutas.py                # NUEVO: oráculo Bellman-Ford independiente (R9)
+├── generar_guardado_formato_anterior.py  # NUEVO: genera el fixture del formato anterior
+├── prueba_reglas.py                # se amplía: set, frozenset, collections y bibliotecas de grafos
 ├── ejecutar_pruebas.py             # registra las nuevas
 └── datos/terreno_cazador/          # NUEVO: paquete sin conexión de prueba
 ```
