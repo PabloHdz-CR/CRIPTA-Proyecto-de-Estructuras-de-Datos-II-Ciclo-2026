@@ -1,0 +1,12 @@
+{
+  "sala": 4,
+  "enemigos": [
+    {
+      "instancia": "e-401",
+      "tipo": "ent_errante_terreno",
+      "vida": 10
+    }
+  ],
+  "objetos": [],
+  "trampas": []
+}

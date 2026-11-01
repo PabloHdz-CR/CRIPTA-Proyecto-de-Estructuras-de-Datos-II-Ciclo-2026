@@ -1,0 +1,12 @@
+{
+  "sala": 2,
+  "enemigos": [
+    {
+      "instancia": "e-201",
+      "tipo": "ent_cazador_sin_rango",
+      "vida": 14
+    }
+  ],
+  "objetos": [],
+  "trampas": []
+}

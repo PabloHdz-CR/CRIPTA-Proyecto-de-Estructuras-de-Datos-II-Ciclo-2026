@@ -1,0 +1,103 @@
+{
+  "pagina": 1,
+  "total_paginas": 1,
+  "salas": [
+    {
+      "id": 1,
+      "nombre": "Entrada",
+      "salidas": {
+        "N": {
+          "sala": 2
+        },
+        "E": {
+          "sala": 3,
+          "costo": 300
+        }
+      }
+    },
+    {
+      "id": 2,
+      "nombre": "Galería",
+      "salidas": {
+        "S": {
+          "sala": 1
+        },
+        "N": {
+          "sala": 4,
+          "costo": 1
+        },
+        "E": {
+          "sala": 5,
+          "costo": 250,
+          "cerrada": true,
+          "llave": "itm_llave_terreno",
+          "cierre_automatico": 300
+        }
+      }
+    },
+    {
+      "id": 3,
+      "nombre": "Río subterráneo",
+      "salidas": {
+        "O": {
+          "sala": 1,
+          "costo": 300
+        },
+        "N": {
+          "sala": 5,
+          "costo": 50
+        }
+      }
+    },
+    {
+      "id": 4,
+      "nombre": "Pasadizo",
+      "salidas": {
+        "S": {
+          "sala": 2
+        },
+        "E": {
+          "sala": 6
+        }
+      }
+    },
+    {
+      "id": 5,
+      "nombre": "Cruce",
+      "salidas": {
+        "O": {
+          "sala": 2,
+          "costo": 250
+        },
+        "S": {
+          "sala": 3,
+          "costo": 50
+        },
+        "N": {
+          "sala": 6
+        }
+      }
+    },
+    {
+      "id": 6,
+      "nombre": "Guarida",
+      "salidas": {
+        "S": {
+          "sala": 5
+        },
+        "E": {
+          "sala": 7
+        }
+      }
+    },
+    {
+      "id": 7,
+      "nombre": "Salida",
+      "salidas": {
+        "O": {
+          "sala": 6
+        }
+      }
+    }
+  ]
+}

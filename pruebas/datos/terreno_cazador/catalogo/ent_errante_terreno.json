@@ -1,0 +1,11 @@
+{
+  "id": "ent_errante_terreno",
+  "nombre": "Alma errante",
+  "clase": "enemigo",
+  "vida_max": 10,
+  "ataque": 3,
+  "defensa": 0,
+  "velocidad": 100,
+  "comportamiento": "errante",
+  "suelta": []
+}

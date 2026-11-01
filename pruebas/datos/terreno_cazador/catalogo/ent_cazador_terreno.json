@@ -1,0 +1,12 @@
+{
+  "id": "ent_cazador_terreno",
+  "nombre": "Acechador",
+  "clase": "enemigo",
+  "vida_max": 14,
+  "ataque": 5,
+  "defensa": 1,
+  "velocidad": 100,
+  "comportamiento": "cazador",
+  "rango": 400,
+  "suelta": []
+}

@@ -1,0 +1,12 @@
+{
+  "sala": 6,
+  "enemigos": [
+    {
+      "instancia": "e-601",
+      "tipo": "ent_cazador_terreno",
+      "vida": 14
+    }
+  ],
+  "objetos": [],
+  "trampas": []
+}

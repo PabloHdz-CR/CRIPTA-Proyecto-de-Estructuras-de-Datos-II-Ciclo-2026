@@ -33,7 +33,7 @@ heapq ni sorted (`prueba_reglas`).
 
 **Purpose**: dejar una línea base verde y los datos y ayudas que usan las pruebas de todas las historias. T001 a T003 van **antes de cambiar cualquier código** de `cripta/`.
 
-- [ ] T001 Confirmar la línea base en esta rama, antes de cambiar código, con `.venv` activado:
+- [X] T001 Confirmar la línea base en esta rama, antes de cambiar código, con `.venv` activado:
   - En `PRUEBAS` de `pruebas/ejecutar_pruebas.py`, revisar las pruebas comentadas que no usan la red. La única es `prueba_falso_1_6`, que **queda fuera**: no es una prueba, sino el módulo que define `ServidorFalso` (no tiene asserts y, corrido solo, sale con 0 sin verificar nada). Lo ejercita `prueba_falso_1_9`, que ya está en la suite. Se deja comentada, con un comentario que lo explica.
   - Las `prueba_real_1_6` y `prueba_real_1_9` siguen comentadas, con su comentario actual, porque llaman al API real y gastan `presupuesto_solicitudes` (principio IV). El README ya indica que se corren aparte.
   - Si una prueba descomentada falla, se corrige o se documenta por qué queda fuera, en el mismo commit.
@@ -41,7 +41,7 @@ heapq ni sorted (`prueba_reglas`).
   - En `README.md:27`, corregir "Corre las 36 pruebas" al total de la línea base (37).
 
   Cubre: protege FR-006 y FR-007 (sin regresiones) y es la base de SC-001.
-- [ ] T002 Ampliar `pruebas/prueba_reglas.py` para que haga cumplir todo el principio I sobre `cripta/`, antes de escribir código nuevo. Debe detectar:
+- [X] T002 Ampliar `pruebas/prueba_reglas.py` para que haga cumplir todo el principio I sobre `cripta/`, antes de escribir código nuevo. Debe detectar:
   - Conjuntos: literales `{a, b}`, comprensiones de conjunto y las llamadas `set()` y `frozenset()`. Solo la llamada a la función cuenta: un método llamado `.set()` (por ejemplo `threading.Event.set()` en `cripta/modelo/datos/fuenteAsincrona.py`) no es un conjunto y no se marca.
   - Módulos: `heapq` y `bisect` (ya se detectan), **cualquier** import de `collections` (no solo `deque`: también `OrderedDict`, `defaultdict` y `Counter`), y `networkx` y otras bibliotecas de grafos (`igraph`, `rustworkx`, `graph_tool`, `scipy.sparse.csgraph`).
   - Los conjuntos y los módulos nuevos no tienen la excepción de `ARCHIVOS_CON_EXCEPCION`: ningún archivo los necesita para hablar con requests o json.
@@ -50,25 +50,25 @@ heapq ni sorted (`prueba_reglas`).
   - `py pruebas/prueba_reglas.py` sigue en verde sobre el código actual de `cripta/`. Si marca algo, se corrige en el mismo commit o se documenta por qué queda.
 
   No cubre ningún FR: hace cumplir el principio I de la constitución, que es el control que usan T041, T042 y T058.
-- [ ] T003 Con el código **actual**, antes de T049, generar el fixture `pruebas/datos/terreno_cazador/guardado_formato_anterior.bin`: un archivo de partida guardada con el formato vigente (`FORMATO_VERSION = 1`).
+- [X] T003 Con el código **actual**, antes de T049, generar el fixture `pruebas/datos/terreno_cazador/guardado_formato_anterior.bin`: un archivo de partida guardada con el formato vigente (`FORMATO_VERSION = 1`).
   - Hacerlo con un script reproducible, `pruebas/generar_guardado_formato_anterior.py`, que inicia una partida sin conexión sobre `datos_offline/` y la guarda con `PartidaBinaria.guardar`.
   - La cripta se elige en el script por cantidad de salas (la más chica). No usa `terreno-a`, porque el código actual no reconoce el comportamiento "cazador".
   - Confirmar en git el `.bin` y el script. T047(b) usa este fixture.
 
   Cubre FR-022.
-- [ ] T004 Crear el paquete sin conexión de prueba en `pruebas/datos/terreno_cazador/`, con la misma estructura que `datos_offline/`: `criptas.json`, `criptas/<id>/general.json`, `version.json`, `esqueleto/pagina_1.json`, `contenido/<sala>.json` y `catalogo/<ficha>.json`. Copiar el formato de `datos_offline/criptas/cripta-01` y `datos_offline/catalogo`. Contenido:
+- [X] T004 Crear el paquete sin conexión de prueba en `pruebas/datos/terreno_cazador/`, con la misma estructura que `datos_offline/`: `criptas.json`, `criptas/<id>/general.json`, `version.json`, `esqueleto/pagina_1.json`, `contenido/<sala>.json` y `catalogo/<ficha>.json`. Copiar el formato de `datos_offline/criptas/cripta-01` y `datos_offline/catalogo`. Contenido:
   - (a) Cripta `terreno-a`, con salidas de costo 1, 50, 250 y 300; salidas sin `costo` (valen 100); una puerta con `cierre_automatico`; una salida de un solo sentido; un enemigo cazador (`comportamiento: "cazador"`, `rango: 400`) y uno errante.
   - (b) Cripta `terreno-caras-distintas`, donde A→B declara `costo: 300` y B→A declara `costo: 200`.
   - (c) Cripta `terreno-sin-rango`, con una ficha de cazador sin `rango`.
 
   Los ids viven solo en los datos de prueba, nunca en `cripta/` (principio IV). Cubre FR-001, FR-009, FR-019, FR-020 y FR-027.
-- [ ] T005 [P] Crear `pruebas/apoyo_terreno.py` con ayudas compartidas:
+- [X] T005 [P] Crear `pruebas/apoyo_terreno.py` con ayudas compartidas:
   - Construir mundos sintéticos: pasillo, malla de n×n, rutas "menos salas pero más caras" y criptas pequeñas al azar con `random.Random(semilla)`.
   - Construir una `Partida` mínima sobre una fuente falsa.
   - `VistaRegistradora`, que guarda cada llamada a `mostrar_error`, `mostrar_estado` y `mostrar_fin` para que las pruebas las revisen.
 
   Lo usan las pruebas de FR-004 a FR-028.
-- [ ] T006 [P] Crear `pruebas/oraculo_rutas.py`, el oráculo **independiente** de R9. Solo lee `Sala.salidas`, `Salida.destino`, `Salida.cerrada` y `Salida.costo`, y no importa nada de `mapaDistancias.py`.
+- [X] T006 [P] Crear `pruebas/oraculo_rutas.py`, el oráculo **independiente** de R9. Solo lee `Sala.salidas`, `Salida.destino`, `Salida.cerrada` y `Salida.costo`, y no importa nada de `mapaDistancias.py`.
   - Si el cazador comparte sala con el jugador vivo → `Atacar`.
   - Si no, para **cada vecina abierta `v`** de la sala `u` del cazador, corre un Bellman-Ford **hacia adelante desde `v`** hasta la sala del jugador, sin cota, sin caché y sin sellos, y obtiene `dist(v, jugador)`.
   - Con eso calcula `d = min(costo(u, v) + dist(v, jugador))`. Si no hay ninguna o `d > rango`, la acción es `Esperar` (costo 100). Si no, es `Mover(dir)` hacia la `v` de menor id entre las que alcanzan `d`, con el costo de esa salida. Si dos o más salidas abiertas de `u` llevan a esa misma `v` y alcanzan `d`, usa la primera en el orden N, S, E, O (FR-014).

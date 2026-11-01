@@ -1,0 +1,22 @@
+{
+  "criptas": [
+    {
+      "id": "terreno-a",
+      "nombre": "Terreno A",
+      "salas": 7,
+      "dificultad": 1
+    },
+    {
+      "id": "terreno-caras-distintas",
+      "nombre": "Caras distintas",
+      "salas": 2,
+      "dificultad": 1
+    },
+    {
+      "id": "terreno-sin-rango",
+      "nombre": "Cazador sin rango",
+      "salas": 2,
+      "dificultad": 1
+    }
+  ]
+}

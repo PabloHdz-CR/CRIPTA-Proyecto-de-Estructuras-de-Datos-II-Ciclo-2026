@@ -11,9 +11,15 @@ proyecto, leyendo el código como lo lee Python (módulo ast), no como texto:
   - sin diccionarios: ni { ... }, ni dict(), ni comprensiones de diccionario
     (§7 prohíbe dict como índice o tabla de búsqueda). Misma excepción que
     arriba, por la misma razón.
+  - sin conjuntos: ni { a, b }, ni comprensiones de conjunto, ni set() ni
+    frozenset() (principio I). Sin excepción de archivos. Un método llamado
+    .set(), como threading.Event.set(), no es un conjunto y se permite.
   - sin sorted() ni .sort() (§4.9 los prohíbe en los ordenamientos evaluados)
   - sin bibliotecas que sustituyen a nuestras estructuras: heapq, bisect,
-    queue y collections.deque (§7)
+    queue y cualquier parte de collections (deque, OrderedDict, defaultdict,
+    Counter, namedtuple...) (§7, principio I)
+  - sin bibliotecas de grafos o de búsqueda de rutas: networkx, igraph,
+    rustworkx, graph_tool y scipy.sparse.csgraph (principio I)
 
 Como lee el código y no el texto, los comentarios y los textos explicativos no
 producen falsas alarmas. Leer un diccionario que llega de response.json() (con
@@ -29,7 +35,24 @@ NOMBRES_PROHIBIDOS = (("list", "list()"), ("sorted", "sorted()"), ("dict", "dict
 # estructura propia del programa.
 ARCHIVOS_CON_EXCEPCION = ("clientehttp", "almacenlocaldisco", "fuenteoffline",
                           "puntajesarchivo", "benchguardado")
-MODULOS_PROHIBIDOS = ("heapq", "bisect", "queue")
+MODULOS_PROHIBIDOS = ("heapq", "bisect", "queue", "collections",
+                      "networkx", "igraph", "rustworkx", "graph_tool")
+# Submódulos prohibidos dentro de paquetes que sí se permiten (scipy sí,
+# scipy.sparse.csgraph no: trae Dijkstra, Bellman-Ford y compañía).
+SUBMODULOS_PROHIBIDOS = ("scipy.sparse.csgraph",)
+# Conjuntos (§7 y principio I): nunca se exceptúan, ningún archivo los
+# necesita para hablar con requests o json.
+FUNCIONES_DE_CONJUNTO = ("set", "frozenset")
+
+
+def _modulo_prohibido(nombre):
+    """True si importar 'nombre' trae una estructura o biblioteca prohibida."""
+    if nombre.split(".")[0] in MODULOS_PROHIBIDOS:
+        return True
+    for prohibido in SUBMODULOS_PROHIBIDOS:
+        if nombre == prohibido or nombre.startswith(prohibido + "."):
+            return True
+    return False
 
 
 def problema_en(nodo, excepcion):
@@ -42,8 +65,16 @@ def problema_en(nodo, excepcion):
         return "usa una lista de Python [ ... ]"
     if isinstance(nodo, ast.ListComp) and not excepcion:
         return "usa una comprensión de lista"
+    if isinstance(nodo, ast.Set):
+        return "crea un conjunto { a, b }"
+    if isinstance(nodo, ast.SetComp):
+        return "usa una comprensión de conjunto"
     if isinstance(nodo, ast.Call):
         funcion = nodo.func
+        # Solo la función set()/frozenset(): un método .set() (por ejemplo
+        # threading.Event.set()) es un ast.Attribute y no se marca.
+        if isinstance(funcion, ast.Name) and funcion.id in FUNCIONES_DE_CONJUNTO:
+            return f"usa {funcion.id}()"
         if isinstance(funcion, ast.Name):
             for nombre, descripcion in NOMBRES_PROHIBIDOS:
                 # DECISIÓN: 'list'/'dict' se exceptúan igual que los literales
@@ -60,16 +91,16 @@ def problema_en(nodo, excepcion):
             return f"usa .{funcion.attr}()"
     if isinstance(nodo, ast.Import):
         for alias in nodo.names:
-            if alias.name.split(".")[0] in MODULOS_PROHIBIDOS:
+            if _modulo_prohibido(alias.name):
                 return f"importa {alias.name}"
     if isinstance(nodo, ast.ImportFrom):
         modulo = nodo.module or ""
-        if modulo.split(".")[0] in MODULOS_PROHIBIDOS:
+        if _modulo_prohibido(modulo):
             return f"importa de {modulo}"
-        if modulo == "collections":
-            for alias in nodo.names:
-                if alias.name == "deque":
-                    return "importa collections.deque"
+        # 'from scipy.sparse import csgraph' trae el submódulo prohibido.
+        for alias in nodo.names:
+            if _modulo_prohibido(f"{modulo}.{alias.name}"):
+                return f"importa {modulo}.{alias.name}"
     return None
 
 
@@ -109,8 +140,42 @@ CASOS = (
     ("x = dict(a=1)", True),
     ("x = (1, 2)\nz = a[0]\nw = a[1:2]\nv = datos.get('c', ())", False),
     ("for a in ():\n    pass", False),
-    ("from collections import namedtuple", False),
+    # Conjuntos (principio I de la constitución, T002 de 001-terreno-cazador).
+    ("x = {1, 2}", True),
+    ("x = {a for a in b}", True),
+    ("x = set(y)", True),
+    ("x = set()", True),
+    ("x = frozenset(y)", True),
+    ("evento.set()", False),            # método .set() de threading.Event: no es un conjunto
+    ("self._terminada.set()", False),
+    # Cualquier parte de collections, no solo deque.
+    ("import collections", True),
+    ("import collections.abc", True),
+    ("from collections import Counter", True),
+    ("from collections import OrderedDict, defaultdict", True),
+    ("from collections import namedtuple", True),
+    # Bibliotecas de grafos o de búsqueda de rutas.
+    ("import networkx", True),
+    ("import networkx as nx", True),
+    ("from networkx.algorithms import shortest_paths", True),
+    ("import igraph", True),
+    ("import rustworkx", True),
+    ("import graph_tool.all", True),
+    ("from scipy.sparse import csgraph", True),
+    ("from scipy.sparse.csgraph import dijkstra", True),
+    ("import scipy.sparse.csgraph", True),
+    ("import bisect", True),
+    ("from heapq import heappush", True),
+    # Lo que se sigue permitiendo.
+    ("from dataclasses import dataclass", False),
+    ("import random", False),
+    ("from scipy import stats", False),
 )
+# Los conjuntos y los módulos prohibidos no tienen la excepción de archivos.
+conjunto_exceptuado = []
+revisar(ast.parse("x = {1, 2}\ny = set(z)\nimport collections"), "caso",
+        conjunto_exceptuado, True)
+assert len(conjunto_exceptuado) == 3, "set y collections no deberían exceptuarse nunca"
 permitidos = []
 revisar(ast.parse(
     "x = {'a': 1}\ny = [1, 2]\ny.append(3)\nz = list(w)\nv = dict(a=1)"),

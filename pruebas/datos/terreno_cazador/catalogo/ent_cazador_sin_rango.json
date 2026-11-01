@@ -1,0 +1,11 @@
+{
+  "id": "ent_cazador_sin_rango",
+  "nombre": "Acechador sin rango",
+  "clase": "enemigo",
+  "vida_max": 14,
+  "ataque": 5,
+  "defensa": 1,
+  "velocidad": 100,
+  "comportamiento": "cazador",
+  "suelta": []
+}

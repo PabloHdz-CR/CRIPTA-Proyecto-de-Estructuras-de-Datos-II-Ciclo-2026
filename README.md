@@ -24,7 +24,7 @@ py -m pip install -r requirements.txt
 | `py main.py --replay partidas/<cripta>.log` | Reproduce un log en la terminal y verifica que sea fiel. |
 | `py main.py --bench` (o `--bench --rapido`) | Mide las estructuras (§5.3). |
 | `py main.py --cache-size N` | Cambia el tope de fichas en memoria (25 por defecto). |
-| `py pruebas/ejecutar_pruebas.py` | Corre las 36 pruebas sin red. Las `prueba_real_*` usan el API real (gastan presupuesto) y se corren aparte. |
+| `py pruebas/ejecutar_pruebas.py` | Corre las 37 pruebas sin red. Las `prueba_real_*` usan el API real (gastan presupuesto) y se corren aparte. |
 | `py pruebas/prueba_reglas.py` | Verifica las reglas del proyecto sobre `cripta/`. |
 
 En Windows se usa `py`; `python` puede abrir la Microsoft Store.

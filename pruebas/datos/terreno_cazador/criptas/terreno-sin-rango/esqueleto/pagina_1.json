@@ -1,0 +1,24 @@
+{
+  "pagina": 1,
+  "total_paginas": 1,
+  "salas": [
+    {
+      "id": 1,
+      "nombre": "Antesala",
+      "salidas": {
+        "N": {
+          "sala": 2
+        }
+      }
+    },
+    {
+      "id": 2,
+      "nombre": "Nido",
+      "salidas": {
+        "S": {
+          "sala": 1
+        }
+      }
+    }
+  ]
+}
