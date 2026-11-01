@@ -889,11 +889,23 @@ Uso: revisar el prompt de constitución propuesto contra el enunciado, señalar 
 
 ## Entrada 99
 - **Fecha:** 31/10/2026
+- **Herramienta:** Claude
+- **Prompt:** “revisa todo por si hay que correghir algo” (con spec.md, plan.md, research.md, data-model.md y quickstart.md de 001-terreno-cazador)
+- **Uso:** revisar los artefactos de spec-kit de la feature terreno y cazador contra el enunciado y el código, y listar las correcciones antes de generar las tareas.
+
+## Entrada 100
+- **Fecha:** 31/10/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "Aplica estas correcciones, cada grupo en su propio commit: 1) En spec.md: cambia SC-001 para cubrir todos los escenarios de aceptación de las Historias 1 a 4 ... 2) En plan.md y quickstart.md: (a) agrega pruebas automáticas para FR-021 y para los conteos de salas examinadas de FR-026/SC-004, y una verificación automática de FR-025; (b) ... DatosInvalidos ... mostrar_error; (c) ... 100 cazadores de rangos distintos ... cota al doble; (d) deja FORMATO_VERSION como pendiente de coordinar ... 3) Luego corre /speckit-analyze y corrige lo que reporte." Seguido de "2" (corregir solo las inconsistencias, porque /speckit-analyze exige tasks.md).
 - **Uso:** SC-001 con los 21 escenarios; pruebas, captura de DatosInvalidos, bench de rangos distintos y FORMATO_VERSION pendiente en plan y quickstart; alinear research.md, data-model.md y el contrato del formato de guardado. /speckit-analyze no se pudo ejecutar porque todavía no existe tasks.md.
 
-## Entrada 100
+## Entrada 101
+- **Fecha:** 31/10/2026
+- **Herramienta** Claude
+- **Prompt:** “[5 archivos adjuntos: data-model.md, quickstart.md, plan.md, research.md, spec.md] revisalos entonces antes”
+- **Uso:** revisar los artefactos de la feature 001-terreno-cazador antes de generar tasks.md, corregir cuatro inconsistencias y ampliar la lista de tareas a pedir.
+
+## Entrada 102
 - **Fecha:** 31/10/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "Aplica estas 4 correcciones en un commit propio, sin tocar spec.md: 1) plan.md, Summary: cambia "0,3 a 9,8 ms" por "0,2 a 9,8 ms" ... 2) research.md R3: reescribe la alternativa descartada "cota = rango máximo entre las fichas cargadas" para que no contradiga a P3 ... 3) data-model.md, MapaDistancias.distancia(): devuelve None si la distancia guardada es mayor que la cota ... 4) quickstart.md: verifica que "python -m pruebas.ejecutar_pruebas" corre; unifica el estilo de comandos con el README (py ...)."
