@@ -4,12 +4,17 @@
 
 Todo se ejecuta desde la raíz del repositorio (la carpeta que contiene `cripta/`
 y `pruebas/`), con Python 3.11 o superior y las dependencias de
-`requirements.txt`.
+`requirements.txt` (`py -m pip install -r requirements.txt`). Los comandos usan
+el lanzador `py`, igual que el README, **con el entorno virtual del proyecto
+activado** (`.venv\Scripts\activate`; es el intérprete que usa PyCharm). Con el
+entorno activo, `py` usa ese intérprete. Sin él, `py` toma el Python del
+sistema, que puede no tener `requests` ni `arcade`, y entonces fallan las
+pruebas que importan el Controlador o la Vista.
 
 ## 1. Pruebas automatizadas
 
 ```bash
-python -m pruebas.ejecutar_pruebas
+py pruebas/ejecutar_pruebas.py
 ```
 
 Resultado esperado: todas pasan, incluidas `prueba_reglas` (sin dict, list,
@@ -47,9 +52,9 @@ prueba lleva en su nombre o docstring la marca `H<historia>.E<escenario>`.
 ## 2. Mediciones
 
 ```bash
-python -m cripta.controlador.bench.benchCazador --rapido   # versión corta
-python -m cripta.controlador.bench.benchCazador            # completa
-python main.py --bench                                     # todas las mediciones
+py -m cripta.controlador.bench.benchCazador --rapido   # versión corta
+py -m cripta.controlador.bench.benchCazador            # completa
+py main.py --bench                                     # todas las mediciones
 ```
 
 Resultado esperado:
@@ -69,14 +74,14 @@ Resultado esperado:
 
 El bench informa las cifras; las pruebas `prueba_rendimiento_cazador` y
 `prueba_conteo_cazador` convierten los mismos criterios en verificaciones que
-pasan o fallan dentro de `python -m pruebas.ejecutar_pruebas`.
+pasan o fallan dentro de `py pruebas/ejecutar_pruebas.py`.
 
 ## 3. Prueba manual (Vista)
 
 1. Usar el paquete sin conexión de prueba con costos y cazadores (lo crea la
    tarea de datos de prueba en `pruebas/datos/terreno_cazador/`, con la
    misma estructura que `datos_offline/`).
-2. `python main.py --offline=pruebas/datos/terreno_cazador` y entrar a esa
+2. `py main.py --offline=pruebas/datos/terreno_cazador` y entrar a esa
    cripta.
 3. Comprobar:
    - Cada salida de la sala actual muestra su costo, y 100 si no se declaró
@@ -91,7 +96,7 @@ pasan o fallan dentro de `python -m pruebas.ejecutar_pruebas`.
 ## 4. Reproducción
 
 ```bash
-python main.py --replay partidas/<archivo>.log
+py main.py --replay partidas/<archivo>.log
 ```
 
 Una partida jugada en el paso 3 se reproduce sin interacción, con las mismas

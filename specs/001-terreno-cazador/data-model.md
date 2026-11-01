@@ -110,8 +110,14 @@ Operaciones:
   cota_minima)`. El cálculo es un Dijkstra hacia atrás por `entrantes`
   abiertas, con el `HeapMinimo` y eliminación perezosa (R6), sin pasar de la
   cota.
-- `distancia(sala) -> int | None`: la distancia si el sello de la sala
-  coincide con el del mapa; si no, None (infinito o fuera de la cota). O(1).
+- `distancia(sala) -> int | None`: devuelve la distancia guardada solo si el
+  sello de la sala coincide con el del mapa **y** esa distancia es ≤ `_cota`.
+  En cualquier otro caso devuelve None: sala no alcanzada (infinito), o un
+  valor provisional mayor que la cota, por ejemplo el de una vecina de una
+  sala del borde que se anotó sin llegar a fijarse. Así el mapa solo expone
+  distancias exactas. O(1). Ocultar esos valores no cambia ninguna decisión:
+  una sala con distancia real mayor que la cota nunca forma parte de una ruta
+  admisible para un cazador de rango ≤ cota (research.md R3).
 
 Entrada del heap (**EntradaMapa**, clase interna): (distancia, sala) con
 `__lt__` por (distancia, sala.id). El orden es total porque dos entradas

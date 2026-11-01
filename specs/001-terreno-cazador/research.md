@@ -129,9 +129,22 @@ está en el mapa con su distancia exacta. Una `v` fuera del mapa tiene
 `dist(v) > cota ≥ r`, así que nunca forma parte de una ruta admisible. Leer
 "infinito" para ella da la misma decisión que el cálculo completo.
 
-**Alternativas**: cota = rango máximo entre las fichas cargadas (exige
-recorrer enemigos y cambia cuando se carga contenido nuevo); sin cota
-(recorre toda la cripta aunque todos los rangos sean pequeños).
+**Alternativas descartadas**:
+
+- *Cota fija = mayor rango entre todas las fichas de cazador cargadas en la
+  caché del catálogo*. Se distingue de P3 en el **conjunto** del que sale el
+  máximo, no en la idea de usar un máximo como tope. Las fichas cargadas
+  incluyen cazadores dormidos en salas lejanas, muertos o que todavía no
+  aparecieron. Entonces el mapa se calcularía siempre con el mayor rango
+  posible, aunque ningún cazador activo lo necesite, y explorar más de lo que
+  pide algún cazador que consulta excede FR-026(b). Esa cota además cambia
+  cuando se descarga contenido nuevo, que es justo de lo que la decisión no
+  debe depender (FR-015). P3, en cambio, usa R_activos (el mayor rango entre
+  los cazadores **activos**, los únicos que deciden), y solo como **tope** del
+  crecimiento al duplicar: la cota parte del rango que se pide y nunca pasa de
+  lo que algún cazador activo puede consultar.
+- *Sin cota*: recorre toda la cripta aunque todos los rangos sean pequeños, y
+  el trabajo crece con el tamaño de la cripta (contradice FR-026).
 
 ---
 

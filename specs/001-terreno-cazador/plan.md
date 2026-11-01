@@ -20,7 +20,7 @@ O(salidas de su sala) aplicando la fórmula de desempate de la spec. La
 versión de puertas avanza en el *setter* de `Salida.cerrada`, así que deshacer
 y cargar también invalidan el mapa. Las salidas guardan referencias directas a
 sus salas y cada sala lista sus salidas entrantes, así la búsqueda nunca busca
-salas por id. Mediciones previas: 100 cazadores en 0,3 a 9,8 ms, contra 8 a
+salas por id. Mediciones previas: 100 cazadores en 0,2 a 9,8 ms, contra 8 a
 497 ms calculando por cazador, con decisiones idénticas.
 
 ## Technical Context
