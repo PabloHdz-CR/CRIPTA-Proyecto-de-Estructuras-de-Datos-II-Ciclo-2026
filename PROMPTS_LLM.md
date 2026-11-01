@@ -910,3 +910,15 @@ Uso: revisar el prompt de constitución propuesto contra el enunciado, señalar 
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "Aplica estas 4 correcciones en un commit propio, sin tocar spec.md: 1) plan.md, Summary: cambia "0,3 a 9,8 ms" por "0,2 a 9,8 ms" ... 2) research.md R3: reescribe la alternativa descartada "cota = rango máximo entre las fichas cargadas" para que no contradiga a P3 ... 3) data-model.md, MapaDistancias.distancia(): devuelve None si la distancia guardada es mayor que la cota ... 4) quickstart.md: verifica que "python -m pruebas.ejecutar_pruebas" corre; unifica el estilo de comandos con el README (py ...)."
 - **Uso:** aplicar las cuatro correcciones al plan de 001-terreno-cazador y verificar la suite de pruebas: con el entorno .venv activo pasan las 37; con el py del sistema fallan 13 por falta de requests.
+
+## Entrada 103
+Fecha: 31/10/2026
+Herramienta: Claude
+Prompt: “osea pongo el comando y en el mismo espacio de escribir eso?”
+Uso: aclarar cómo se escribe /speckit-tasks junto con el texto de instrucciones adicionales en un solo mensaje.
+
+## Entrada 104
+- **Fecha:** 31/10/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5), comando de spec-kit `/speckit-tasks`
+- **Prompt:** "/speckit-tasks Genera tasks.md para 001-terreno-cazador. Cada tarea debe citar los FR-xxx que cubre. Incluye estas tareas de forma explícita: 1. Pruebas, antes del código que las hace pasar ... 2. La tabla de los 21 escenarios de aceptación ... 3. El bench de la cota con las reglas P1, P2 y P3 ... 4. Tarea condicional ... FR-026(b) ... 5. La equivalencia con el oráculo Bellman-Ford ... 6. modoReplay ... 7. El paquete sin conexión de prueba ... 8. benchCazador.py ejecutable con -m ... 9. Registrar las 9 pruebas nuevas ... 10. README ... 11. DECISIONES.md ... PROMPTS_LLM.md. 12. FORMATO_VERSION queda como tarea pendiente de coordinar con Pablo ..." (texto completo en la conversación).
+- **Uso:** generar specs/001-terreno-cazador/tasks.md: 56 tareas en 8 fases, con pruebas antes del código, la tabla de los 21 escenarios, la cobertura de FR-001 a FR-028 y la tarea de cierre al final.
