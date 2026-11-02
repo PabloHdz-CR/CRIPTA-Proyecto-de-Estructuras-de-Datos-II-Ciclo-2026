@@ -8,3 +8,6 @@ guardados/
 partidas/
 puntajes.jsonl
 fichas_guardadas/
+
+# Salida de pruebas/prueba_6_3.py: se regenera en cada corrida
+paquete_prueba_6_3/
