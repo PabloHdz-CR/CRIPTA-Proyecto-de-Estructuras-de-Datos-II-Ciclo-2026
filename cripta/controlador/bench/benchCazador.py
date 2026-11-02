@@ -38,11 +38,13 @@ from ...modelo.estructuras.listaEnlazada import ListaEnlazada
 from ...modelo.mundo.mapaDistancias import MapaDistancias
 from ...modelo.mundo.mundo import Mundo
 from ...modelo.nucleo.accion import Mover
+from ...modelo.nucleo.constantes import calcular_intervalo
 from ...modelo.nucleo.partida import Partida
 from ...modelo.puertos.dto import (
     DIRECCIONES, ContenidoSalaDTO, DatosCriptaDTO, FichaEnemigoDTO, JugadorDTO, SalaDTO,
     SalidaDTO)
-from .alternativasCazador import BusquedaPorCazador, MapaDistanciasP1, MapaDistanciasP2
+from .alternativasCazador import (
+    BusquedaPorCazador, MapaDistanciasP1, MapaDistanciasP2, MapaDistanciasP4)
 from .medidor import Medidor
 from .reporte import Reporte
 
@@ -54,7 +56,7 @@ CANTIDADES = (20, 50, 100)
 RANGO_GRANDE = 10 ** 6        # "cotas grandes": el mapa cubre toda la cripta
 COSTOS_SINTETICOS = (1, 50, 100, 100, 150, 250, 300)
 ORDENES = ("creciente", "decreciente", "al azar")
-POLITICAS = ("P1", "P2", "P3")
+POLITICAS = ("P1", "P2", "P3", "P4")
 VIDA_JUGADOR = 10 ** 9        # los cazadores lo atacan: que nunca termine la partida
 
 
@@ -267,16 +269,30 @@ class EscenarioCiclo:
             return MapaDistanciasP1(partida.mundo)
         if self._politica == "P2":
             return MapaDistanciasP2(partida.mundo)
+        if self._politica == "P4":
+            return MapaDistanciasP4(partida.mundo, partida.mayor_rango_activo)
         return MapaDistancias(partida.mundo, partida.mayor_rango_activo)
 
     def preparar(self, n) -> None:
-        """Devuelve cada cazador a su sala inicial (no se cronometra)."""
+        """Deja la partida en el mismo estado antes de cada repetición (no se
+        cronometra): cada cazador vuelve a su sala inicial y su próximo turno
+        se reprograma a reloj + intervalo(100), en el orden de activación.
+        Sin esto, los costos sintéticos (1 a 300) desfasan los turnos: un
+        cazador que cruza salidas de costo 1 actúa varias veces por ciclo y
+        uno que cruza una de 300 se salta ciclos, así que cada repetición
+        mediría otra carga (entre 82 y 125 decisiones medidas) y el orden
+        del escenario se perdería. Así, cada ciclo son exactamente 'cantidad'
+        decisiones en el orden pedido."""
         partida = self.partida
         partida.mutador.pausar()
         for enemigo, id_inicial in self._cazadores:
             if enemigo.sala != id_inicial:
                 partida.mutador.enemigo_mover(enemigo, partida.mundo.sala(enemigo.sala),
                                               partida.mundo.sala(id_inicial))
+            turno = partida.mutador.agenda_reprogramar(
+                enemigo.evento_accion,
+                partida.reloj + calcular_intervalo(100, enemigo.velocidad))
+            partida.mutador.asignar(enemigo, "evento_accion", turno)
         partida.mutador.reanudar()
 
     def ejecutar(self) -> None:
@@ -369,12 +385,13 @@ def _seccion_cota(reporte, medidor, criptas) -> None:
                 calculos, examinadas = escenario.ciclo_contado()
                 filas.agregar_al_final((cripta.nombre, orden, politica, str(calculos),
                                         str(examinadas), _ms(medicion.minimo),
+                                        f"{LIMITE_CICLO_MS - medicion.minimo * 1000:.2f}",
                                         _pasa(medicion.minimo)))
     reporte.tabla("2. Bench de la cota: 100 cazadores con rangos distintos, por ciclo "
                   "(P1 max(anterior, rango); P2 duplicar; P3 duplicar con tope R_activos, "
-                  "la del juego)",
+                  "la del juego; P4 directo a R_activos)",
                   ("cripta", "orden", "política", "recálculos", "salas examinadas",
-                   "mínimo ms", "resultado"), filas)
+                   "mínimo ms", f"margen a {LIMITE_CICLO_MS} ms", "resultado"), filas)
 
 
 def _conteos_en_malla(lado: int, rango: int):

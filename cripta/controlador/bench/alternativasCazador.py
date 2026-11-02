@@ -5,10 +5,10 @@ Siguen el patrón de alternativasAgenda.py: viven en el bench, no las usa el
 juego. Como están en cripta/, prueba_reglas también las revisa: sin list,
 dict, set, sorted ni heapq; se usan ListaEnlazada y HeapMinimo.
 
-- MapaDistanciasP1 y MapaDistanciasP2: el mismo MapaDistancias del juego, con
-  otra política de cota. Sobrescriben SOLO _cota_nueva(). La política P3
-  (duplicar con tope R_activos) ganó el bench (T044) y vive en
-  MapaDistancias.
+- MapaDistanciasP1, MapaDistanciasP2 y MapaDistanciasP4: el mismo
+  MapaDistancias del juego, con otra política de cota. Sobrescriben SOLO
+  _cota_nueva(). La política P3 (duplicar con tope R_activos) es la que hoy
+  usa MapaDistancias.
 - BusquedaPorCazador: la alternativa descartada de R1, un Dijkstra hacia
   adelante desde la sala de cada cazador, acotado por su rango. Es otro
   algoritmo y no reutiliza MapaDistancias, para que la comparación no
@@ -37,6 +37,19 @@ class MapaDistanciasP2(MapaDistancias):
 
     def _cota_nueva(self, cota_minima: int) -> int:
         return max(cota_minima, 2 * self._cota_reutilizable)
+
+
+class MapaDistanciasP4(MapaDistancias):
+    """P4, directo al tope: al recalcular, cota = R_activos (el mayor rango
+    entre los cazadores activos), sin duplicar. Un solo recálculo por ciclo
+    sea cual sea el orden en que deciden los cazadores; explora siempre hasta
+    R_activos, que es la cota de FR-026(b) enmendado. Sin fuente de R_activos,
+    el tope es el rango pedido (como P1)."""
+
+    def _cota_nueva(self, cota_minima: int) -> int:
+        if self._mayor_rango_activo is None:
+            return cota_minima
+        return max(cota_minima, self._mayor_rango_activo())
 
 
 class BusquedaPorCazador:
