@@ -8,7 +8,7 @@ examinadas, sin medir tiempo:
   (b) cada cálculo del mapa examina como máximo las salas a costo <= R de la
       sala del jugador más sus vecinas inmediatas, donde R es el mayor rango
       entre los cazadores activos en el momento del cálculo (FR-026(b)
-      enmendado por la política de cota P3);
+      enmendado; la política de cota del juego es P4, cota = R_activos);
   (c) los dos conteos son idénticos en una cripta base y en otra 10 veces más
       grande con la misma región alcanzable.
 
@@ -87,10 +87,11 @@ def medir(lado):
                           if s is not None and not s.cerrada)
         assert set(mapa.consultadas) <= set(destinos), (mapa.consultadas, destinos)
         por_decision.append(relativas(lado, mapa.consultadas))
-    # Tres decisiones de rangos crecientes: la cota sube 100 → 200 → 300 (P3
-    # duplica, con tope R_activos = 300) y nunca pasa de R_activos.
+    # Tres decisiones de rangos crecientes: con P4 la primera ya calcula con
+    # cota = R_activos = 300, y las otras dos reutilizan ese mapa (un cálculo).
     assert partida.mayor_rango_activo() == max(RANGOS)
     assert mapa.cota == max(RANGOS), mapa.cota
+    assert mapa.calculos == 1, mapa.calculos
     return {
         "por_decision": por_decision,
         "ultimo_calculo": mapa.examinadas_ultimo_calculo,
@@ -132,9 +133,9 @@ def caso_conteo_no_depende_del_tamano_con_cota_chica():
 
 
 def caso_cota_con_tope_r_activos():
-    """FR-026(b) enmendado (política P3): al recalcular, la cota se duplica
-    pero nunca pasa del mayor rango entre los cazadores ACTIVOS; si el de
-    mayor rango muere, el tope baja."""
+    """FR-026(b) enmendado (política P4): al recalcular, la cota es el mayor
+    rango entre los cazadores ACTIVOS, sea cual sea el rango que consulta
+    (un solo cálculo por ciclo); si el de mayor rango muere, la cota baja."""
     lado = LADO_BASE
     centro = lado // 2
     jugador = id_malla(lado, centro, centro)
@@ -148,21 +149,19 @@ def caso_cota_con_tope_r_activos():
     activar_sala(partida, jugador + 1)
     assert partida.mayor_rango_activo() == 250
     mapa = partida.mapa_distancias
-    mapa.asegurar(jugador, 100)
-    assert mapa.cota == 100
+    mapa.asegurar(jugador, 100)                               # pide 100: calcula hasta 250
+    assert mapa.cota == 250 and mapa.calculos == 1, (mapa.cota, mapa.calculos)
+    mapa.asegurar(jugador, 220)                               # mismo estado: lo reutiliza
+    assert mapa.cota == 250 and mapa.calculos == 1
     partida.mundo.sala(1).salida("E").cerrada = True          # cambia la versión
     mapa.asegurar(jugador, 100)
-    assert mapa.cota == 100                                   # el estado cambió: no duplica
-    mapa.asegurar(jugador, 200)                               # mismo estado: duplica a 200
-    assert mapa.cota == 200, mapa.cota
-    mapa.asegurar(jugador, 220)                               # duplicaría a 400: tope 250
-    assert mapa.cota == 250, mapa.cota
+    assert mapa.cota == 250 and mapa.calculos == 2
     largo = buscar_enemigo(partida, "c-largo")
     largo.vivo = False
     assert partida.mayor_rango_activo() == 100
     partida.mundo.sala(1).salida("E").cerrada = False
     mapa.asegurar(jugador, 100)
-    assert mapa.cota == 100
+    assert mapa.cota == 100                                   # el tope bajó con R_activos
 
 
 CASOS = (caso_h4_e2_conteos_iguales, caso_conteo_no_depende_del_tamano_con_cota_chica,

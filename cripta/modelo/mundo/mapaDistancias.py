@@ -53,10 +53,10 @@ class MapaDistancias:
     del jugador (las que fija) y sus vecinas inmediatas hacia atrás (las que
     anota sin llegar a fijar). No depende del tamaño total de la cripta.
 
-    Política de cota P3 (T044, plan.md "Política de cota del mapa"): al
-    recalcular con el mismo objetivo y la misma versión, la cota se duplica
-    para no recalcular una vez por cada rango distinto, pero nunca pasa de
-    R_activos, el mayor rango entre los cazadores activos (FR-026(b)).
+    Política de cota P4 (plan.md "Política de cota del mapa", D72): al
+    recalcular, la cota es R_activos, el mayor rango entre los cazadores
+    activos (FR-026(b)). Así hay un solo cálculo por ciclo, sea cual sea el
+    orden en que deciden cazadores de rangos distintos.
 
     No es estado reversible (principio V): es caché derivada. Se invalida,
     nunca se restaura; deshacer o cargar cambian la versión de las puertas.
@@ -145,21 +145,18 @@ class MapaDistancias:
     def _cota_nueva(self, cota_minima: int) -> int:
         """Regla de la cota al recalcular (plan.md, "Política de cota del mapa").
 
-        Política P3, elegida con el bench (T044): duplicar con tope,
-        max(cota_minima, min(max(cota_minima, 2 × anterior), R_activos)).
-        'anterior' es la cota vigente si el objetivo y la versión no
-        cambiaron, o 0 si cambiaron (self._cota_reutilizable). Así, 100
-        cazadores con rangos distintos recalculan O(log2(R_max / R_min))
-        veces por ciclo y no una vez por rango, y la cota nunca pasa del
-        mayor rango entre los cazadores activos (FR-026(b) enmendado). Las
-        alternativas del bench (P1, P2) sobrescriben solo este método.
+        Política P4, elegida con el bench de escenarios estacionarios (D72):
+        directo al tope, max(cota_minima, R_activos). El primer cazador que
+        consulta en un ciclo deja el mapa con la cota del mayor rango activo y
+        los demás lo reutilizan: un solo cálculo por ciclo en cualquier orden
+        (P3, duplicar, hacía 8 con rangos crecientes). La cota nunca pasa del
+        mayor rango entre los cazadores activos (FR-026(b) enmendado). Sin
+        fuente de R_activos, el tope es el rango pedido. Las alternativas del
+        bench (P1, P2, P3) sobrescriben solo este método.
         """
-        duplicada = max(cota_minima, 2 * self._cota_reutilizable)
         if self._mayor_rango_activo is None:
-            tope = cota_minima
-        else:
-            tope = self._mayor_rango_activo()
-        return max(cota_minima, min(duplicada, tope))
+            return cota_minima
+        return max(cota_minima, self._mayor_rango_activo())
 
     def _calcular(self, objetivo, version: int, cota: int) -> None:
         """Dijkstra hacia atrás desde 'objetivo', sin pasar de 'cota'."""

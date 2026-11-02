@@ -1,16 +1,18 @@
 """Ciclo de eventos con muchos cazadores por debajo de 20 ms
 (001-terreno-cazador, Historia 4).
 
-Requisitos que ejerce: FR-025 y SC-003. Importa los escenarios de
-cripta/controlador/bench/benchCazador.py en su versión rápida y falla si el
-MÍNIMO de las repeticiones de un ciclo completo de eventos (entre dos
-decisiones del jugador) llega a 20 ms en:
-  - 20, 50 y 100 cazadores en la cripta de referencia y en la malla de 1024
-    salas;
+Requisitos que ejerce: FR-025 y SC-003, que exigen < 20 ms en la CRIPTA DE
+REFERENCIA. Importa los escenarios de cripta/controlador/bench/benchCazador.py
+y falla si el MÍNIMO de las repeticiones de un ciclo completo de eventos
+(entre dos decisiones del jugador) llega a 20 ms en la cripta de referencia:
+  - 20, 50 y 100 cazadores;
   - 100 cazadores con rangos distintos (activados en orden creciente,
-    decreciente y al azar), con la política de cota del juego.
-Al fallar reporta la cifra medida. Se toma el mínimo, como Medidor, porque
-los demás tiempos incluyen ruido de la máquina (plan.md, "Riesgos").
+    decreciente y al azar), con la política de cota del juego (P4).
+La malla de 1024 salas es estrés propio del plan y queda en el bench
+informativo (py -m cripta.controlador.bench.benchCazador), no en la suite:
+depende de la velocidad de la máquina. Al fallar reporta la cifra medida. Se
+toma el mínimo, como Medidor, porque los demás tiempos incluyen ruido de la
+máquina (plan.md, "Riesgos").
 
 Escenario de aceptación: H4.E1 (la marca va en el caso).
 
@@ -24,12 +26,14 @@ REPETICIONES = 7
 
 
 def caso_h4_e1_ciclo_menor_a_20_ms():
-    """H4.E1 (FR-025, SC-003): con 20, 50 y 100 cazadores (y con 100 de rangos
-    distintos), el mínimo de un ciclo completo queda por debajo de 20 ms."""
+    """H4.E1 (FR-025, SC-003): en la cripta de referencia, con 20, 50 y 100
+    cazadores (y con 100 de rangos distintos), el mínimo de un ciclo completo
+    queda por debajo de 20 ms."""
     medidor = Medidor(REPETICIONES)
     fallidos = []
     medidos = 0
-    for nombre, escenario in benchCazador.escenarios_rendimiento(rapido=True):
+    referencia = benchCazador.cripta_de_referencia()
+    for nombre, escenario in benchCazador.escenarios_rendimiento(criptas=(referencia,)):
         medicion = medidor.medir(escenario, escenario.cantidad)
         milisegundos = medicion.minimo * 1000
         medidos += 1
@@ -37,7 +41,7 @@ def caso_h4_e1_ciclo_menor_a_20_ms():
         print(f"    {nombre:<52} {milisegundos:7.2f} ms  {estado}")
         if milisegundos >= benchCazador.LIMITE_CICLO_MS:
             fallidos.append(f"{nombre}: {milisegundos:.2f} ms")
-    assert medidos >= 2 * 3 + 3, f"faltan escenarios: {medidos}"
+    assert medidos == 3 + 3, f"faltan escenarios: {medidos}"
     assert not fallidos, "ciclo de 20 ms o más en: " + "; ".join(fallidos)
 
 

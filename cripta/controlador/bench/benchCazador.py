@@ -44,7 +44,7 @@ from ...modelo.puertos.dto import (
     DIRECCIONES, ContenidoSalaDTO, DatosCriptaDTO, FichaEnemigoDTO, JugadorDTO, SalaDTO,
     SalidaDTO)
 from .alternativasCazador import (
-    BusquedaPorCazador, MapaDistanciasP1, MapaDistanciasP2, MapaDistanciasP4)
+    BusquedaPorCazador, MapaDistanciasP1, MapaDistanciasP2, MapaDistanciasP3)
 from .medidor import Medidor
 from .reporte import Reporte
 
@@ -214,7 +214,7 @@ class EscenarioCiclo:
     cada ciclo). preparar() devuelve los cazadores a sus salas iniciales; la
     partida se arma una sola vez porque Mundo.enlazar() cuesta O(salas²)."""
 
-    def __init__(self, cripta: Cripta, rangos: ListaEnlazada, politica: str = "P3") -> None:
+    def __init__(self, cripta: Cripta, rangos: ListaEnlazada, politica: str = "P4") -> None:
         self.cantidad = len(rangos)
         self._cripta = cripta
         self._politica = politica
@@ -264,13 +264,13 @@ class EscenarioCiclo:
         return sala_jugador
 
     def _crear_mapa(self, partida):
-        """P3 es la del juego (MapaDistancias con el R_activos de la partida)."""
+        """P4 es la del juego (MapaDistancias con el R_activos de la partida)."""
         if self._politica == "P1":
             return MapaDistanciasP1(partida.mundo)
         if self._politica == "P2":
             return MapaDistanciasP2(partida.mundo)
-        if self._politica == "P4":
-            return MapaDistanciasP4(partida.mundo, partida.mayor_rango_activo)
+        if self._politica == "P3":
+            return MapaDistanciasP3(partida.mundo, partida.mayor_rango_activo)
         return MapaDistancias(partida.mundo, partida.mayor_rango_activo)
 
     def preparar(self, n) -> None:
@@ -318,13 +318,16 @@ def _iguales(cantidad: int, rango: int) -> ListaEnlazada:
     return rangos
 
 
-def escenarios_rendimiento(rapido: bool = False) -> ListaEnlazada:
-    """(nombre, EscenarioCiclo) que verifica prueba_rendimiento_cazador (H4.E1):
-    20, 50 y 100 cazadores en la cripta de referencia y en la malla de 1024
-    salas, y 100 de rangos distintos en los tres órdenes, con la política del
-    juego (P3, MapaDistancias)."""
+def escenarios_rendimiento(rapido: bool = False, criptas=None) -> ListaEnlazada:
+    """(nombre, EscenarioCiclo) con 20, 50 y 100 cazadores y con 100 de rangos
+    distintos en los tres órdenes, con la política del juego (P4,
+    MapaDistancias). Por omisión, en la cripta de referencia y en la malla de
+    1024 salas; prueba_rendimiento_cazador (H4.E1) pide solo la de
+    referencia, que es la que exigen FR-025 y SC-003."""
+    if criptas is None:
+        criptas = (cripta_de_referencia(), malla(LADO_MALLA))
     escenarios = ListaEnlazada()
-    for cripta in (cripta_de_referencia(), malla(LADO_MALLA)):
+    for cripta in criptas:
         for cantidad in CANTIDADES:
             escenarios.agregar_al_final((f"{cripta.nombre}, {cantidad} cazadores",
                                          EscenarioCiclo(cripta, _iguales(cantidad, RANGO_GRANDE))))
@@ -388,8 +391,8 @@ def _seccion_cota(reporte, medidor, criptas) -> None:
                                         f"{LIMITE_CICLO_MS - medicion.minimo * 1000:.2f}",
                                         _pasa(medicion.minimo)))
     reporte.tabla("2. Bench de la cota: 100 cazadores con rangos distintos, por ciclo "
-                  "(P1 max(anterior, rango); P2 duplicar; P3 duplicar con tope R_activos, "
-                  "la del juego; P4 directo a R_activos)",
+                  "(P1 max(anterior, rango); P2 duplicar; P3 duplicar con tope R_activos; "
+                  "P4 directo a R_activos, la del juego)",
                   ("cripta", "orden", "política", "recálculos", "salas examinadas",
                    "mínimo ms", f"margen a {LIMITE_CICLO_MS} ms", "resultado"), filas)
 
