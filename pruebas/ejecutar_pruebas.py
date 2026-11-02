@@ -54,6 +54,16 @@ PRUEBAS = (
     "prueba_vista_10",           # teclas nuevas: nombre, replay, fin, benchmark
     "prueba_controlador",        # Controlador de punta a punta (offline)
     "prueba_replay_menu",        # replay en la ventana, nombre y benchmark (offline)
+    # 001-terreno-cazador (specs/001-terreno-cazador/tasks.md, T053)
+    "prueba_costo_salidas",      # FR-001, FR-002, FR-004 a FR-008, FR-028 (H1.E1 a H1.E6)
+    "prueba_datos_costo",        # FR-001, FR-003, FR-009, FR-019, FR-020, FR-027 (H1.E7, H1.E8)
+    "prueba_fuentes_costos",     # FR-019, FR-020, FR-021: en línea y sin conexión, igual
+    "prueba_cazador",            # FR-010 a FR-016 y casos borde (H2.E1 a H2.E9)
+    "prueba_cazador_equivalencia",  # FR-017, FR-018, FR-022, SC-002: 1000 situaciones vs. oráculo
+    "prueba_conteo_cazador",     # FR-026, SC-004: salas examinadas (H4.E2)
+    "prueba_rendimiento_cazador",  # FR-025, SC-003: ciclo < 20 ms (H4.E1)
+    "prueba_persistencia_cazador",  # FR-022, FR-027, SC-005: guardar, cargar y --replay
+    "prueba_vista_costos",       # FR-023, FR-024 (H3.E1, H3.E2)
 
 )
 

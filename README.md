@@ -24,8 +24,10 @@ py -m pip install -r requirements.txt
 | `py main.py --replay partidas/<cripta>.log` | Reproduce un log en la terminal y verifica que sea fiel. |
 | `py main.py --bench` (o `--bench --rapido`) | Mide las estructuras (§5.3). |
 | `py main.py --cache-size N` | Cambia el tope de fichas en memoria (25 por defecto). |
-| `py pruebas/ejecutar_pruebas.py` | Corre las 37 pruebas sin red. Las `prueba_real_*` usan el API real (gastan presupuesto) y se corren aparte. |
+| `py pruebas/ejecutar_pruebas.py` | Corre las 46 pruebas sin red. Las `prueba_real_*` usan el API real (gastan presupuesto) y se corren aparte. |
 | `py pruebas/prueba_reglas.py` | Verifica las reglas del proyecto sobre `cripta/`. |
+| `py main.py --offline=pruebas/datos/terreno_cazador` | Juega con el paquete de prueba de terreno y cazador (costos de salida y un cazador). |
+| `py -m cripta.controlador.bench.benchCazador` (o `--rapido`) | Mide el cazador: ciclo con 20, 50 y 100 cazadores, política de cota y salas examinadas. |
 
 En Windows se usa `py`; `python` puede abrir la Microsoft Store.
 
@@ -81,11 +83,28 @@ Al elegir objetivo: flecha arriba/abajo, ENTER confirma y ESC cancela.
 
 Al terminar, la pantalla indica si el replay llegó exactamente al mismo final que la partida.
 
+## Terreno y cazador
+
+Especificación, plan y tareas en `specs/001-terreno-cazador/`.
+
+- **Costo de las salidas.** Cada salida puede declarar un costo de tránsito
+  (entero ≥ 1; 100 si no lo declara o viene `null`), el mismo en los dos
+  sentidos. Moverse cuesta el costo de la salida para todos los actores. Si
+  las dos caras de una puerta declaran costos distintos, la cripta no se
+  inicia y se muestra un error con las dos salas y los dos costos.
+- **El cazador.** Un enemigo con un `rango` en su ficha. Se activa como los
+  demás (al entrar el jugador a su sala). Si comparte sala con el jugador,
+  ataca; si no, avanza un paso por la ruta de costo mínimo cuando esa ruta no
+  supera su rango, y si no, espera. No abre puertas.
+- **En la vista.** El costo aparece junto a cada salida de la sala y en la
+  brújula del panel de salidas. El cazador lleva un anillo y el prefijo «» »
+  en su etiqueta, además del color.
+
 ## Archivos que genera el juego
 
 No se suben al repositorio (están en `.gitignore`):
 
-- `guardados/<cripta>.bin`: la partida guardada de cada cripta (formato binario propio, §4.10). Se borra al ganar o morir la partida que lo usó.
+- `guardados/<cripta>.bin`: la partida guardada de cada cripta (formato binario propio, §4.10). Se borra al ganar o morir la partida que lo usó. Desde terreno y cazador el formato es la versión 2 (guarda el costo de cada salida): **un guardado del formato anterior se reporta incompatible y no se migra**; hay que empezar una partida nueva de esa cripta.
 - `partidas/<cripta>.log`: el log de la partida en curso; `partidas/historial/`: un log archivado por partida terminada, para el replay.
 - `puntajes.jsonl`: la tabla de puntajes.
 - `fichas_guardadas/`: copia en disco de las fichas del catálogo, para no volver a pedirlas a la red.

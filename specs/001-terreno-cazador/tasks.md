@@ -345,14 +345,14 @@ heapq ni sorted (`prueba_reglas`).
 
 ## Phase 8: Polish, documentación y cierre
 
-- [ ] T053 Registrar las **9 pruebas nuevas** en `PRUEBAS` de `pruebas/ejecutar_pruebas.py`, con un comentario de los FR de cada una: `prueba_costo_salidas`, `prueba_datos_costo`, `prueba_fuentes_costos`, `prueba_cazador`, `prueba_cazador_equivalencia`, `prueba_conteo_cazador`, `prueba_rendimiento_cazador`, `prueba_persistencia_cazador` y `prueba_vista_costos`. Cubre FR-001 a FR-028 y SC-001.
-- [ ] T054 [P] En `README.md`:
+- [X] T053 Registrar las **9 pruebas nuevas** en `PRUEBAS` de `pruebas/ejecutar_pruebas.py`, con un comentario de los FR de cada una: `prueba_costo_salidas`, `prueba_datos_costo`, `prueba_fuentes_costos`, `prueba_cazador`, `prueba_cazador_equivalencia`, `prueba_conteo_cazador`, `prueba_rendimiento_cazador`, `prueba_persistencia_cazador` y `prueba_vista_costos`. Cubre FR-001 a FR-028 y SC-001.
+- [X] T054 [P] En `README.md`:
   - Agregar una nota: los archivos de guardado del formato anterior se reportan incompatibles (`VersionIncompatible`) y no se migran; hay que empezar una partida nueva.
   - Mencionar el costo de las salidas y el cazador.
   - En `README.md:27`, cambiar el conteo de pruebas de 37 (lo deja T001) a **46**: las 37 de la línea base más las 9 nuevas de T053. Confirmar que `py pruebas/ejecutar_pruebas.py` imprime "Todas las pruebas pasaron (46)" (46/46) antes de escribirlo.
 
   Cubre FR-022.
-- [ ] T055 [P] En `DECISIONES.md`, **antes de numerar**, hacer `git pull` de `main` (otras features pueden haber agregado decisiones) y usar el **siguiente número D libre**, sin suponer D71. Agregar la sección del problema resuelto, con enlaces a `specs/001-terreno-cazador/spec.md` y `specs/001-terreno-cazador/plan.md`:
+- [X] T055 [P] En `DECISIONES.md`, **antes de numerar**, hacer `git pull` de `main` (otras features pueden haber agregado decisiones) y usar el **siguiente número D libre**, sin suponer D71. Agregar la sección del problema resuelto, con enlaces a `specs/001-terreno-cazador/spec.md` y `specs/001-terreno-cazador/plan.md`:
   - Mapa compartido frente a búsqueda por cazador, con las cifras de T044.
   - Invalidación por el *setter* de `cerrada`.
   - Política de cota elegida y resultado de T045.
@@ -360,9 +360,9 @@ heapq ni sorted (`prueba_reglas`).
   - Formato de guardado con el número acordado.
 
   Cubre FR-017, FR-025 y FR-026.
-- [ ] T056 [P] Registro en `PROMPTS_LLM.md`: **cada commit de fase incluye** la entrada de los prompts usados en esa fase (constitución, "Flujo y definición de hecho"), con el siguiente número libre de `## Entrada N` tal como está en el archivo en ese momento. Esta tarea verifica al final que ningún commit de fase quedó sin su entrada y que la numeración es continua. No cubre ningún FR: es un requisito de proceso de la constitución, no del producto.
-- [ ] T057 Comprobar la tabla de escenarios (SC-001): buscar en `pruebas/` las 21 marcas `H<historia>.E<escenario>` de la sección "Escenarios de aceptación → pruebas" y confirmar que cada una aparece en la prueba asignada. Cubre SC-001.
-- [ ] T058 Validación completa con `.venv` activado:
+- [X] T056 [P] Registro en `PROMPTS_LLM.md`: **cada commit de fase incluye** la entrada de los prompts usados en esa fase (constitución, "Flujo y definición de hecho"), con el siguiente número libre de `## Entrada N` tal como está en el archivo en ese momento. Esta tarea verifica al final que ningún commit de fase quedó sin su entrada y que la numeración es continua. No cubre ningún FR: es un requisito de proceso de la constitución, no del producto.
+- [X] T057 Comprobar la tabla de escenarios (SC-001): buscar en `pruebas/` las 21 marcas `H<historia>.E<escenario>` de la sección "Escenarios de aceptación → pruebas" y confirmar que cada una aparece en la prueba asignada. Cubre SC-001.
+- [X] T058 Validación completa con `.venv` activado:
   - `py pruebas/ejecutar_pruebas.py`: todas pasan, **46/46**.
   - `py pruebas/prueba_reglas.py` (ampliada en T002): sin dict, set, list, heapq, bisect ni sorted en `cripta/`.
   - `py main.py --bench --rapido`.

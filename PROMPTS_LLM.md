@@ -1048,3 +1048,9 @@ Uso: decidir que un costo null equivale a no declarado, registrar la aclaración
 - **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-implement` (Fase 7, persistencia)
 - **Prompt:** "haz el push y para la Fase 7 useamos el FORMATO_VERSION=2, provisional segun el orden de merge al main."
 - **Uso:** push de la Fase 6 (bd9fd2e..d4f44ac) y Fase 7 (T047 a T052). Prueba primero: prueba_persistencia_cazador; (a) y (b) fallaron (el formato seguía en 1, y una partida con cazador ni se podía cargar porque faltaba el rango); (c) y (d) ya pasaban, lo que confirma T050: modoReplay ya reporta DatosInvalidos y sale con 1. T048: el acuerdo (2, provisional según el orden de merge) en el contrato, en T048 y en plan.md. T049: el costo efectivo en el archivo, el rango del enemigo al cargar, RegistroPuertas, enlazar() y Partida.reconstruir_tras_cargar(). T051: la equivalencia guarda y carga entre turnos (917 veces) con las 4492 decisiones idénticas; una carga sin enlazar la hace fallar. Suite 37/37 y bench rápido sin errores.
+
+## Entrada 126
+- **Fecha:** 01/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-implement` (Fase 8, cierre)
+- **Prompt:** "opción 2, haz push y sigue con la Fase 8"
+- **Uso:** sacar del índice la salida de prueba_6_3 (paquete_prueba_6_3/ a .gitignore, commit f334303) y push. Fase 8: T053, las 9 pruebas nuevas en ejecutar_pruebas.py (46/46); T054, README (46 pruebas, sección de terreno y cazador, formato 2 incompatible con los guardados anteriores); T055, D71 a D74 en DECISIONES.md (después de D70; origin/main no agregó decisiones), con las cifras del bench; T056, numeración de PROMPTS_LLM.md continua de la 16 a la 126 (la 1 repetida y la 4, 6, 14 y 15 faltantes son de la Parte I y no se renumeran); T057, las 21 marcas de escenario en su prueba y los 28 FR citados; T058, suite 46/46, prueba_reglas, --bench --rapido y quickstart §4 con las tres partidas reales del usuario (mismo final que en puntajes.jsonl).
