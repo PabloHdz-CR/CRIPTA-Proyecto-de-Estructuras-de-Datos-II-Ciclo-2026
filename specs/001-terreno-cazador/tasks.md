@@ -320,7 +320,7 @@ heapq ni sorted (`prueba_reglas`).
 
 ### Tests (escribir primero; deben fallar)
 
-- [ ] T047 [P] Crear `pruebas/prueba_persistencia_cazador.py`, con docstring que cite FR-022, FR-027 y SC-005:
+- [X] T047 [P] Crear `pruebas/prueba_persistencia_cazador.py`, con docstring que cite FR-022, FR-027 y SC-005:
   - (a) Guardar y cargar `terreno-a` en el formato nuevo: los costos se conservan, `enlazar()` corre al cargar, y la decisión del cazador después de cargar es igual a la de antes de guardar.
   - (b) Cargar el fixture `pruebas/datos/terreno_cazador/guardado_formato_anterior.bin` (T003) → `VersionIncompatible`, sin migrar ni modificar el archivo.
   - (c) `--replay` de un log de `terreno-a` → mismas acciones y mismo estado final.
@@ -328,8 +328,8 @@ heapq ni sorted (`prueba_reglas`).
 
 ### Implementation
 
-- [ ] T048 **PENDIENTE DE COORDINAR con Pablo**: acordar el número nuevo de `FORMATO_VERSION` con las otras features que cambian el formato de guardado, **sin fijar un número de antemano** (plan.md, "Formato de guardado"). Registrar el acuerdo en `specs/001-terreno-cazador/contracts/partida-binaria.md`, donde se reemplaza `VERSION_NUEVA`. Bloquea T049. Cubre FR-022.
-- [ ] T049 En `cripta/adaptadores/partidaBinaria.py`:
+- [X] T048 **Acordado el 01/11/2026: `FORMATO_VERSION = 2`, provisional según el orden de merge a `main`** (registrado en `contracts/partida-binaria.md`). Texto original: **PENDIENTE DE COORDINAR con Pablo**: acordar el número nuevo de `FORMATO_VERSION` con las otras features que cambian el formato de guardado, **sin fijar un número de antemano** (plan.md, "Formato de guardado"). Registrar el acuerdo en `specs/001-terreno-cazador/contracts/partida-binaria.md`, donde se reemplaza `VERSION_NUEVA`. Bloquea T049. Cubre FR-022.
+- [X] T049 En `cripta/adaptadores/partidaBinaria.py`:
   - `_escribir_sala` escribe el **costo efectivo** de cada salida y `_leer_sala` lo lee.
   - `FORMATO_VERSION` toma el número acordado en T048.
   - `cargar()` llama a `mundo.enlazar()` y la Partida vuelve a crear `MapaDistancias`.
@@ -337,9 +337,9 @@ heapq ni sorted (`prueba_reglas`).
   - Actualizar el docstring del formato.
 
   Cubre FR-022.
-- [ ] T050 Verificar con T047(d) que `cripta/controlador/modoReplay.py` ya reporta el error y que `fabricaAplicacion` sale con 1: hoy `ejecutar()` envuelve `iniciar_cripta` y `partida.iniciar` en `except ErrorCripta` y llama a `_fallar`. **Si no lo hace**, agregar la captura en `ModoReplay.ejecutar`, con su prueba en `pruebas/prueba_persistencia_cazador.py`. Cubre FR-027.
-- [ ] T051 Ampliar `pruebas/prueba_cazador_equivalencia.py` (T022) para que también guarde y cargue entre turnos, y compruebe que la decisión sigue igual a la del oráculo. Cubre FR-017 y FR-022.
-- [ ] T052 Ejecutar T047 y T051 en verde. Cubre FR-022 y SC-005.
+- [X] T050 Verificar con T047(d) que `cripta/controlador/modoReplay.py` ya reporta el error y que `fabricaAplicacion` sale con 1: hoy `ejecutar()` envuelve `iniciar_cripta` y `partida.iniciar` en `except ErrorCripta` y llama a `_fallar`. **Si no lo hace**, agregar la captura en `ModoReplay.ejecutar`, con su prueba en `pruebas/prueba_persistencia_cazador.py`. Cubre FR-027.
+- [X] T051 Ampliar `pruebas/prueba_cazador_equivalencia.py` (T022) para que también guarde y cargue entre turnos, y compruebe que la decisión sigue igual a la del oráculo. Cubre FR-017 y FR-022.
+- [X] T052 Ejecutar T047 y T051 en verde. Cubre FR-022 y SC-005.
 
 ---
 

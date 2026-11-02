@@ -113,6 +113,19 @@ class Partida:
         caché derivada que se invalida sola (principio V, research R2)."""
         return self._mapa_distancias
 
+    def reconstruir_tras_cargar(self) -> None:
+        """Después de cargar una partida guardada (y de Mundo.enlazar()):
+        vuelve a crear la caché derivada que no se guarda, el mapa de
+        distancias y la lista de cazadores para R_activos (principio V: se
+        recalcula, no se restaura). O(salas + enemigos), una vez por carga."""
+        self._cazadores = ListaEnlazada()
+        for sala in self.mundo:
+            for grupo in (sala.dormidos, sala.activos):
+                for enemigo in grupo:
+                    if isinstance(enemigo.comportamiento, Cazador):
+                        self._cazadores.agregar_al_final(enemigo)
+        self._mapa_distancias = MapaDistancias(self.mundo, self.mayor_rango_activo)
+
     def registrar_activacion(self, enemigo) -> None:
         """Lo llama Enemigo.activar(): recuerda a los cazadores (una vez cada
         uno) para calcular R_activos. O(cazadores)."""

@@ -20,7 +20,12 @@ Formato (todo escrito con EscritorBinario/LectorBinario, little-endian):
   JUGADOR (un solo bloque, fuera del índice de salas)
 
   SALAS: cantidad(entero), luego cada Sala una tras otra (se recuerda el
-  offset y la longitud de cada una para el índice)
+  offset y la longitud de cada una para el índice). Cada salida guarda
+  destino, cerrada, llave, cierre_automatico y, desde la versión 2, su
+  costo EFECTIVO (entero >= 1, 001-terreno-cazador): al cargar,
+  Mundo.enlazar() vuelve a resolver origen, destino y entrantes, y la Partida
+  recrea su mapa de distancias (specs/001-terreno-cazador/contracts/
+  partida-binaria.md).
 
   EVENTOS PENDIENTES DE LA AGENDA: cantidad(entero), luego cada evento
 
@@ -50,6 +55,7 @@ from ..modelo.actores.enemigo import Enemigo
 from ..modelo.estructuras.listaEnlazada import ListaEnlazada
 from ..modelo.actores.jugador import Jugador
 from ..modelo.mundo.mundo import Mundo
+from ..modelo.mundo.registroPuertas import RegistroPuertas
 from ..modelo.mundo.salida import Salida
 from ..modelo.mundo.sala import Sala
 from ..modelo.mundo.trampa import Trampa
@@ -71,7 +77,11 @@ from ..modelo.reloj.eventos import (
 from .codificadorBinario import EscritorBinario, LectorBinario
 
 MAGIC = b"CRPB"
-FORMATO_VERSION = 1
+# 2 desde 001-terreno-cazador (costo por salida). Provisional según el orden
+# de merge a main: si otra feature toma el 2 antes, se ajusta al integrarse
+# (contracts/partida-binaria.md, T048). Un archivo de otra versión se reporta
+# incompatible y no se migra (principio V).
+FORMATO_VERSION = 2
 
 # Nombres de tipo de evento, para no depender del nombre de la clase de Python
 # (si se refactoriza un nombre de clase, el formato de archivo no se rompe).
@@ -241,6 +251,7 @@ class PartidaBinaria:
                 escritor.booleano(salida.cerrada)
                 escritor.texto(salida.llave)
                 escritor.entero_opcional(salida.cierre_automatico)
+                escritor.entero(salida.costo)          # versión 2: costo efectivo
         escritor.entero_opcional(sala.rastro)
         escritor.booleano(sala.contenido_cargado)
 
@@ -379,6 +390,11 @@ class PartidaBinaria:
         for evento in eventos:
             partida.agenda.reinsertar(evento)
 
+        # 001-terreno-cazador: referencias directas, entrantes y registro de
+        # puertas (los costos guardados son los efectivos, así que las caras
+        # coinciden), y el mapa de distancias y los cazadores de la Partida.
+        partida.mundo.enlazar()
+        partida.reconstruir_tras_cargar()
         return partida
 
     @staticmethod
@@ -421,6 +437,7 @@ class PartidaBinaria:
         mundo.estadisticas_jugador = types.SimpleNamespace(
             vida_max=vida_max, ataque=ataque, defensa=defensa, velocidad=velocidad)
         mundo._salas = ListaEnlazada()
+        mundo.registro_puertas = RegistroPuertas()
         partida.mundo = mundo
 
         partida.agenda = Agenda()
@@ -542,7 +559,9 @@ class PartidaBinaria:
             cerrada = lector.booleano()
             llave = lector.texto()
             cierre_automatico = lector.entero_opcional()
-            salida = Salida(DIRECCIONES[indice], destino, cerrada, llave, cierre_automatico)
+            costo = lector.entero()                    # versión 2: costo efectivo
+            salida = Salida(DIRECCIONES[indice], destino, cerrada, llave, cierre_automatico,
+                            costo)
             if indice == 0:
                 norte = salida
             elif indice == 1:
@@ -602,7 +621,8 @@ class PartidaBinaria:
             ids_suelta.agregar_al_final(lector.texto())
 
         ficha = PartidaBinaria._resolver_ficha(servicio, id_ficha)
-        enemigo = Enemigo(id_instancia, ficha, vida, id_sala, crear_comportamiento(ficha.comportamiento))
+        enemigo = Enemigo(id_instancia, ficha, vida, id_sala,
+                          crear_comportamiento(ficha.comportamiento, ficha.rango))
         enemigo.vida_max = vida_max
         enemigo.ataque = ataque
         enemigo.defensa = defensa

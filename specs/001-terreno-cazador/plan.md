@@ -146,7 +146,11 @@ primero FR-026(b) en un commit propio (principio VII), y la decisión y sus
 mediciones van a DECISIONES.md. La prueba de equivalencia (R9) corre con la
 política elegida.
 
-## Formato de guardado (pendiente de coordinar)
+## Formato de guardado
+
+**Acuerdo (T048, 01/11/2026):** `FORMATO_VERSION = 2`, provisional según el
+orden de merge a `main` (ver contracts/partida-binaria.md). Lo que sigue es
+el razonamiento original, que se mantiene si otra feature toma el 2 antes.
 
 Esta capacidad agrega el **costo efectivo** de cada salida al archivo de
 partida ([contracts/partida-binaria.md](contracts/partida-binaria.md)).
