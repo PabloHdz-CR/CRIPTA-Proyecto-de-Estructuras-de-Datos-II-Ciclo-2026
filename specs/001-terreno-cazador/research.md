@@ -110,12 +110,16 @@ columna lenta de R1); comparar el estado de todas las puertas en cada consulta
 
 **Decisión**: las salas a costo mayor que la cota quedan "sin distancia"
 (infinito). La regla para elegir la cota nueva al recalcular **se decide con el
-bench** (plan.md, "Política de cota del mapa"). Hay tres candidatas:
+bench** (plan.md, "Política de cota del mapa"). Hay cuatro candidatas:
 
 - **P1** (punto de partida): `max(cota_anterior, rango_del_cazador)`.
 - **P2**: duplicar, `max(rango, 2 × cota_anterior)`.
 - **P3**: duplicar con tope, `min(max(rango, 2 × cota_anterior), R_activos)`,
   donde R_activos es el mayor rango entre los cazadores activos.
+- **P4**: directo al tope, `cota = R_activos`. Un solo recálculo por ciclo.
+  **Es la elegida** (D72): en T044 se había elegido P3 con un banco no
+  estacionario; con escenarios estacionarios P3 no pasa los 20 ms en la malla
+  de 1024 salas.
 
 P1 puede recalcular una vez por cada rango distinto dentro de un ciclo; P2 y P3,
 O(log₂(R_max / R_min)) veces. P2 explora hasta casi el doble de R y exigiría
@@ -321,6 +325,6 @@ el Modelo (principio III).
 4. **Costo del enlace** (R4) al cargar la cripta.
 5. **Rangos distintos y política de cota** (R3): 100 cazadores con rangos
    distintos, activados en orden creciente, decreciente y al azar con semilla
-   fija. Para P1, P2 y P3 reporta los recálculos del mapa por ciclo, las salas
+   fija. Para P1, P2, P3 y P4 reporta los recálculos del mapa por ciclo, las salas
    examinadas y el tiempo del ciclo. Se elige la política más simple que quede
    por debajo de 20 ms.

@@ -95,7 +95,7 @@ lo único que importa es que *cambie* (R2).
 - **`_sello_mapa` / `sello_mapa`** y **`nuevo_sello_mapa()`**: el contador de
   sellos de los cálculos de distancias vive en el Mundo, no en cada mapa.
   Cada cálculo reserva el siguiente con `nuevo_sello_mapa()`. Así, si dos
-  mapas usan el mismo mundo (por ejemplo, el bench que compara P1, P2 y P3),
+  mapas usan el mismo mundo (por ejemplo, el bench que compara P1 a P4),
   cada uno detecta que otro sobrescribió los campos de las salas (el sello
   del mundo ya no es el suyo) y recalcula, en vez de leer distancias ajenas.
 
@@ -126,11 +126,11 @@ Operaciones:
   sigue siendo el suyo y la cota es ≥ `cota_minima`. Si no, recalcula desde
   cero con la cota que devuelve `_cota_nueva(cota_minima)`.
 - `_cota_nueva(cota_minima)`: la regla de la cota, aislada para que las
-  alternativas del bench (P1, P2) sobrescriban solo este método. **Política
-  P3**, elegida con el bench (T044): `max(cota_minima, min(max(cota_minima,
-  2 × anterior), R_activos))`, donde `anterior` es la cota vigente si el
-  objetivo y la versión no cambiaron (o 0) y `R_activos` es el mayor rango
-  entre los cazadores activos (FR-026(b) enmendado en `859cf55`).
+  alternativas del bench (P1, P2, P3) sobrescriban solo este método.
+  **Política P4** (D72): `max(cota_minima, R_activos)`, donde `R_activos` es
+  el mayor rango entre los cazadores activos (FR-026(b) enmendado en
+  `859cf55`): un solo cálculo por ciclo. En T044 se había elegido P3,
+  duplicar con tope; ver D72.
 - Constructor `MapaDistancias(mundo, mayor_rango_activo=None)`:
   `mayor_rango_activo` es una función que devuelve R_activos (la Partida pasa
   `Partida.mayor_rango_activo`). Sin ella, el tope es el rango pedido.

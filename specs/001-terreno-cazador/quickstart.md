@@ -60,10 +60,12 @@ py main.py --bench                                     # todas las mediciones
 Resultado esperado:
 
 - **Ciclo de eventos**: con 20, 50 y 100 cazadores, el mínimo es < 20 ms en
-  la cripta de referencia y en la malla de 1024 salas (FR-025, SC-003).
+  la cripta de referencia (FR-025, SC-003). La malla de 1024 salas se informa
+  como estrés (alrededor de 8 ms con P4 en el equipo local).
 - **Rangos distintos**: 100 cazadores con rangos distintos, activados en orden
   creciente, decreciente y al azar (semilla fija). Por cada política de cota
-  (P1 `max(anterior, rango)`, P2 duplicar, P3 duplicar con tope; ver
+  (P1 `max(anterior, rango)`, P2 duplicar, P3 duplicar con tope, P4 directo
+  a R_activos, la del juego; ver
   plan.md, "Política de cota del mapa") reporta los recálculos del mapa por
   ciclo, las salas examinadas y el tiempo del ciclo. La política elegida y
   sus cifras van a DECISIONES.md.
@@ -72,9 +74,10 @@ Resultado esperado:
 - **Comparación**: mapa compartido frente a búsqueda por cazador desde cero,
   con las mismas decisiones. Va a DECISIONES.md.
 
-El bench informa las cifras; las pruebas `prueba_rendimiento_cazador` y
-`prueba_conteo_cazador` convierten los mismos criterios en verificaciones que
-pasan o fallan dentro de `py pruebas/ejecutar_pruebas.py`.
+El bench informa las cifras; las pruebas `prueba_rendimiento_cazador` (solo
+la cripta de referencia) y `prueba_conteo_cazador` convierten los criterios de
+la spec en verificaciones que pasan o fallan dentro de
+`py pruebas/ejecutar_pruebas.py`.
 
 ## 3. Prueba manual (Vista)
 

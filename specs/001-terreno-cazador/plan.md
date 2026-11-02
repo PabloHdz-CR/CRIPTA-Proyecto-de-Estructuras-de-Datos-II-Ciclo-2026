@@ -125,19 +125,20 @@ de una partida guardada.
 - **Sin Vista (`--replay`)**: `modoReplay` debe reportar el mensaje y salir con
   código 1. Se verifica y, si no lo hace, se agrega la captura.
 
-## Política de cota del mapa (a decidir con el bench)
+## Política de cota del mapa
 
 Con `cota = max(cota_anterior, rango)` (research.md R3), 100 cazadores de
 rangos distintos que deciden en orden creciente de rango provocan hasta 100
 recálculos del mapa en un solo ciclo. El bench agrega ese escenario de peor
 caso: 100 cazadores con rangos distintos, activados en orden creciente,
-decreciente y al azar con semilla fija. En él compara tres políticas:
+decreciente y al azar con semilla fija. En él compara cuatro políticas:
 
 | Política | Recálculos por ciclo (peor caso) | Región explorada | Relación con FR-026(b) |
 |---|---|---|---|
 | P1: `max(anterior, rango)` | hasta 1 por rango distinto | exactamente la cota pedida | la cumple a la letra (≤ R) |
 | P2: duplicar, `max(rango, 2 × anterior)` | O(log₂(R_max / R_min)) | hasta casi 2R | la excede: haría falta enmendar FR-026(b) a "≤ 2R" |
 | P3: duplicar con tope, `min(max(rango, 2 × anterior), R_activos)`, donde R_activos es el mayor rango entre los cazadores activos | O(log₂(R_max / R_min)) | ≤ R_activos | la cumple si R se lee como el mayor rango de los cazadores activos que consultan en el ciclo; conviene precisarlo en FR-026 |
+| P4: directo al tope, `cota = R_activos` | 1 | ≤ R_activos | la cumple con FR-026(b) enmendado (859cf55) |
 
 Criterio de decisión: se elige la política más simple que deje el ciclo con
 100 cazadores de rangos distintos por debajo de 20 ms (FR-025) en la cripta
@@ -145,6 +146,14 @@ de referencia y en la malla de 1024 salas. Si gana P2 o P3, se enmienda
 primero FR-026(b) en un commit propio (principio VII), y la decisión y sus
 mediciones van a DECISIONES.md. La prueba de equivalencia (R9) corre con la
 política elegida.
+
+**Decisión (D72):** P4, un solo recálculo por ciclo en cualquier orden (en la
+malla de 1024 salas, 8,1 ms frente a 46,3 ms de P3 en orden creciente). En
+T044 se había elegido P3 con un banco que no reiniciaba los turnos de los
+cazadores entre repeticiones; con escenarios estacionarios P3 no pasa. La
+verificación automática (`prueba_rendimiento_cazador`) mide solo la cripta de
+referencia, que es lo que exigen FR-025 y SC-003; la malla de 1024 salas y los
+rangos distintos en ella quedan como estrés informativo en el bench.
 
 ## Formato de guardado
 
@@ -213,7 +222,7 @@ cripta/
 │   ├── modoReplay.py               # verificar que reporte DatosInvalidos y salga con 1
 │   ├── constructorEstadoVista.py   # SalidaVisible.costo, ActorVisible.es_cazador
 │   └── bench/
-│       ├── alternativasCazador.py  # NUEVO: MapaDistanciasP2, MapaDistanciasP3 y BusquedaPorCazador (solo para medir)
+│       ├── alternativasCazador.py  # NUEVO: MapaDistanciasP1, P2 y P3 y BusquedaPorCazador (solo para medir)
 │       ├── benchCazador.py         # NUEVO: ciclo con 20/50/100, rangos distintos, políticas de cota, conteos, comparación
 │       └── benchTodo.py            # registra benchCazador
 └── vista/

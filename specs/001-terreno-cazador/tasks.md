@@ -282,6 +282,8 @@ heapq ni sorted (`prueba_reglas`).
 
   Al fallar reporta la cifra medida.
 
+  **Ajuste (D72, 58e0a18):** la prueba mide solo la cripta de referencia (20, 50 y 100 cazadores y 100 de rangos distintos en tres órdenes), que es lo que exigen FR-025 y SC-003. La malla de 1024 salas queda como estrés informativo en `benchCazador`.
+
 ### Implementation for User Story 4
 
 - [X] T041 [US4] Crear `cripta/controlador/bench/alternativasCazador.py`, siguiendo el patrón de `alternativasAgenda.py`:
@@ -292,7 +294,7 @@ heapq ni sorted (`prueba_reglas`).
   **Nota**: este código vive en `cripta/`, así que `prueba_reglas` lo revisa: nada de list, dict, sorted ni heapq; se usan `ListaEnlazada` y `HeapMinimo`. Cubre FR-025 y FR-026.
 - [X] T042 [US4] Crear `cripta/controlador/bench/benchCazador.py`, con `ejecutar(reporte, rapido)` y estos escenarios:
   1. Ciclo completo con 20, 50 y 100 cazadores, en la cripta de referencia y en la malla de 1024 salas. La cripta de referencia es la de más salas que lista `FuenteOffline` sobre `datos_offline/`; se elige por cantidad de salas, sin ids en el código, y recibe costos sintéticos con semilla fija.
-  2. **Bench de la cota**: 100 cazadores con **rangos distintos**, activados en orden creciente, decreciente y al azar (semilla fija). Para **P1, P2 y P3** reporta recálculos por ciclo, salas examinadas y tiempo del ciclo, con PASA/FALLA contra 20 ms.
+  2. **Bench de la cota**: 100 cazadores con **rangos distintos**, activados en orden creciente, decreciente y al azar (semilla fija). Para **P1, P2 y P3** reporta recálculos por ciclo, salas examinadas y tiempo del ciclo, con PASA/FALLA contra 20 ms. **Ajuste (D72, 677fe12):** se agregó P4 y el margen frente a 20 ms, y cada repetición reinicia los turnos de los cazadores (escenarios estacionarios).
   3. Conteos de salas examinadas en una cripta base y en otra 10 veces más grande.
   4. Comparación del mapa compartido contra `BusquedaPorCazador`, con las mismas decisiones.
   5. Costo de `Mundo.enlazar()`.
@@ -301,13 +303,15 @@ heapq ni sorted (`prueba_reglas`).
 
   **Nota**: este código vive en `cripta/`, así que `prueba_reglas` lo revisa: nada de list, dict, sorted ni heapq (las criptas sintéticas y los resultados van en `ListaEnlazada` o tuplas). Cubre FR-025 y FR-026.
 - [X] T043 [US4] En `cripta/controlador/bench/benchCazador.py`, agregar un bloque `if __name__ == "__main__":` que acepte `--rapido`, para que funcione `py -m cripta.controlador.bench.benchCazador [--rapido]`. Además, registrar `benchCazador.ejecutar(reporte, rapido)` en `cripta/controlador/bench/benchTodo.py` (import y llamada en `ejecutar_todo`). Cubre FR-025.
-- [X] T044 [US4] Ejecutar el bench completo y **decidir la política de cota** con el criterio de plan.md ("la más simple que deje el ciclo con 100 cazadores de rangos distintos por debajo de 20 ms en la cripta de referencia y en la malla de 1024 salas"). Guardar las cifras para DECISIONES.md (T055). Cubre FR-025 y FR-026.
+- [X] T044 [US4] Ejecutar el bench completo y **decidir la política de cota** con el criterio de plan.md ("la más simple que deje el ciclo con 100 cazadores de rangos distintos por debajo de 20 ms en la cripta de referencia y en la malla de 1024 salas"). Guardar las cifras para DECISIONES.md (T055). Cubre FR-025 y FR-026. **Resultado:** primero se eligió P3, con un banco no estacionario; con escenarios estacionarios ganó **P4** (D72).
 - [X] T045 [US4] **CONDICIONAL**, solo si en T044 gana P2 o P3:
   1. Enmendar primero FR-026(b), y SC-004 si hace falta, en `specs/001-terreno-cazador/spec.md`, en un **commit propio** que solo toque la spec (principio VII). Para P2, la cota pasa a "≤ 2R"; para P3, R es "el mayor rango de los cazadores activos que consultan en el ciclo".
   2. **Después**, en otro commit, mover la política ganadora a `cripta/modelo/mundo/mapaDistancias.py`. Si es P3, `cripta/modelo/nucleo/partida.py` debe proveer R_activos.
   3. Volver a ejecutar T022, T039 y T040.
 
   Si gana P1, escribir "no aplica" en esta tarea y en DECISIONES.md. Cubre FR-026.
+
+  **Resultado:** FR-026(b) enmendado en `859cf55` (R = mayor rango entre los cazadores activos); la política del juego es P4 desde `58e0a18`, que cumple esa enmienda; T022, T039 y T040 en verde con P4.
 - [X] T046 [US4] Ejecutar T039 y T040 en verde, junto con la suite completa. Cubre FR-025, FR-026, SC-003 y SC-004.
 
 **Checkpoint**: US4 medida y verificada.
