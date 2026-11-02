@@ -1054,3 +1054,9 @@ Uso: decidir que un costo null equivale a no declarado, registrar la aclaración
 - **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-implement` (Fase 8, cierre)
 - **Prompt:** "opción 2, haz push y sigue con la Fase 8"
 - **Uso:** sacar del índice la salida de prueba_6_3 (paquete_prueba_6_3/ a .gitignore, commit f334303) y push. Fase 8: T053, las 9 pruebas nuevas en ejecutar_pruebas.py (46/46); T054, README (46 pruebas, sección de terreno y cazador, formato 2 incompatible con los guardados anteriores); T055, D71 a D74 en DECISIONES.md (después de D70; origin/main no agregó decisiones), con las cifras del bench; T056, numeración de PROMPTS_LLM.md continua de la 16 a la 126 (la 1 repetida y la 4, 6, 14 y 15 faltantes son de la Parte I y no se renumeran); T057, las 21 marcas de escenario en su prueba y los 28 FR citados; T058, suite 46/46, prueba_reglas, --bench --rapido y quickstart §4 con las tres partidas reales del usuario (mismo final que en puntajes.jsonl).
+
+## Entrada 127
+- **Fecha:** 01/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-implement` (cierre, T059)
+- **Prompt:** "haz el push y luego yo me encargo del merge, ya con esto estariamos con el primer feature"
+- **Uso:** cerrar T059: las comprobaciones de cierre ya estaban hechas (58 tareas marcadas, T045 y T048 resueltas, los 28 FR con prueba, DECISIONES.md y PROMPTS_LLM.md al día, sin ids concretos, commits separados). Se marca T059 y se hace push de la rama; el PR y el merge a main quedan a cargo del usuario.

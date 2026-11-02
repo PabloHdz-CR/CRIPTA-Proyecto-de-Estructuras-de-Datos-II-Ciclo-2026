@@ -369,7 +369,7 @@ heapq ni sorted (`prueba_reglas`).
   - quickstart.md §3 y §4.
 
   Cubre FR-001 a FR-028.
-- [ ] T059 **Cerrar la feature** (última tarea). Comprobar:
+- [X] T059 **Cerrar la feature** (última tarea; 01/11/2026: comprobaciones hechas y push de la rama; el PR y el merge a `main` los hace el usuario). Comprobar:
   - Todas las tareas anteriores marcadas, y T045 y T048 resueltas (o T045 con "no aplica").
   - Cada FR-001 a FR-028 citado por al menos una prueba en verde.
   - DECISIONES.md y PROMPTS_LLM.md al día.
