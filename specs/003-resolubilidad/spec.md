@@ -12,7 +12,7 @@
 
 ### Session 2026-11-08
 
-- Q: Si sala_salida también puede alcanzarse por un camino que no atraviesa ninguna puerta que requiera llave_salida, ¿qué debe decir la verificación? → A: Se aplica la definición literal del enunciado: la cripta es "no resoluble" y el reporte da el motivo "la sala de salida es alcanzable sin la puerta que requiere llave_salida"; la regla de victoria del juego no cambia (FR-001, FR-011).
+- Q: Si sala_salida también puede alcanzarse por un camino que no atraviesa ninguna puerta que requiera llave_salida, ¿qué debe decir la verificación? → A: Se aplica la definición literal del enunciado: la cripta es "no resoluble" y el reporte da el motivo "la sala de salida es alcanzable sin la puerta que requiere llave_salida"; la regla de victoria del juego no cambia (FR-001, FR-011). *Corregido tras la revisión de la spec (2026-11-08)*: la respuesta contradecía el enunciado ("llegar a sala_salida a través de una puerta que la requiere"; Parte I §2.12). La cripta es resoluble si EXISTE un camino que entra a sala_salida por una salida que requiere llave_salida, aunque sala_salida también sea alcanzable por otro camino; es no resoluble solo si llave_salida no es obtenible o si ninguna salida que la requiere da acceso a sala_salida desde la región alcanzable, incluido el caso en que sala_salida solo se alcanza sin esa puerta (FR-001, FR-011).
 - Q: ¿Qué llaves debe incluir el orden de obtención cuando la cripta es resoluble? → A: Todas las llaves obtenibles, cada una después de las que hacen falta para alcanzarla, incluidas las que no se necesitan para ganar; llave_salida no tiene por qué ir última (FR-007, FR-008).
 - Q: Cuando varias llaves ya pueden obtenerse al mismo tiempo, ¿qué regla decide cuál va antes en el orden? → A: Entre las llaves alcanzables con las ya ordenadas, va primero la de menor id (comparación de texto del identificador); el resultado es el orden lexicográficamente menor entre los válidos (FR-009).
 - Q: En la ventana del juego, ¿cómo y cuándo se muestra el reporte de resolubilidad? → A: Resoluble: la partida inicia con un aviso corto y el reporte completo (con el orden) se abre a pedido con la tecla V, que no estaba asignada; no resoluble sin --forzar: pantalla con el reporte completo y vuelta al menú; no resoluble con --forzar: la misma pantalla y, al aceptar, la partida inicia, con el reporte disponible con V. La asignación de V se documenta en el README (FR-019, FR-020, FR-037).
@@ -53,6 +53,7 @@ con el resultado esperado, sin vista ni red.
 9. **Given** una puerta con cierre automático en el único camino hacia llave_salida y hacia la sala de salida, y la llave de esa puerta obtenible antes, **When** se verifica, **Then** la puerta no bloquea y la cripta es resoluble (FR-005).
 10. **Given** una puerta cuyas dos caras tienen estados o llaves distintos (por ejemplo, abierta de A hacia B y cerrada con llave de B hacia A), **When** se verifica, **Then** cada cara se evalúa en el sentido en que se recorre: se puede pasar de A a B sin llave, pero volver de B a A exige la llave de esa cara (FR-006).
 11. **Given** una cripta que no es resoluble por causas sin ciclo (por ejemplo, solo una llave faltante o una puerta cerrada sin llave), **When** se verifica, **Then** el reporte incluye las llaves no obtenibles, la frontera bloqueada y las ubicaciones, e indica que no hay ciclo (FR-011, FR-012, FR-013, FR-014).
+12. **Given** una cripta en la que sala_salida es alcanzable por dos caminos, uno que entra por una salida que requiere llave_salida (obtenible) y otro que entra por una salida abierta, **When** se verifica, **Then** la cripta es resoluble (FR-001).
 
 ---
 
@@ -166,7 +167,8 @@ compararla con la alternativa ingenua.
 - **Dentro de un grupo hay varios ciclos posibles** (por ejemplo, las llaves k_a, k_b y k_c, donde k_a depende de k_b y de k_c, k_b de k_a y k_c de k_a): se muestra solo el que da la regla de FR-015 (k_a → k_b → k_a) (FR-015).
 - **La misma llave aparece en varias ubicaciones**: es obtenible si al menos una de ellas es alcanzable; si no lo es, el reporte lista todas sus ubicaciones (FR-013, FR-016).
 - **llave_salida es obtenible pero ninguna puerta que la requiere conduce a la sala de salida desde la región alcanzable**: la cripta no es resoluble y el reporte lo indica (FR-001, FR-011).
-- **La sala de salida es alcanzable sin atravesar ninguna puerta que requiera llave_salida**: la cripta es "no resoluble" según la definición literal del enunciado, aunque el juego permita ganarla; el reporte da el motivo "la sala de salida es alcanzable sin la puerta que requiere llave_salida" (FR-001, FR-011). La regla de victoria del juego no cambia.
+- **sala_salida es alcanzable por dos caminos, uno por una salida que requiere llave_salida y otro sin ella**: la cripta es resoluble, porque existe el camino por la salida que requiere llave_salida (FR-001).
+- **sala_salida solo es alcanzable sin atravesar ninguna salida que requiera llave_salida**: la cripta es no resoluble con el motivo (b) de FR-011, y el reporte indica que sala_salida solo se alcanza sin esa salida, aunque el juego permita ganarla. La regla de victoria del juego no cambia (FR-001, FR-011).
 - **Una puerta cerrada cuya sala de destino ya es alcanzable por otro camino**: no forma parte de la frontera bloqueada (FR-012).
 - **La ubicación de llaves está vacía**: llave_salida no puede obtenerse, la cripta no es resoluble y el reporte la lista como no obtenible "sin ubicación" (FR-001, FR-011, FR-013).
 - **Las páginas del esqueleto o las entradas de la ubicación de llaves llegan en otro orden**: el veredicto, el orden y el reporte no cambian (FR-010).
@@ -177,7 +179,7 @@ compararla con la alternativa ingenua.
 
 **Reglas de la verificación**
 
-- **FR-001**: Una cripta MUST considerarse resoluble si y solo si, partiendo de la sala inicial y bajo los supuestos de FR-002 a FR-006, el jugador puede obtener llave_salida y llegar a sala_salida atravesando una salida que requiere llave_salida.
+- **FR-001**: Una cripta MUST considerarse resoluble si y solo si, partiendo de la sala inicial y bajo los supuestos de FR-002 a FR-006, el jugador puede obtener llave_salida y existe un camino que entra a sala_salida por una salida que requiere llave_salida. Que sala_salida también sea alcanzable por otro camino, sin esa salida, MUST NOT cambiar el veredicto.
 - **FR-002**: La verificación MUST considerar transitable toda salida abierta y toda salida cerrada cuya llave ya fue obtenida; una salida cerrada sin llave asociada MUST considerarse intransitable siempre.
 - **FR-003**: Las llaves MUST NOT consumirse: una llave obtenida sigue sirviendo para todas las salidas que la requieren durante el resto de la verificación.
 - **FR-004**: Todo enemigo MUST considerarse derrotable. Una llave que suelta un enemigo MUST considerarse obtenible en la sala donde ese enemigo inicia, aunque sea errante o se mueva después.
@@ -190,7 +192,7 @@ compararla con la alternativa ingenua.
 
 **Reporte de no resolubilidad**
 
-- **FR-011**: Si la cripta no es resoluble, el reporte MUST listar las llaves que no pueden obtenerse, incluidas las que requiere alguna puerta pero no aparecen en la ubicación de llaves, e indicar el motivo del fracaso: llave_salida no obtenible; llave_salida obtenible pero sin una salida que la requiera hacia sala_salida desde la región alcanzable; o la sala de salida es alcanzable sin la puerta que requiere llave_salida.
+- **FR-011**: Si la cripta no es resoluble, el reporte MUST listar las llaves que no pueden obtenerse, incluidas las que requiere alguna puerta pero no aparecen en la ubicación de llaves, e indicar el motivo del fracaso, que MUST ser uno de estos dos: (a) llave_salida no es obtenible; (b) llave_salida es obtenible, pero ninguna salida que la requiere da acceso a sala_salida desde la región alcanzable. En el caso (b), si sala_salida es alcanzable solo por caminos que no atraviesan esa salida, el reporte MUST indicarlo.
 - **FR-012**: El reporte MUST listar las puertas de la frontera bloqueada: las salidas cerradas que parten de una sala alcanzable hacia una sala no alcanzable, identificadas por sala de origen, dirección y sala de destino, con la llave que requiere cada una o la marca "sin llave".
 - **FR-013**: Para cada llave de FR-011 y de FR-012, el reporte MUST indicar dónde se encuentra: la sala, y el enemigo que la suelta si corresponde; o "sin ubicación" si no aparece en la ubicación de llaves.
 - **FR-014**: Una llave K depende de una llave Y si alguna salida cerrada que requiere Y conduce hasta la ubicación de K sin atravesar ninguna otra salida intransitable con las llaves obtenibles. Si una llave no obtenible depende de sí misma, directamente o mediante una cadena de dependencias entre llaves no obtenibles, el reporte MUST señalar el ciclo concreto como la secuencia de llaves y de las puertas que las encierran; si no hay ciclo, MUST indicar que no lo hay.
@@ -245,9 +247,9 @@ compararla con la alternativa ingenua.
 
 ### Measurable Outcomes
 
-- **SC-001**: Los 12 escenarios de aceptación del enunciado (incluidos los 4 obligatorios del Apéndice B) y los casos borde de esta especificación tienen una prueba automatizada que pasa, y cada prueba cita los FR que ejerce.
+- **SC-001**: Los 28 escenarios de aceptación de esta especificación (12 de la historia 1, 4 de la 2, 3 de la 3, 6 de la 4 y 3 de la 5), de los cuales 4 son los obligatorios del Apéndice B, y sus casos borde tienen una prueba automatizada que pasa; cada prueba cita los FR que ejerce.
 - **SC-002**: La verificación de la cripta publicada más grande disponible toma menos de 200 ms en el equipo local, medido con --bench, sin red ni renderizado.
-- **SC-003**: En criptas sintéticas con 100, 200 y 400 llaves encadenadas, al duplicar la cantidad de llaves las salidas examinadas por la verificación crecen como mucho alrededor del doble (proporcional al tamaño), mientras que las de la alternativa ingenua crecen alrededor de cuatro veces; ambas dan el mismo veredicto, orden y reporte en todos los casos.
+- **SC-003**: En criptas sintéticas con 100, 200 y 400 llaves encadenadas, al duplicar la cantidad de llaves (de 100 a 200 y de 200 a 400), el cociente de salidas examinadas es ≤ 2,5 en la verificación y ≥ 3,5 en la alternativa ingenua; ambas dan el mismo veredicto, orden y reporte en todos los casos.
 - **SC-004**: Dos verificaciones de la misma cripta, incluso con las páginas del esqueleto y las entradas de llaves en otro orden, producen reportes idénticos carácter por carácter.
 - **SC-005**: Ninguna partida nueva comienza en una cripta no resoluble sin --forzar; con --forzar comienza en el 100 % de los casos.
 - **SC-006**: --verificar nunca abre la ventana del juego ni crea partidas, registros ni puntajes, y su código de salida distingue resoluble, no resoluble y error.
@@ -255,12 +257,13 @@ compararla con la alternativa ingenua.
 
 ## Assumptions
 
-- **Definición de "resoluble"** (confirmada en Clarifications): se sigue literalmente el enunciado: hace falta obtener llave_salida y entrar a sala_salida por una salida que la requiere. La regla de victoria del juego (entrar a sala_salida por cualquier camino) queda fuera del alcance y no cambia; el caso en que ambas difieren se reporta con su propio motivo (FR-011).
+- **Definición de "resoluble"** (confirmada en Clarifications y corregida tras la revisión): basta con que exista un camino que entra a sala_salida por una salida que requiere llave_salida, con llave_salida obtenible; otros caminos hacia sala_salida no cambian el veredicto. La regla de victoria del juego (entrar a sala_salida por cualquier camino) queda fuera del alcance y no cambia; el único caso en que difiere de la verificación (sala_salida alcanzable solo sin esa salida) se explica en el reporte (FR-001, FR-011).
 - **Contenido del orden** (confirmado en Clarifications): el orden de FR-007 incluye todas las llaves obtenibles, no solo las necesarias para ganar; entre llaves disponibles a la vez va primero la de menor id (FR-009, confirmado en Clarifications).
 - **Dependencias con varias entradas**: si la ubicación de una llave puede alcanzarse por puertas que requieren llaves distintas, la llave depende de cada una de ellas (FR-014); un ciclo se reporta solo entre llaves no obtenibles, de modo que siempre explica un bloqueo real.
-- **Códigos de salida de --verificar**: 0 resoluble, 1 no resoluble, 2 error de datos o de red, siguiendo el uso actual del 1 en --replay para fallos (FR-024).
+- **Códigos de salida de --verificar**: 0 resoluble, 1 no resoluble, 2 error de datos o de red (FR-024). Es una decisión propia de esta capacidad: en --replay el 1 significa fallo, mientras que en --verificar significa un veredicto válido (no resoluble); los errores van con el 2. Cada modo documenta sus propios códigos.
 - **Fallo al verificar**: si no puede verificarse (datos ausentes, presupuesto agotado, red), se trata como un tercer resultado y no como "no resoluble" (FR-031).
-- **Interfaz del reporte** (confirmada en Clarifications): el orden de llaves de una cripta resoluble no se muestra por defecto porque revela la solución; queda a pedido con V. V se eligió porque no estaba asignada en el menú, la partida ni el replay (letras en uso: A, B, C, G, L, N, O, P, Q, R, S, U, X).
+- **Paquetes sin conexión**: los paquetes sin conexión (datos_offline y el paquete de pruebas) deben incluir la ubicación de llaves de cada cripta. Sin ella, FR-029 la reporta como datos no disponibles y FR-031 trata la verificación como "no se pudo verificar", así que jugar sin conexión exige --forzar.
+- **Interfaz del reporte** (confirmada en Clarifications): el orden de llaves de una cripta resoluble no se muestra por defecto porque revela la solución; queda a pedido con V. V se eligió porque no estaba asignada en el menú, la partida ni el replay (letras en uso: A, B, C, G, L, N, O, P, Q, R, S, U, X). Se coordina con el otro integrante del grupo para que no choque con las teclas de niebla, ir a y línea de tiempo de sus capacidades.
 - **Alcance de la verificación**: solo partidas nuevas; cargar una partida guardada o reproducir un registro no vuelve a verificar ni se bloquea (FR-021).
 - **Validez de la ubicación de llaves**: el programa confía en que la sala indicada para un enemigo es su sala inicial y no cruza esa información con el contenido de las salas, que la verificación no descarga (FR-017).
 - **Esqueleto completo**: la verificación usa el esqueleto completo, que el programa ya descarga al preparar una partida; no añade solicitudes de esqueleto propias.
