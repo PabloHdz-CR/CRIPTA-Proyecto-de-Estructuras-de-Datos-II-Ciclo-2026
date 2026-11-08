@@ -137,7 +137,8 @@ Detalle en research.md R12. En resumen:
   `llaves.json` el resultado es NO_VERIFICADA, que con `--forzar` también
   deja iniciar (FR-031). El error de caras distintas sigue apareciendo, al
   convertir el esqueleto o al iniciar la partida forzada, según dónde salte
-  hoy. `prueba_persistencia_cazador` no pasa por la verificación.
+  hoy. `prueba_persistencia_cazador` se adaptó igual en su caso del replay
+  fiel, que también inicia por el menú (se vio al implementar, T041).
 - Paquetes temporales de `prueba_controlador` y `prueba_replay_menu`: se les
   agrega `llaves.json` y siguen el camino normal (su puerta cerrada lleva a la
   sala de salida). Si alguno no resultara resoluble, se usa `forzar=True`.

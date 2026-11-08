@@ -334,7 +334,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - (2) las cadenas de 100, 200 y 400 llaves, resolubles y con ciclo: ms (informativo), salidas examinadas de las dos, cocientes con PASA/FALLA contra ≤ 2,5 y ≥ 3,5, y "mismo reporte: sí/no".
   Generar las cadenas en el mismo módulo, sin ids de criptas reales; `--rapido` reduce las repeticiones, no los tamaños. Registrar en `cripta/controlador/bench/benchTodo.py`. FR-032 a FR-035.
 - [X] T052 [US5] Correr `py main.py --bench` completo y anotar las cifras reales (referencia o SIN DATOS, ms y salidas examinadas por tamaño, cocientes) para DECISIONES.md (T061). Si un criterio de SC-002 o SC-003 **falla**, se para: se diagnostica con mediciones (principio VI), y solo si la spec pide algo imposible se enmienda spec.md en un commit propio. Nunca se relaja un umbral en la prueba.
-- [ ] T053 [US5] Suite completa y `prueba_reglas` en verde (55, con H5.E1 saltada si no hay datos). Commit: "Resolubilidad US5: bench y alternativa ingenua (T048 a T053)".
+- [X] T053 [US5] Suite completa y `prueba_reglas` en verde (55, con H5.E1 saltada si no hay datos). Commit: "Resolubilidad US5: bench y alternativa ingenua (T048 a T053)".
 
 **Checkpoint**: la escalabilidad queda demostrada por conteo; los 200 ms, por tiempo cuando haya datos.
 
@@ -344,22 +344,22 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
 
 **Purpose**: coordinación con la otra rama, documentación con cifras reales y cierre.
 
-- [ ] T054 [P] Revisar `cripta/` contra la constitución: tipos y docstrings en lo nuevo, atributos `_` con propiedades, nombres camelCase y ninguna estructura prohibida (`prueba_reglas`). Buscar en `cripta/` los ids, versiones y cantidades de las criptas de `datos_offline/` y de `pruebas/datos/`: no debe aparecer ninguno (FR-036).
-- [ ] T055 [P] Cobertura: cada FR-001 a FR-037 aparece citado en al menos una prueba (`grep -o "FR-0[0-9][0-9]" pruebas/prueba_*resolub* pruebas/prueba_verificar.py pruebas/prueba_datos_llaves.py pruebas/prueba_vista_resolubilidad.py`, FR-036 lo cubre `prueba_sin_datos_concretos`, T005) y las 28 marcas H*.E* de plan.md están en su prueba. Completar lo que falte.
-- [ ] T056 Validar quickstart.md §3 a §5 a mano (`--verificar` con los tres códigos, pantalla de reporte con y sin `--forzar`, V, partida cargada y replay forzado, `--bench --rapido`). Corregir quickstart.md si algo no coincide.
-- [ ] T057 [P] README.md (FR-037; la fila de V ya se agregó en T041):
+- [X] T054 [P] Revisar `cripta/` contra la constitución: tipos y docstrings en lo nuevo, atributos `_` con propiedades, nombres camelCase y ninguna estructura prohibida (`prueba_reglas`). Buscar en `cripta/` los ids, versiones y cantidades de las criptas de `datos_offline/` y de `pruebas/datos/`: no debe aparecer ninguno (FR-036).
+- [X] T055 [P] Cobertura: cada FR-001 a FR-037 aparece citado en al menos una prueba (`grep -o "FR-0[0-9][0-9]" pruebas/prueba_*resolub* pruebas/prueba_verificar.py pruebas/prueba_datos_llaves.py pruebas/prueba_vista_resolubilidad.py`, FR-036 lo cubre `prueba_sin_datos_concretos`, T005) y las 28 marcas H*.E* de plan.md están en su prueba. Completar lo que falte.
+- [X] T056 Validar quickstart.md §3 a §5 a mano (`--verificar` con los tres códigos, pantalla de reporte con y sin `--forzar`, V, partida cargada y replay forzado, `--bench --rapido`). Corregir quickstart.md si algo no coincide.
+- [X] T057 [P] README.md (FR-037; la fila de V ya se agregó en T041):
   - una sección "Resolubilidad" con `--verificar ID` y sus códigos 0, 1 y 2, `--forzar`, la pantalla de reporte (ENTER y ESC), el aviso y la V en una partida cargada;
   - el total de pruebas actualizado;
   - la nota de que `datos_offline/` debe regenerarse para la Parte II.
-- [ ] T058 [P] Actualizar `contracts/vista.md`, `plan.md` o `research.md` si la implementación cambió un detalle de diseño (no de regla). Un cambio de regla va por spec.md (regla de arriba).
-- [ ] T059 Conflicto con Pablo, **segundo repaso** (el primero es la sincronización antes de la Fase 5, T029), **antes** de documentar números: `git fetch` y `git pull origin main` (o merge de `main` en la rama), y revisar:
+- [X] T058 [P] Actualizar `contracts/vista.md`, `plan.md` o `research.md` si la implementación cambió un detalle de diseño (no de regla). Un cambio de regla va por spec.md (regla de arriba).
+- [X] T059 Conflicto con Pablo, **segundo repaso** (el primero es la sincronización antes de la Fase 5, T029), **antes** de documentar números: `git fetch` y `git pull origin main` (o merge de `main` en la rama), y revisar:
   - numeración de DECISIONES.md: el siguiente D libre después de lo que trajo `main`;
   - numeración de PROMPTS_LLM.md: continua; si se repite un número, renumerar las entradas de esta rama;
   - el último campo de `EstadoVista`: conservar los dos campos, con nombre;
   - el encabezado del log: sumar las palabras de marca de Pablo a la lista de conocidas, si las hay;
   - las teclas: ninguna repetida en la partida, el menú y el replay.
   Suite y `prueba_reglas` en verde después del merge. Commit: "Merge de main en resolubilidad y coordinación con las features de Pablo".
-- [ ] T060 DECISIONES.md, con los números libres de T059, una sección por decisión **con las cifras reales de T052**:
+- [X] T060 DECISIONES.md, con los números libres de T059, una sección por decisión **con las cifras reales de T052**:
   - grafo enlazado por ordenamiento y fusión (R1);
   - fase 1 con puertas pendientes y heap mínimo, y la marca de la puerta de salida (R2, R3);
   - fase 2 con Tarjan iterativo y relleno por prioridad (R4);
@@ -367,8 +367,8 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - encabezado con palabras de marca (R9);
   - V como estado local de la Vista y el verbo para la partida cargada (R8).
   Agregar la fila de la sección del problema a la tabla del inicio.
-- [ ] T061 PROMPTS_LLM.md al día: cada prompt de la implementación registrado, con numeración continua revisada en T059.
-- [ ] T062 Cierre parcial: suite completa, `prueba_reglas` y `--bench --rapido` en verde. Marcar las tareas hechas en este archivo. Commit: "Resolubilidad: documentación y cierre (T054 a T062)". El push lo pide el usuario.
+- [X] T061 PROMPTS_LLM.md al día: cada prompt de la implementación registrado, con numeración continua revisada en T059.
+- [X] T062 Cierre parcial: suite completa, `prueba_reglas` y `--bench --rapido` en verde. Marcar las tareas hechas en este archivo. Commit: "Resolubilidad: documentación y cierre (T054 a T062)". El push lo pide el usuario.
 - [ ] T063 **H5.E1 obligatorio** (depende de T003): con `datos_offline/` regenerado, quitar el salto "SIN DATOS" de `pruebas/prueba_rendimiento_resolubilidad.py`: sin `llaves.json`, la prueba **falla**. Correr la suite y `--bench` con la cripta de referencia real (< 200 ms, PASA), y actualizar la cifra en DECISIONES.md (T060) y plan.md. Si no pasa, se aplica la regla de T052. Correr además la suite completa y `py main.py --bench --rapido` con los datos regenerados y documentar en el commit y en DECISIONES.md lo que cambie (tablas de otras features que usan `datos_offline/`, cifras de referencia). Commit: "Resolubilidad: H5.E1 obligatorio con datos de la Parte II".
   **Plan alternativo** si al cierre el servicio todavía no publica `/llaves` (T003 imposible): H5.E1 sigue saltando con "SIN DATOS" y **no** se da por cumplido SC-002. Se documenta como pendiente en DECISIONES.md (qué falta, desde cuándo, qué se midió en su lugar: las cadenas sintéticas de SC-003) y se avisa al profesor. El cierre de la feature lo indica en el README y en el commit, sin quitar el salto ni inventar una ubicación de llaves.
 

@@ -41,6 +41,7 @@ CODIGO_NO_VERIFICADA = 2
 
 
 def codigo_de(resultado: ResultadoResolubilidad) -> int:
+    """El código de salida de --verificar para ese resultado (FR-024)."""
     if resultado.veredicto == RESOLUBLE:
         return CODIGO_RESOLUBLE
     if resultado.veredicto == NO_RESOLUBLE:
@@ -49,6 +50,7 @@ def codigo_de(resultado: ResultadoResolubilidad) -> int:
 
 
 class ModoVerificar:
+    """Verifica una cripta e imprime el reporte; ver el docstring del módulo."""
 
     def __init__(self, servicio: "ServicioDatos", reporte: Reporte,
                  reporte_final: ReporteFinal) -> None:

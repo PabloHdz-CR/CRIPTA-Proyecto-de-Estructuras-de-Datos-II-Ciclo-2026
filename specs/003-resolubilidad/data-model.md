@@ -106,6 +106,7 @@ Datos puros e inmutables que entrega el modelo. No llevan texto de interfaz.
 | `veredicto` | str | `RESOLUBLE`, `NO_RESOLUBLE` o `NO_VERIFICADA` (FR-031) |
 | `id_cripta`, `version_cripta` | str | de los datos generales (None si no se pudieron obtener) |
 | `llave_salida` | str | |
+| `sala_salida` | int | la usa el texto del motivo (b); se agregó al implementar (T008) |
 | `orden` | ListaEnlazada de `LlaveOrdenada` | solo si RESOLUBLE; todas las obtenibles, cada una una vez (FR-007, FR-008, FR-009) |
 | `motivo` | str \| None | `LLAVE_SALIDA_NO_OBTENIBLE` (a) o `SIN_PUERTA_DE_SALIDA` (b) si NO_RESOLUBLE (FR-011) |
 | `sala_salida_solo_sin_puerta` | bool | caso (b) con sala_salida alcanzada por otro camino |

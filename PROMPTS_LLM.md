@@ -1186,3 +1186,15 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "Incorpora a tasks.md los hallazgos pendientes del análisis, sin cambiar spec.md. Un solo commit, sin push. - U1: el oráculo compara el resultado estructurado (veredicto, motivo, orden, no obtenibles, frontera y ciclos, convertidos a tuplas de Python) y no el texto [...] - U2: [...] verificar en RegistroArchivo si crear el objeto toca el disco; si lo toca, crearlo en iniciar_preparada. - R1: [...] plan alternativo [...] sin dar por cumplido SC-002. - G1: [...] el orden esperado no la deja última (FR-008). - G2: caso # borde: trampas (FR-005, FR-017) [...]. - L1: la prueba de --verificar en el mismo proceso captura SystemExit y lee su código. - L2: correr prueba_1_4, prueba_1_8 y prueba_5_5 justo después de cambiar las falsas y ServidorFalso. Actualiza referencias cruzadas y conteos si cambian. Registra este prompt en PROMPTS_LLM.md." Seguido de "y agrega" con el texto de la entrada 147.
 - **Uso:** tasks.md sin tareas nuevas (siguen 63; los conteos de la suite no cambian). U1: T010 devuelve tuplas sin clases del programa ni formateador, a_tuplas en apoyo_resolubilidad, T013 compara campo por campo, y se quitan el [P] de T010 y su dependencia del formateador; research.md R13 y plan.md al día. U2: T039 revisa RegistroArchivo antes de cambiar el flujo. R1: plan alternativo en T063. G1 y G2: casos borde en T011. L1: T043 captura SystemExit. L2: T020 corre prueba_falso_1_9 y prueba_errores_red, y T024 corre prueba_1_4, 1_8, 5_5 y falso_1_9. spec.md sin cambios.
+
+## Entrada 149
+- **Fecha:** 08/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-implement`
+- **Prompt:** "haz push y ejecuta /speckit-implement"
+- **Uso:** push de la rama (aea2b74..17b2e8f) e implementación de resolubilidad por fases, con pruebas primero y un commit por fase: setup (5f8c1b8), tipos, ayudas y oráculo (d67f94c), US1 verificación y reporte (8edca37), US4 consulta de llaves (80eb070), US2 inicio de partida, --forzar y tecla V (f220b9b), US3 --verificar (5ac18a0), US5 bench y alternativa ingenua (b3de87f) y cierre. Hallazgos: el ejemplo de ciclo de una llave de contracts/reporte.md no terminaba en "-> llave" (corregido); prueba_persistencia_cazador también inicia terreno-a por el menú y se adaptó con --forzar; prueba_4_4 cuenta las 3 tablas nuevas de benchTodo; se agregó la cadena bloqueada al bench para probar FR-034 a escala. El oráculo coincide en las 200 criptas de la suite y en 3000 semillas más. Suite 55/55; H5.E1 salta con SIN DATOS hasta regenerar datos_offline/ (T003 y T063, del equipo).
+
+## Entrada 150
+- **Fecha:** 08/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** respuesta a la pregunta "¿Ya lo confirmó [Pablo, que sus features no usan la tecla V]?" → "Sí, V está libre".
+- **Uso:** marcar T006 con la respuesta, asignar V en PantallaJuego (panel con reporte y verbo ver_resolubilidad sin reporte), agregar la fila al README y cerrar la fase 5.

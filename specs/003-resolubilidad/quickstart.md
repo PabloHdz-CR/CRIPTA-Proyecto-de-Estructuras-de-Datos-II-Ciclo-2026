@@ -51,7 +51,7 @@ tomaría como otro argumento.
 |---|---|
 | cadena de llaves A, B, salida | `RESOLUBLE`, orden A, B, salida; código 0 |
 | llave_salida detrás de su propia puerta | `NO RESOLUBLE`, ciclo de una llave; código 1 |
-| dos llaves en ciclo | `NO RESOLUBLE`, ciclo `k_a -> k_b -> k_a`; código 1 |
+| dos llaves en ciclo (`res-ciclo-dos`) | `NO RESOLUBLE`, ciclo `itm_res_ka -> itm_res_kb -> itm_res_ka`; código 1 |
 | sin `llaves.json` | `NO SE PUDO VERIFICAR`; código 2 |
 
 No se abre ninguna ventana y no aparecen archivos nuevos en `partidas/`,

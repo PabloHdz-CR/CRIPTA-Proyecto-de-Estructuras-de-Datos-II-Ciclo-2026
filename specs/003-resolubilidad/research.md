@@ -352,8 +352,13 @@ No importa `vistaArcade`, no crea `Partida`, log ni puntaje (FR-023), igual que
   mientras `datos_offline/` no tenga llaves, y pasa a obligatoria (falla sin
   datos) en la tarea final T061.
 - **Cadenas sintéticas** de 100, 200 y 400 llaves: la llave i abre la puerta
-  hacia la zona de la llave i+1. Hay una variante resoluble y otra con la
-  última puerta en ciclo, para medir también la fase 2. Para cada una se mide
+  hacia la zona de la llave i+1. Hay una variante resoluble, otra con la
+  última puerta en ciclo y, *agregada al implementar*, una **bloqueada**
+  (cada llave detrás de su propia puerta): en ella la fase 2 recorre la cadena
+  entera con un ciclo por llave y su cociente de salidas examinadas prueba
+  FR-034 a escala (en la variante con ciclo la fase 2 solo ve una sala). La
+  ingenua comparte la fase 2, así que en la bloqueada solo se compara el
+  reporte. Para cada una se mide
   el tiempo y las salidas examinadas de la verificación y de la alternativa
   ingenua. SC-003 mide **salidas examinadas**, no tiempo: el PASA/FALLA se
   decide con los cocientes de salidas examinadas 200/100 y 400/200 contra
@@ -384,7 +389,7 @@ No importa `vistaArcade`, no crea `Partida`, log ni puntaje (FR-023), igual que
 | Paquete o prueba | Inicia por | Llaves | Qué se hace |
 |---|---|---|---|
 | `pruebas/datos/terreno_cazador` (terreno-a, terreno-caras-distintas, terreno-sin-rango) en `prueba_datos_costo` | menú "jugar" | no tiene | **No** se le agrega `llaves.json`. Ninguna de sus criptas es resoluble con FR-001: terreno-a tiene la única puerta de llave_salida hacia la sala 5 y la salida es la 7, y las otras dos no tienen puertas cerradas. Agregar llaves no las vuelve resolubles, y cambiar el esqueleto alteraría las pruebas de la 001. `prueba_datos_costo` arma el menú con `forzar=True` y manda `aceptar_resolubilidad` después de cada "jugar"; el error de caras distintas aparece entonces al iniciar la partida forzada |
-| `pruebas/datos/terreno_cazador` en `prueba_persistencia_cazador` | `servicio_terreno()` + partida directa y `--replay` | no tiene | Sin cambios: no pasa por la verificación (FR-021) |
+| `pruebas/datos/terreno_cazador` en `prueba_persistencia_cazador` | `servicio_terreno()` + partida directa y `--replay`; **su caso del replay fiel inicia por el menú** | no tiene | *Corregido al implementar (T041)*: el caso del replay fiel inicia terreno-a por el menú, así que se adaptó igual que `prueba_datos_costo` (`forzar=True` y `aceptar_resolubilidad`). Los demás casos no pasan por la verificación (FR-021) |
 | paquete temporal de `prueba_controlador` | menú "jugar" | no tiene | Se agrega `llaves.json` al paquete que la prueba escribe, con la llave en una sala alcanzable. Su puerta cerrada hacia la sala de salida la vuelve resoluble, así que la prueba sigue el camino normal sin `--forzar`. Se comprueba al implementar; si no resultara resoluble, se usa `forzar=True` como en `prueba_datos_costo` |
 | paquete temporal de `prueba_replay_menu` | menú "jugar" | no tiene | Igual que `prueba_controlador` |
 | `prueba_vista_*` | solo arman comandos | — | Sin cambios |

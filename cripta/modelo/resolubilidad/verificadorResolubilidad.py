@@ -61,6 +61,7 @@ class Contador:
         return self._valor
 
     def sumar(self) -> None:
+        """Una salida examinada más."""
         self._valor += 1
 
 
@@ -97,6 +98,7 @@ def _fase1(grafo: GrafoVerificacion, contador: Contador) -> EstadoFase1:
     disponibles = HeapMinimo()
 
     def alcanzar(sala: NodoSala) -> None:
+        """Marca la sala y ofrece sus llaves al heap de disponibles."""
         sala.alcanzada = True
         cola.encolar(sala)
         for llave in sala.llaves_aqui:
@@ -105,6 +107,7 @@ def _fase1(grafo: GrafoVerificacion, contador: Contador) -> EstadoFase1:
                 disponibles.insertar(llave)
 
     def examinar(arista: AristaSalida) -> None:
+        """Atraviesa la salida o la deja pendiente de su llave (R2, R3)."""
         contador.sumar()
         if arista.transitable():
             if requiere_llave_salida(arista, grafo):
@@ -233,6 +236,7 @@ class Componente:
         self.llaves = ListaEnlazada()
 
     def es_grupo(self) -> bool:
+        """Un grupo de FR-015: al menos una llave y más de un nodo."""
         return not self.llaves.esta_vacia() and self.tamano > 1
 
 

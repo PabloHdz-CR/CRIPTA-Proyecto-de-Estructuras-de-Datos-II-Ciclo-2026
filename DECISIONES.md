@@ -18,6 +18,7 @@ salieron de Windows 11 con Python 3.14 y cambian con la máquina y su carga.
 | §4.9 Ordenamiento | D41, D42, D59 | benchOrdenamiento (7 tablas) |
 | §4.10 Guardado binario de la partida | D68, D48 | benchGuardado (mide JSON) |
 | §4.11 Bitácora de partida y reproducción | D70, D49, D56, D61 | prueba_controlador, prueba_replay_menu |
+| Parte II, resolubilidad (specs/003-resolubilidad) | D75, D76, D77, D78, D79, D80 | benchResolubilidad (referencia, cadenas y cocientes); prueba_resolubilidad_oraculo |
 
 Otras decisiones: cliente HTTP y presupuesto de red (D2, D9–D14), estructuras
 base (D3, D4, D6, D7, D8, D27), Vista y Controlador (D43–D48, D51–D66).
@@ -693,6 +694,72 @@ Decisión: FORMATO_VERSION = 2, provisional según el orden de merge a main (aco
 Complejidad: un entero más por salida; la carga suma un enlace, O(salas²).
 Evidencia: prueba_persistencia_cazador guarda y carga terreno-a (mismos costos, enlace hecho y la misma decisión del cazador, y las dos partidas siguen idénticas), comprueba que el fixture del formato 1 da VersionIncompatible sin cambiar el archivo, reproduce un log con --replay hasta el mismo final y comprueba que --replay de una cripta con caras distintas sale con código 1. La equivalencia guarda y carga 917 veces entre turnos sin que cambie ninguna decisión.
 Límites: los guardados de la versión 1 dejan de cargarse; hay que empezar una partida nueva (el README lo dice). El número es provisional hasta el merge.
+
+D75. Resolubilidad: grafo propio enlazado por ordenamiento y fusión
+
+(specs/003-resolubilidad/spec.md, FR-006, FR-010, FR-017, FR-030; research.md R1.)
+
+Problema: para verificar hace falta saber, de cada salida, a qué sala lleva y qué llave la abre, y, de cada ubicación de llave, en qué sala está, sin usar dict ni set como índice (principio I) y sin depender del orden en que llegan las páginas del esqueleto ni las entradas de llaves (FR-010).
+Alternativas: (a) reutilizar el Mundo y Mundo.enlazar(): búsqueda lineal por id, O(E · S) (D73 midió 64,79 ms en 1024 salas solo en enlazar), y obliga a crear salas de juego antes de que exista una partida. (b) tabla hash propia: es un dict hecho a mano, descartado en D32. (c) árbol de búsqueda propio: no está entre los TDA permitidos y no mejora O(n log n).
+Decisión: grafoVerificacion arma nodos propios (NodoSala, AristaSalida, NodoLlave) y resuelve cada referencia ordenando con ordenamiento.mezcla y ClaveOrden y fusionando dos secuencias ordenadas en una pasada: aristas por id de destino contra salas por id; ids de llave de salidas cerradas, ubicaciones y llave_salida, deduplicados en la misma pasada; ubicaciones por sala contra salas. Una salida o una ubicación que nombra una sala inexistente queda sin pareja en la fusión y lanza DatosInvalidos con la entrada (FR-030). El grafo se descarta al terminar: no es estado de la partida (principio V).
+Complejidad: O((S + E + L) log(S + E + L)) una vez por verificación; todo lo demás es lineal.
+Evidencia (--bench, benchResolubilidad, mínimo de 10): armar el grafo y verificar una cadena de 400 llaves (401 salas) cuesta 5,80 ms en total (bench completo del cierre). prueba_resolubilidad_reglas comprueba el error de datos para una ubicación y para un destino inexistentes; prueba_resolubilidad_reporte y prueba_resolubilidad_oraculo comparan con las entradas desordenadas por semilla y dan el mismo resultado.
+Límites: el factor log está sobre el tamaño de la cripta, no sobre las llaves obtenidas; con criptas de cientos de salas es despreciable frente al límite de 200 ms.
+
+D76. Resolubilidad, fase 1: puertas pendientes por llave y heap mínimo de disponibles
+
+(specs/003-resolubilidad/spec.md, FR-001 a FR-013, FR-033, FR-034; research.md R2 y R3.)
+
+Problema: el orden de obtención debe ser el lexicográficamente menor (FR-009), cada llave después de las que hacen falta para alcanzarla (FR-007), y el costo no puede repetir el recorrido completo cada vez que se obtiene una llave (FR-033). Además, la cripta es resoluble aunque sala_salida también se alcance sin la puerta de llave_salida (FR-001, escenario H1.E12).
+Alternativas: (a) la alternativa ingenua: repetir el recorrido desde cero por cada llave obtenida, O(K · (S + E)); queda en el bench como comparación (FR-035). (b) el orden de descubrimiento de un recorrido N, S, E, O: se descartó en la aclaración 3 porque depende de cómo se defina el recorrido.
+Decisión: un solo recorrido en anchura (Cola propia) que nunca vuelve a empezar. Una salida cerrada con llave no obtenida queda pendiente en su NodoLlave; las llaves alcanzadas entran a un HeapMinimo propio (NodoLlave compara por id). Solo cuando la cola se vacía se extrae la disponible de menor id, se marca obtenida y se reexaminan sus pendientes. Como obtener una llave solo agranda la región (FR-003), elegir siempre la disponible menor da el orden menor. La marca entra_por_puerta_salida se pone al EXAMINAR una salida cerrada que requiere llave_salida, con esa llave obtenida y destino sala_salida, aunque sala_salida ya esté alcanzada: así H1.E12 da resoluble. La frontera son las pendientes de llaves no obtenidas y las cerradas sin llave cuyo destino no se alcanzó: salen del mismo recorrido (FR-034).
+Complejidad: cada salida se examina a lo sumo dos veces; O(S + E + L + K log K).
+Evidencia (benchResolubilidad, mínimo de 10): cadenas de 100, 200 y 400 llaves resolubles, 300, 600 y 1200 salidas examinadas y 1,41, 2,85 y 5,80 ms; la ingenua, 10200, 40400 y 160800 salidas y 6,74, 24,67 y 96,62 ms, con el mismo reporte. Cocientes al duplicar: 2,00 contra 3,96 y 3,98 (SC-003: <= 2,5 y >= 3,5). prueba_resolubilidad_oraculo compara 200 criptas al azar con un oráculo que aplica la definición literal (recorrer desde cero en cada paso): 200 iguales; fuera de la suite se compararon 3000 semillas más, con y sin entradas desordenadas, sin diferencias.
+Límites: el orden incluye todas las llaves obtenibles, también las que no hacen falta para ganar (aclaración 2).
+
+D77. Resolubilidad, fase 2: Tarjan iterativo y relleno por prioridad para los ciclos
+
+(specs/003-resolubilidad/spec.md, FR-014, FR-015, FR-034; research.md R4; commit 254747e, enmienda de FR-034.)
+
+Problema: si la cripta no es resoluble, el reporte debe mostrar un ciclo por grupo de llaves que se encierran entre sí, elegido con la regla de menor id de FR-015, sin recorrer la cripta una vez por llave (FR-034).
+Alternativas: (a) una búsqueda hacia atrás por cada llave no obtenible: O(K · (S + E)), justo lo que FR-034 prohíbe. (b) una sola dependencia por llave (la primera puerta que la alcanza): es lineal pero no es la relación de FR-014 y cambia los ciclos. (c) enumerar todos los ciclos elementales: exponencial.
+Decisión: una sola pasada para todas las llaves, más allá de la frontera, sobre el grafo de bloqueo (salas no alcanzadas y llaves no obtenidas). Tarjan iterativo con Pila propia (marcos con generadores de sucesores, índices en campos de los nodos, sin recursión) da las componentes fuertes; los grupos son las que tienen al menos una llave y más de un nodo. Después, un relleno por prioridad: las puertas que requieren una llave del grupo y llegan a una sala del grupo, ordenadas por (id de llave, sala de origen, dirección N, S, E, O), etiquetan cada sala una vez con la menor que la alcanza; la menor etiqueta de las ubicaciones de una llave es a la vez la dependencia de menor id y la puerta que muestra FR-015. El ciclo se arma desde la llave de menor id hasta repetir. FR-034 se enmendó antes del plan, en un commit propio: "una sola pasada para todas las llaves, que puede continuar más allá de la frontera".
+Complejidad: O(S + E + K + D log D), con D puertas que entran a los grupos.
+Evidencia: en la cadena bloqueada (cada llave detrás de su propia puerta, un ciclo por llave) la fase 2 recorre la cadena entera: 399, 799 y 1599 salidas examinadas con 100, 200 y 400 llaves y 2,26, 4,53 y 9,56 ms, cociente 2,00 (prueba_rendimiento_resolubilidad lo exige <= 2,5). El oráculo calcula la relación con una búsqueda por puerta y la clausura transitiva: coincide en las 200 criptas de la suite (81 con ciclos) y en cadenas bloqueadas de 3, 8 y 15 llaves.
+Límites: se muestra un ciclo por grupo, no todos; la spec lo pide así (FR-015).
+
+D78. Ubicación de llaves: consulta síncrona con caché por versión de cripta
+
+(specs/003-resolubilidad/spec.md, FR-025 a FR-031; contracts/datos-llaves.md; research.md R5 y R6.)
+
+Problema: la verificación necesita GET /criptas/<id>/llaves, que cuenta en el presupuesto (FR-026), debe reutilizarse mientras coincida la versión de la cripta (FR-027) e invalidar lo de la primera parte sin borrar archivos (FR-028), y la fuente sin conexión debe dar lo mismo (FR-029).
+Alternativas: (a) pedirla por FuenteAsincrona: no hay nada que hacer en paralelo, la partida espera la respuesta. (b) guardarla en el archivo de partida: la verificación ocurre antes de que exista una partida, y cargar una guardada no verifica (FR-021).
+Decisión: FuenteDatos.llaves() es un método nuevo del puerto. ClienteHttp lo pide por _pedir (cuenta cada intento y reintento) y FuenteOffline lee criptas/<id>/llaves.json; los dos convierten con convertidorJson.llaves_desde_json, que valida cada entrada con DatosInvalidos (índice y campo). ServicioDatos.ubicacion_llaves() resuelve en memoria, disco (AlmacenLocal.cargar_llaves, None si la versión no coincide o el archivo está dañado) y red. verificar_cripta convierte todo ErrorCripta en NO_VERIFICADA, nunca en NO_RESOLUBLE (FR-031); sin llaves.json, es NO_VERIFICADA, nunca una lista vacía.
+Complejidad: una solicitud por versión de cripta; leer el disco es O(L).
+Evidencia: prueba_datos_llaves (9 casos) comprueba que la consulta cuenta 1 y con un 429 cuenta 2, que la misma versión no vuelve a pedir ni desde disco, que otra versión se pide y sobrescribe, que en línea y sin conexión dan lo mismo, los 10 errores de datos, el presupuesto insuficiente (5 solicitudes, ninguna de más) y un archivo dañado. Seis implementaciones del puerto (FuenteLenta y cinco falsas de prueba) ganaron llaves() y sus pruebas se corrieron justo después.
+Límites: depende de que el servicio publique /llaves y de regenerar datos_offline/ (tasks.md T003); mientras no esté, el juego sin conexión exige --forzar y la medición de la cripta de referencia dice SIN DATOS.
+
+D79. Partida forzada: palabras de marca en el encabezado del log
+
+(specs/003-resolubilidad/spec.md, FR-020, FR-021; contracts/registro.md; research.md R9.)
+
+Problema: el log debe anotar que la cripta no era resoluble y que se forzó el inicio (FR-020), sin romper los logs existentes ni el replay (FR-021), y sin chocar con otras features que agreguen campos al encabezado.
+Alternativas: (a) un quinto campo por posición: dos features que agreguen un campo opcional significarían cosas distintas en la misma posición. (b) una línea extra después del encabezado: el lector la tomaría por una acción y rompería los logs existentes. (c) una sola palabra FORZADA: no distingue NO_RESOLUBLE de NO_VERIFICADA (hallazgo I2 de /speckit-analyze).
+Decisión: después de los 4 campos fijos, palabras de marca conocidas en cualquier orden, cada una a lo sumo una vez: FORZADA va siempre con exactamente una de NO_RESOLUBLE o NO_VERIFICADA. Una palabra desconocida, repetida, FORZADA sola o una de veredicto sin FORZADA son errores de encabezado. EncabezadoPartida gana forzada y veredicto_forzado; el replay los lee y los ignora para decidir. El binario de partida no cambia.
+Complejidad: O(palabras de marca) al leer el encabezado.
+Evidencia: prueba_resolubilidad_inicio lee un log de 4 campos, las dos combinaciones válidas, los cinco casos inválidos y la ida y vuelta, y reproduce con ModoReplay una partida forzada. prueba_persistencia_cazador y prueba_controlador siguen reproduciendo sus logs.
+Límites: una feature nueva que necesite marcar el log agrega su palabra a MARCAS_CONOCIDAS en registroArchivo.
+
+D80. Inicio de partida, pantalla de reporte y tecla V
+
+(specs/003-resolubilidad/spec.md, FR-018 a FR-021, FR-037; contracts/vista.md; research.md R8.)
+
+Problema: una partida nueva se verifica antes de empezar; si la cripta no es resoluble, no empieza sin --forzar (FR-019, FR-020). Si es resoluble, el reporte debe poder verse sin arruinar la partida, porque el orden de llaves es la solución (aclaración 4). Cargar una partida y los replays no verifican (FR-021).
+Alternativas: (a) mostrar siempre la pantalla de reporte antes de jugar: muestra la solución de una cripta resoluble. (b) un verbo de sesión para abrir el panel: un viaje de ida y vuelta al Controlador para mostrar datos que la Vista ya tiene.
+Decisión: ControladorJuego separa preparar_nueva() (datos, esqueleto, llaves y verificación, sin partida ni log) de iniciar_preparada(semilla, forzada); iniciar_nueva() se conserva sin verificar para las pruebas que arman una partida directo. ControladorMenu, si la cripta no es resoluble, guarda el juego pendiente y muestra PantallaResolubilidad: "volver" lo descarta y reinicia la sesión; "aceptar_resolubilidad" solo funciona con --forzar. Si es resoluble, la bitácora avisa ("La cripta es resoluble. V muestra el reporte.") y el reporte viaja en EstadoVista.resolubilidad. La tecla V abre y cierra el panel en la Vista, como L con la bitácora (estado local, sin Comando ni log); en una partida cargada (sin reporte) manda ver_resolubilidad y la bitácora lo dice, sin log ni reloj. El usuario confirmó que Pablo no usa la V (T006).
+Complejidad: verificar al iniciar suma una verificación (D76, D77) y, la primera vez por versión, una solicitud; el panel es O(líneas del reporte).
+Evidencia: prueba_resolubilidad_inicio (9 casos) cubre H2.E1 a H2.E4, NO_VERIFICADA con y sin --forzar, la partida cargada que no consulta llaves, el replay fiel de una partida resoluble (binario idéntico al original) y el binario idéntico antes y después de V. prueba_vista_resolubilidad cubre la pantalla con y sin --forzar, V con y sin reporte, V en el replay, el menú, el fin y los puntajes, y la fila de V en el README. Crear RegistroArchivo no toca el disco, así que una cripta no resoluble sin --forzar no deja ningún log (revisión U2).
+Límites: las criptas de pruebas/datos/terreno_cazador no son resolubles con FR-001; sus pruebas de la 001 inician con --forzar.
 
 Nota sobre veneno y regeneración: el modelo implementa los dos mecanismos (EfectoVeneno con curar_veneno del antídoto, y EfectoRegeneracion en Enemigo), pero el contrato del API no trae hoy ningún campo que los active: Enemigo.regeneracion queda en 0 y ninguna ficha envenena. Se dejaron implementados y probados por si una cripta nueva los usa; con los datos actuales no aparecen en una partida.
 

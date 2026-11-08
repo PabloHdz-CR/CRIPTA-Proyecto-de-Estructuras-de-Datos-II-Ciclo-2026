@@ -9,7 +9,13 @@ FR-032 a FR-035, SC-002, SC-003. Escenarios:
     reporte de la verificación es igual al de la alternativa ingenua;
   - H5.E3: al duplicar las llaves, el cociente de SALIDAS EXAMINADAS es
     <= 2,5 en la verificación y >= 3,5 en la ingenua (se mide el contador,
-    no el tiempo).
+    no el tiempo);
+  - FR-034: en la cadena BLOQUEADA (cada llave detrás de su propia puerta)
+    nada se obtiene y la fase 2 recorre la cadena entera con un ciclo por
+    llave; su cociente de salidas examinadas también es <= 2,5, así que las
+    dependencias y los ciclos salen de una sola pasada, sin recorridos por
+    llave. La ingenua comparte la fase 2, así que ahí solo se compara el
+    reporte.
 
 Uso: py -m pruebas.prueba_rendimiento_resolubilidad
 """
@@ -46,9 +52,21 @@ def h5_e2_y_e3_cadenas():
                   f"verificación x{verificacion:.2f}, ingenua x{ingenua:.2f}")
 
 
+def fr_034_cadena_bloqueada():
+    mediciones = [bench.medir_cadena(llaves, True, repeticiones=1, bloqueada=True)
+                  for llaves in TAMANOS]
+    for medicion in mediciones:
+        assert medicion.mismo_reporte, medicion.llaves
+    for chica, grande in zip(mediciones, mediciones[1:]):
+        cociente = grande.salidas_verificacion / chica.salidas_verificacion
+        assert cociente <= 2.5, (chica.llaves, grande.llaves, cociente)
+        print(f"FR-034 bloqueada {chica.llaves}->{grande.llaves}: verificación x{cociente:.2f}")
+
+
 def main():
     h5_e1_referencia()
     h5_e2_y_e3_cadenas()
+    fr_034_cadena_bloqueada()
     print("prueba_rendimiento_resolubilidad OK")
 
 

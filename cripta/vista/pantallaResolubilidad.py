@@ -28,6 +28,7 @@ _TAMANO = 11
 
 
 class PantallaResolubilidad(_PantallaCripta):
+    """La pantalla de reporte; ver el docstring del módulo."""
 
     def __init__(self, vista_arcade, reporte):
         super().__init__(vista_arcade)

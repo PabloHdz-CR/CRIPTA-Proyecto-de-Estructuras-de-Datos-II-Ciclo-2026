@@ -22,12 +22,16 @@ py -m pip install -r requirements.txt
 | `py main.py --offline` | Juega con los datos de `datos_offline/` (sin red). |
 | `py main.py` | Juega contra el API real (gasta solicitudes del presupuesto). |
 | `py main.py --replay partidas/<cripta>.log` | Reproduce un log en la terminal y verifica que sea fiel. |
+| `py main.py --verificar <cripta>` (con `--offline` o `--offline=CARPETA`) | Solo verifica si la cripta se puede ganar: imprime el reporte y sale con 0 (resoluble), 1 (no resoluble) o 2 (no se pudo verificar). No abre la ventana ni crea partida. |
+| `py main.py --forzar` | Permite jugar una cripta no resoluble (o que no se pudo verificar) después de ver su reporte. |
 | `py main.py --bench` (o `--bench --rapido`) | Mide las estructuras (§5.3). |
 | `py main.py --cache-size N` | Cambia el tope de fichas en memoria (25 por defecto). |
-| `py pruebas/ejecutar_pruebas.py` | Corre las 46 pruebas sin red. Las `prueba_real_*` usan el API real (gastan presupuesto) y se corren aparte. |
+| `py pruebas/ejecutar_pruebas.py` | Corre las 55 pruebas sin red. Las `prueba_real_*` usan el API real (gastan presupuesto) y se corren aparte. |
 | `py pruebas/prueba_reglas.py` | Verifica las reglas del proyecto sobre `cripta/`. |
 | `py main.py --offline=pruebas/datos/terreno_cazador` | Juega con el paquete de prueba de terreno y cazador (costos de salida y un cazador). |
 | `py -m cripta.controlador.bench.benchCazador` (o `--rapido`) | Mide el cazador: ciclo con 20, 50 y 100 cazadores, política de cota y salas examinadas. |
+| `py main.py --offline=pruebas/datos/resolubilidad` | Juega con el paquete de prueba de resolubilidad (criptas resolubles, con ciclos y sin ubicación de llaves). |
+| `py -m cripta.controlador.bench.benchResolubilidad` (o `--rapido`) | Mide la verificación de resolubilidad: cripta de referencia (200 ms) y cadenas de llaves frente a la alternativa ingenua. |
 
 En Windows se usa `py`; `python` puede abrir la Microsoft Store.
 
@@ -101,6 +105,32 @@ Especificación, plan y tareas en `specs/001-terreno-cazador/`.
   brújula del panel de salidas. El cazador lleva un anillo y el prefijo «» »
   en su etiqueta, además del color.
 
+## Resolubilidad
+
+Especificación, plan y tareas en `specs/003-resolubilidad/`.
+
+- **Antes de cada partida nueva** el juego verifica si la cripta se puede
+  ganar, con el esqueleto y la ubicación de las llaves (`GET
+  /criptas/<id>/llaves`, que cuenta en el presupuesto y se guarda por versión
+  de cripta). Una llave que suelta un enemigo cuenta en la sala donde el
+  enemigo empieza.
+- **Si es resoluble**, la partida empieza con el aviso «La cripta es
+  resoluble. V muestra el reporte.» y **V** abre o cierra el reporte con el
+  orden en que se pueden obtener las llaves (no se muestra solo porque es la
+  solución).
+- **Si no es resoluble** (o no se pudo verificar), se muestra una pantalla con
+  el reporte: el motivo, las llaves que no se pueden obtener y dónde están,
+  las puertas que bloquean el avance y, si una llave queda encerrada detrás de
+  puertas que solo ella abre, el ciclo. **ENTER** o **ESC** vuelven al menú y
+  la partida no empieza. Con `--forzar`, **ENTER** la inicia igual y el log lo
+  anota (`FORZADA NO_RESOLUBLE` o `FORZADA NO_VERIFICADA`).
+- **Continuar una partida guardada** y los replays no verifican: en una
+  partida cargada, **V** dice en la bitácora que no hay reporte.
+- **`datos_offline/` debe regenerarse** para la segunda parte con
+  `python guardar_respuestas.py` (necesita red), que ahora baja también
+  `llaves.json`. Mientras falte, jugar sin conexión exige `--forzar` y la
+  medición de la cripta de referencia del bench dice SIN DATOS.
+
 ## Archivos que genera el juego
 
 No se suben al repositorio (están en `.gitignore`):
@@ -108,7 +138,7 @@ No se suben al repositorio (están en `.gitignore`):
 - `guardados/<cripta>.bin`: la partida guardada de cada cripta (formato binario propio, §4.10). Se borra al ganar o morir la partida que lo usó. Desde terreno y cazador el formato es la versión 2 (guarda el costo de cada salida): **un guardado del formato anterior se reporta incompatible y no se migra**; hay que empezar una partida nueva de esa cripta.
 - `partidas/<cripta>.log`: el log de la partida en curso; `partidas/historial/`: un log archivado por partida terminada, para el replay.
 - `puntajes.jsonl`: la tabla de puntajes.
-- `fichas_guardadas/`: copia en disco de las fichas del catálogo, para no volver a pedirlas a la red.
+- `fichas_guardadas/`: copia en disco de las fichas del catálogo, para no volver a pedirlas a la red, y en `fichas_guardadas/llaves/` la ubicación de llaves de cada cripta con su versión.
 
 ## Créditos de gráficos
 

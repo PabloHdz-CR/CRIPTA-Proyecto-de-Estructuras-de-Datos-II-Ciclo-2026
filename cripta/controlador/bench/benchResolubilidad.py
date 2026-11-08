@@ -59,6 +59,7 @@ class Referencia:
 
     @property
     def sin_datos(self) -> bool:
+        """True si no se pudo medir (falta llaves.json u otro dato)."""
         return self.ms_minimo is None
 
 
@@ -74,13 +75,16 @@ class _EscenarioVerificar:
         self.resultado = None
 
     def preparar(self, n) -> None:
-        pass
+        """Nada que preparar: los DTO ya están en memoria."""
 
     def ejecutar(self) -> None:
+        """Arma el grafo y verifica (lo que se cronometra)."""
         self.resultado = self._funcion(self._datos, self._salas, self._ubicaciones)
 
 
 def medir_referencia(repeticiones: int = 10, carpeta=CARPETA_OFFLINE) -> Referencia:
+    """Mide la cripta con más salas del paquete, o dice por qué no se pudo
+    (SIN DATOS si no tiene llaves.json)."""
     try:
         fuente = FuenteOffline(carpeta)
         elegida = None
@@ -119,12 +123,14 @@ def _id_llave(numero: int) -> str:
     return f"k_{numero:04d}"
 
 
-def cadena(llaves: int, con_ciclo: bool):
+def cadena(llaves: int, con_ciclo: bool, bloqueada: bool = False):
     """(datos, salas, ubicaciones) de una cadena de 'llaves' llaves: la sala i
     (1 a llaves) tiene la llave i, la puerta i E -> i+1 requiere la llave i y
     la sala i+1 vuelve a la i por una salida abierta. La última llave es
     llave_salida, y su puerta lleva a la sala de salida. Con ciclo,
-    llave_salida está DETRÁS de su propia puerta: la fase 2 también corre."""
+    llave_salida está DETRÁS de su propia puerta. Bloqueada: TODAS las llaves
+    están detrás de su propia puerta, así que nada se obtiene y la fase 2
+    recorre la cadena entera con un ciclo por llave (FR-034)."""
     salas = ListaEnlazada()
     ubicaciones = ListaEnlazada()
     sala_salida = llaves + 1
@@ -133,12 +139,14 @@ def cadena(llaves: int, con_ciclo: bool):
         if numero <= llaves:
             llave = LLAVE_SALIDA if numero == llaves else _id_llave(numero)
             salidas.agregar_al_final(SalidaDTO("E", numero + 1, True, llave))
-            if not (con_ciclo and numero == llaves):
+            if bloqueada:
+                ubicaciones.agregar_al_final(UbicacionLlaveDTO(llave, numero + 1))
+            elif not (con_ciclo and numero == llaves):
                 ubicaciones.agregar_al_final(UbicacionLlaveDTO(llave, numero))
         if numero > 1:
             salidas.agregar_al_final(SalidaDTO("O", numero - 1))
         salas.agregar_al_final(SalaDTO(numero, f"Sala {numero}", salidas))
-    if con_ciclo:
+    if con_ciclo and not bloqueada:
         ubicaciones.agregar_al_final(UbicacionLlaveDTO(LLAVE_SALIDA, sala_salida))
     datos = DatosCriptaDTO(
         id="bench-resolubilidad", version="v1", salas_total=llaves + 1, paginas=1,
@@ -149,6 +157,8 @@ def cadena(llaves: int, con_ciclo: bool):
 
 
 class MedicionCadena:
+    """Tiempos y salidas examinadas de una cadena, con las dos alternativas."""
+
     def __init__(self, llaves: int, con_ciclo: bool, ms_verificacion: float, ms_ingenua: float,
                  salidas_verificacion: int, salidas_ingenua: int, mismo_reporte: bool) -> None:
         self.llaves = llaves
@@ -164,8 +174,10 @@ def _texto(resultado) -> str:
     return "\n".join(lineas_reporte(resultado))
 
 
-def medir_cadena(llaves: int, con_ciclo: bool, repeticiones: int = 5) -> MedicionCadena:
-    datos, salas, ubicaciones = cadena(llaves, con_ciclo)
+def medir_cadena(llaves: int, con_ciclo: bool, repeticiones: int = 5,
+                 bloqueada: bool = False) -> MedicionCadena:
+    """Verificación e ingenua sobre la misma cadena (FR-033 a FR-035)."""
+    datos, salas, ubicaciones = cadena(llaves, con_ciclo, bloqueada)
     medidor = Medidor(repeticiones)
     rapida = _EscenarioVerificar(datos, salas, ubicaciones)
     lenta = _EscenarioVerificar(datos, salas, ubicaciones, verificar_ingenua)
@@ -186,6 +198,7 @@ def _pasa(condicion: bool) -> str:
 
 
 def ejecutar(reporte: Reporte, rapido: bool = False) -> None:
+    """Las tres tablas de resolubilidad (las llama benchTodo)."""
     repeticiones = 3 if rapido else 10
     reporte.titulo("Resolubilidad: verificación (003-resolubilidad)")
 
@@ -205,11 +218,12 @@ def ejecutar(reporte: Reporte, rapido: bool = False) -> None:
 
     filas = ListaEnlazada()
     cocientes = ListaEnlazada()
-    for con_ciclo in (False, True):
-        variante = "con ciclo" if con_ciclo else "resoluble"
+    for con_ciclo, bloqueada, variante in ((False, False, "resoluble"),
+                                           (True, False, "con ciclo"),
+                                           (True, True, "bloqueada")):
         anterior = None
         for llaves in TAMANOS:
-            medicion = medir_cadena(llaves, con_ciclo, repeticiones)
+            medicion = medir_cadena(llaves, con_ciclo, repeticiones, bloqueada)
             filas.agregar_al_final((
                 variante, f"{llaves}", f"{medicion.ms_verificacion:.3f}",
                 f"{medicion.ms_ingenua:.3f}", f"{medicion.salidas_verificacion}",
@@ -217,10 +231,14 @@ def ejecutar(reporte: Reporte, rapido: bool = False) -> None:
             if anterior is not None:
                 rapida = medicion.salidas_verificacion / anterior.salidas_verificacion
                 lenta = medicion.salidas_ingenua / anterior.salidas_ingenua
+                # En la bloqueada no se obtiene ninguna llave: la ingenua
+                # hace una sola ronda y comparte la fase 2, así que su
+                # cociente no se compara (no aplica SC-003).
+                criterio_lenta = "-" if bloqueada else _pasa(lenta >= COCIENTE_MINIMO_INGENUA)
                 cocientes.agregar_al_final((
                     variante, f"{anterior.llaves} -> {llaves}", f"{rapida:.2f}",
                     _pasa(rapida <= COCIENTE_MAXIMO_VERIFICACION), f"{lenta:.2f}",
-                    _pasa(lenta >= COCIENTE_MINIMO_INGENUA)))
+                    criterio_lenta))
             anterior = medicion
     reporte.tabla("Cadenas de llaves: verificación frente a la alternativa ingenua",
                   ("cadena", "llaves", "ms verif.", "ms ingenua", "salidas verif.",
@@ -230,6 +248,7 @@ def ejecutar(reporte: Reporte, rapido: bool = False) -> None:
 
 
 def main():
+    """python -m cripta.controlador.bench.benchResolubilidad [--rapido]"""
     ejecutar(Reporte(), "--rapido" in sys.argv)
 
 

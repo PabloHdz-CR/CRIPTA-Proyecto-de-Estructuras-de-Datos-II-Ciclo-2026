@@ -63,6 +63,7 @@ def _menor_disponible(grafo: GrafoVerificacion):
 
 def verificar_ingenua(datos: DatosCriptaDTO, salas: Iterable,
                       ubicaciones: Iterable) -> ResultadoResolubilidad:
+    """La alternativa ingenua: mismo resultado, O(K · (S + E)) salidas."""
     grafo = construir_grafo(datos, salas, ubicaciones)
     contador = Contador()
     orden = ListaEnlazada()

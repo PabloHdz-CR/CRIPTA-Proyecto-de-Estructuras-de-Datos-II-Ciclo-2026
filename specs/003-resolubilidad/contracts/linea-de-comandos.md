@@ -38,7 +38,10 @@ el resumen de red habitual (solicitudes usadas sobre el presupuesto).
 1. Cripta de referencia: salas, salidas, llaves, tiempo mínimo en ms, y
    PASA/FALLA contra 200 ms (FR-032, SC-002). Si la cripta no tiene
    `llaves.json`, la fila dice **SIN DATOS** y el resultado no es PASA.
-2. Cadenas de 100, 200 y 400 llaves (resoluble y con ciclo): tiempo
+2. Cadenas de 100, 200 y 400 llaves (resoluble, con ciclo y **bloqueada**,
+   donde cada llave está detrás de su propia puerta y la fase 2 recorre la
+   cadena entera, FR-034; en esa variante el cociente de la ingenua no se
+   compara porque comparte la fase 2): tiempo
    (informativo) y salidas examinadas de la verificación y de la alternativa
    ingenua; cociente de **salidas examinadas** al duplicar, con PASA/FALLA
    contra ≤ 2,5 y ≥ 3,5 (SC-003); y "mismo reporte: sí/no" (FR-035).

@@ -91,6 +91,7 @@ class ResultadoResolubilidad:
 
     @property
     def resoluble(self) -> bool:
+        """True si el veredicto es RESOLUBLE."""
         return self.veredicto == RESOLUBLE
 
 
