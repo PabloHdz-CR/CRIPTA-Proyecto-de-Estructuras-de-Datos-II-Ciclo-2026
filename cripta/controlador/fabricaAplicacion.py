@@ -7,6 +7,9 @@ donde se decide HTTP u offline (sin propagar un if por el modelo, §6).
     --replay ARCHIVO.log  reproduce sin vista interactiva; sale con 1 si falla
     --bench [--rapido]    mediciones de §5.3
     --cache-size N        tope de fichas en memoria (25 por defecto, §4.4)
+    --verificar ID        solo verifica la resolubilidad de la cripta ID, imprime
+                          el reporte y sale con 0 (resoluble), 1 (no resoluble)
+                          o 2 (no se pudo verificar); sin Vista (003-resolubilidad)
     --forzar              permite iniciar una cripta no resoluble o que no se
                           pudo verificar, tras ver su reporte (003-resolubilidad,
                           FR-020, FR-031)
@@ -33,8 +36,10 @@ from ..modelo.datos.servicioDatos import ServicioDatos
 from ..vista.vistaNula import VistaNula
 from .controladorMenu import ControladorMenu
 from .gestorGuardado import GestorGuardado
+from .bench.reporte import Reporte
 from .modoBench import ModoBench
 from .modoReplay import ModoReplay
+from .modoVerificar import CODIGO_NO_VERIFICADA, ModoVerificar
 from .reporteFinal import ReporteFinal
 
 BASE_URL_POR_DEFECTO = "https://cripta-api.kad06a0zhgs84.us-east-2.cs.amazonlightsail.com/v1"
@@ -60,11 +65,22 @@ class FabricaAplicacion:
         modo_rapido = "--rapido" in self._argumentos
         tamano_cache = self._leer_cache_size()
         forzar = "--forzar" in self._argumentos
+        modo_verificar = "--verificar" in self._argumentos
 
         if modo_bench:
             # --bench usa cargas sintéticas: no necesita red, caché ni vista.
             ModoBench().ejecutar(modo_rapido)
             return
+
+        if modo_verificar:
+            # FR-022 a FR-024: sin Vista, sin partida, log ni puntaje. Va
+            # antes de --replay y del juego interactivo.
+            id_cripta = self._leer_opcion_con_valor("--verificar")
+            if id_cripta is None or id_cripta.startswith("--"):
+                Reporte().nota("Uso: python main.py --verificar ID [--offline[=CARPETA]]")
+                sys.exit(CODIGO_NO_VERIFICADA)
+            servicio = self._armar_servicio(offline, carpeta_offline, tamano_cache)
+            sys.exit(ModoVerificar(servicio, Reporte(), ReporteFinal()).ejecutar(id_cripta))
 
         servicio = self._armar_servicio(offline, carpeta_offline, tamano_cache)
         reporte_final = ReporteFinal()

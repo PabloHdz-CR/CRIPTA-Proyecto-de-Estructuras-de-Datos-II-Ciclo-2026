@@ -72,6 +72,7 @@ PRUEBAS = (
     "prueba_datos_llaves",           # FR-025 a FR-031, SC-007 (H4.E1 a H4.E6)
     "prueba_resolubilidad_inicio",   # FR-018 a FR-021, FR-031 (H2.E1 a H2.E4), encabezado del log
     "prueba_vista_resolubilidad",    # FR-019, FR-020, FR-037 (H2.E3): pantalla de reporte y tecla V
+    "prueba_verificar",              # FR-022 a FR-024, SC-006 (H3.E1 a H3.E3): --verificar
 
 )
 

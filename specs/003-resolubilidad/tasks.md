@@ -279,7 +279,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - `cripta/vista/hudJuego.py`: el panel superpuesto;
   - `README.md`: la fila `| V | Mostrar / ocultar el reporte de resolubilidad (orden de llaves) |` en la tabla "Partida" (FR-037).
   **Depende de T006** (confirmación de Pablo, fase 1): no se implementa la tecla sin esa confirmación. Si V choca, se para y se enmiendan la aclaración 4 y FR-037 de spec.md en un commit propio. FR-019, FR-020, FR-037.
-- [ ] T042 [US2] Suite completa y `prueba_reglas` en verde (53). Commit: "Resolubilidad US2: inicio de partida, --forzar y tecla V (T030 a T042)".
+- [X] T042 [US2] Suite completa y `prueba_reglas` en verde (53). Commit: "Resolubilidad US2: inicio de partida, --forzar y tecla V (T030 a T042)".
 
 **Checkpoint**: una cripta no resoluble no inicia sin `--forzar`; con él inicia y queda anotada en el log.
 
@@ -293,18 +293,18 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
 
 ### Tests for User Story 3 (escribir primero; deben fallar)
 
-- [ ] T043 [P] [US3] Escribir `pruebas/prueba_verificar.py` (FR-022 a FR-024).
+- [X] T043 [P] [US3] Escribir `pruebas/prueba_verificar.py` (FR-022 a FR-024).
   Escenarios:
   - H3.E1: en un subproceso con directorio de trabajo temporal y ruta absoluta del paquete, el reporte sale por la terminal y no aparecen `partidas/`, `guardados/` ni `puntajes.jsonl`. Además, en el mismo proceso, `FabricaAplicacion(("--verificar", id, "--offline=...")).ejecutar()` no deja `arcade` en `sys.modules`. Como `ejecutar()` termina con `sys.exit`, la prueba lo envuelve en `try`/`except SystemExit` y comprueba el código de salida leído de la excepción (`.code`);
   - H3.E2: códigos 0 (`res-cadena`), 1 (`res-autociclo`) y 2 (`res-sin-llaves`); `--verificar` sin ID da 2 con el mensaje de uso;
   - H3.E3: el texto con `--offline` es idéntico al obtenido con `ClienteHttp` contra `ServidorFalso` sirviendo el mismo JSON de la misma versión.
   `--forzar` no cambia el código de `--verificar`.
-- [ ] T044 [US3] Registrar T043 en `pruebas/ejecutar_pruebas.py` y confirmar que falla (no existe `--verificar`). Anotarlo para el commit.
+- [X] T044 [US3] Registrar T043 en `pruebas/ejecutar_pruebas.py` y confirmar que falla (no existe `--verificar`). Anotarlo para el commit.
 
 ### Implementation for User Story 3
 
-- [ ] T045 [US3] Crear `cripta/controlador/modoVerificar.py`. Llama a `servicio.iniciar_cripta(id)` (captura `ErrorCripta` → NO_VERIFICADA) y a `verificar_cripta`, imprime las líneas de `textoResolubilidad` con `Reporte` y el resumen de red de `ReporteFinal`, y devuelve 0, 1 o 2 según contracts/linea-de-comandos.md. FR-022, FR-024, FR-031.
-- [ ] T046 [US3] En `cripta/controlador/fabricaAplicacion.py`, leer `--verificar ID` antes de `--replay`, armar el servicio (en línea o `--offline`), ejecutar `ModoVerificar` y `sys.exit(codigo)`, sin importar `vistaArcade` ni crear `ControladorMenu`. Sin ID: mensaje de uso y salida con 2. Docstring de uso en `main.py`. FR-022, FR-023, FR-024.
+- [X] T045 [US3] Crear `cripta/controlador/modoVerificar.py`. Llama a `servicio.iniciar_cripta(id)` (captura `ErrorCripta` → NO_VERIFICADA) y a `verificar_cripta`, imprime las líneas de `textoResolubilidad` con `Reporte` y el resumen de red de `ReporteFinal`, y devuelve 0, 1 o 2 según contracts/linea-de-comandos.md. FR-022, FR-024, FR-031.
+- [X] T046 [US3] En `cripta/controlador/fabricaAplicacion.py`, leer `--verificar ID` antes de `--replay`, armar el servicio (en línea o `--offline`), ejecutar `ModoVerificar` y `sys.exit(codigo)`, sin importar `vistaArcade` ni crear `ControladorMenu`. Sin ID: mensaje de uso y salida con 2. Docstring de uso en `main.py`. FR-022, FR-023, FR-024.
 - [ ] T047 [US3] Suite completa y `prueba_reglas` en verde (54). Commit: "Resolubilidad US3: --verificar (T043 a T047)".
 
 **Checkpoint**: cualquier cripta se revisa por terminal con un código de salida útil en revisión.

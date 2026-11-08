@@ -2,6 +2,7 @@
 
     python main.py [--offline] [--cache-size N] [--forzar]
     python main.py --replay partidas/x.log
+    python main.py --verificar ID [--offline[=CARPETA]]
     python main.py --bench [--rapido]
 """
 from __future__ import annotations
