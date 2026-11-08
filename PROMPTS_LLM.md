@@ -1078,3 +1078,27 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "comfirmo"
 - **Uso:** aplicar la propuesta de la entrada 129 en tres commits: (1) banco estacionario y P4 en benchCazador (677fe12); (2) P4 como política del juego en MapaDistancias, P3 al bench, prueba_rendimiento_cazador solo sobre la cripta de referencia y prueba_conteo_cazador con P4; las dos pruebas fallaron antes del código (58e0a18); (3) D72 reescrita con P4 y con la corrección de la medición de T044, D73 sin la cifra de P3, y plan.md, research.md, data-model.md, quickstart.md y tasks.md al día. Suite 46/46; malla de 1024 salas con P4: 7,9 a 8,2 ms. FR-026(b) no cambia.
+
+## Entrada 131
+- **Fecha:** 08/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Estamos en la rama 003-resolubilidad del proyecto Cripta (Parte II, Spec-Driven Development). La feature 001-terreno-cazador ya está en main. Antes de hacer nada, lee .specify/memory/constitution.md y CLAUDE.md si existe. Trabaja siempre bajo esa constitución: estructuras propias (sin dict, set, list, heapq, bisect ni collections en cripta/), determinismo, MVC con puertos, la spec precede al código, pruebas antes del código, medir antes de afirmar y registrar cada prompt en PROMPTS_LLM.md. No cambies nada todavía; confírmame en qué rama estás y qué carpeta de specs/ existe." Seguido de "Registra este prompt en PROMPTS_LLM.md y ejecuta /speckit-specify".
+- **Uso:** arranque de la feature 003-resolubilidad: lectura de la constitución 1.0.0 (CLAUDE.md no existe), confirmación de la rama 003-resolubilidad con el árbol limpio y de que en specs/ solo está 001-terreno-cazador. /speckit-specify queda pendiente de la descripción de la feature, que no estaba en el prompt ni en el repositorio.
+
+## Entrada 132
+- **Fecha:** 08/11/2026
+- **Herramienta:** Claude
+- **Prompt:** "ok hay que hacer el spec de esta feature" (feature de resolubilidad de la rama de trabajo; se pidió el texto de entrada para /speckit-specify a partir del enunciado de la Parte II)
+- **Uso:** redactar, desde §3.5, §4.2, §4.3, §5.4, §6.1, §7.3 y el Apéndice B del enunciado, el texto de entrada de /speckit-specify para resolubilidad (reglas de la verificación, contrato de GET /criptas/<id>/llaves, interfaz con --verificar y --forzar, límite de 200 ms y 12 escenarios de aceptación) y la lista de puntos que conviene aclarar con /speckit-clarify.
+
+## Entrada 133
+- **Fecha:** 08/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-specify`
+- **Prompt:** texto de la entrada 132 pasado a `/speckit-specify` ("Resolubilidad: antes de iniciar una partida, el programa determina si la cripta puede ganarse y, si no, explica por qué. Usa el esqueleto de la cripta y la ubicación de las llaves. [...] Todos los requisitos funcionales con identificador FR-xxx y cada escenario de aceptación con su requisito. No menciones estructuras de datos, clases ni módulos. Respeta la constitución. Registra este prompt en PROMPTS_LLM.md.").
+- **Uso:** specs/003-resolubilidad/spec.md con 5 historias (verificación y reporte, bloqueo de inicio con --forzar, --verificar, consulta de llaves, rendimiento), FR-001 a FR-036, SC-001 a SC-007, los 12 escenarios del enunciado (los 4 del Apéndice B marcados) y los 5 casos borde; checklist de calidad completa y .specify/feature.json apuntando a la nueva carpeta. Sin marcadores [NEEDS CLARIFICATION]; las decisiones por defecto quedan en Assumptions para /speckit-clarify.
+
+## Entrada 134
+- **Fecha:** 08/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-clarify`
+- **Prompt:** `/speckit-clarify` sin texto adicional, con las respuestas a las cinco preguntas: (1) "Si sala_salida también puede alcanzarse por un camino que no atraviesa ninguna puerta que requiera llave_salida, ¿qué debe decir la verificación?" → "A"; (2) "¿Qué llaves debe incluir el orden de obtención cuando la cripta es resoluble?" → "A"; (3) "Cuando varias llaves ya pueden obtenerse al mismo tiempo, ¿qué regla decide cuál va antes en el orden?" → "A"; (4) "En la ventana del juego, ¿cómo y cuándo se muestra el reporte de resolubilidad?" → "A, recuerda utilizar una tecla que no este asignada ya previamente, y colocar dicha asignacion en el README"; (5) "Cuando hay un ciclo entre llaves no obtenibles, ¿qué ciclo concreto debe mostrar el reporte y en qué orden?" → "A".
+- **Uso:** sección Clarifications (sesión 2026-11-08) de specs/003-resolubilidad/spec.md: (1) definición literal de resoluble, con motivo propio en FR-011 cuando la sala de salida es alcanzable sin la puerta de llave_salida y sin tocar la regla de victoria; (2) FR-008: el orden incluye todas las llaves obtenibles, una vez cada una, y un escenario nuevo; (3) FR-009: orden lexicográficamente menor por id; (4) FR-019, FR-020 y FR-037 nuevo: aviso corto si es resoluble, reporte a pedido con la tecla V (libre en menú, partida y replay) y pantalla del reporte si no lo es; el README se actualiza en la fase de implementación; (5) FR-015: un ciclo por grupo con la regla de menor id y la puerta de menor sala de origen y orden N, S, E, O. Checklist de calidad 16/16 sin cambios.
