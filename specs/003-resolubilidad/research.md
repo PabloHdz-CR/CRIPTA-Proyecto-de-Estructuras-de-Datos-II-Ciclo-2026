@@ -340,8 +340,9 @@ No importa `vistaArcade`, no crea `Partida`, log ni puntaje (FR-023), igual que
   red ni renderizado. Se reporta PASA/FALLA contra 200 ms (FR-032). Si esa
   cripta no tiene `llaves.json`, la fila dice **SIN DATOS** y el resultado no
   es PASA: no se mide con una ubicación de llaves inventada ni vacía. La
-  prueba de la suite que la usa (H5.E1) falla en ese caso, para que la falta
-  de datos no pase inadvertida.
+  prueba de la suite que la usa (H5.E1) **salta** imprimiendo "SIN DATOS"
+  mientras `datos_offline/` no tenga llaves, y pasa a obligatoria (falla sin
+  datos) en la tarea final T061.
 - **Cadenas sintéticas** de 100, 200 y 400 llaves: la llave i abre la puerta
   hacia la zona de la llave i+1. Hay una variante resoluble y otra con la
   última puerta en ciclo, para medir también la fase 2. Para cada una se mide
@@ -366,7 +367,7 @@ No importa `vistaArcade`, no crea `Partida`, log ni puntaje (FR-023), igual que
 - **Regenerar `datos_offline/`** con las versiones de la segunda parte es una
   tarea explícita. Requiere red y que el servicio publique `/llaves`, así que
   la corre el equipo, no el agente. Hasta entonces, jugar sin conexión exige
-  `--forzar` y la referencia del bench dice SIN DATOS.
+  `--forzar`, la referencia del bench dice SIN DATOS y H5.E1 salta.
 - Un paquete nuevo `pruebas/datos/resolubilidad/` trae criptas sintéticas con
   `llaves.json` para los escenarios de aceptación.
 

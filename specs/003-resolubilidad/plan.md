@@ -146,7 +146,8 @@ Detalle en research.md R12. En resumen:
 - **Tarea del equipo, fuera del agente**: regenerar `datos_offline/` con
   `python guardar_respuestas.py` (requiere red y el endpoint `/llaves`
   publicado). Hasta entonces, el juego sin conexión exige `--forzar`, la
-  referencia del bench dice SIN DATOS y H5.E1 falla a propósito.
+  referencia del bench dice SIN DATOS y H5.E1 **salta** con el mensaje "SIN DATOS"
+  (tasks.md T045); pasa a obligatorio en T061, cuando `datos_offline/` tenga llaves.
 
 ## Escenarios de aceptación hacia pruebas
 
@@ -181,7 +182,7 @@ FR que ejerce (SC-001). Los 4 obligatorios del Apéndice B están marcados con
 | H4.E4 | en línea y sin conexión, iguales | `prueba_datos_llaves` |
 | H4.E5 | respuesta mal formada: error explícito | `prueba_datos_llaves` |
 | H4.E6 | presupuesto insuficiente: no se pudo verificar | `prueba_datos_llaves` |
-| H5.E1 | referencia < 200 ms (SIN DATOS = falla) | `prueba_rendimiento_resolubilidad` |
+| H5.E1 | referencia < 200 ms (salta con SIN DATOS hasta T061) | `prueba_rendimiento_resolubilidad` |
 | H5.E2 | cadenas 100, 200, 400: mismo reporte que la ingenua | `prueba_rendimiento_resolubilidad` |
 | H5.E3 | cocientes de salidas examinadas ≤ 2,5 y ≥ 3,5 | `prueba_rendimiento_resolubilidad` |
 

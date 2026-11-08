@@ -15,8 +15,8 @@ fija el plan; `tasks.md` los asigna.
   con `python guardar_respuestas.py`, que ahora incluye
   `criptas/<id>/llaves.json`. **Tarea del equipo**: necesita red y que el
   servicio publique `/llaves`. Mientras no se haga, la referencia del bench
-  dice SIN DATOS, H5.E1 falla a propósito y jugar con `datos_offline/` exige
-  `--forzar`.
+  dice SIN DATOS, H5.E1 salta con el mensaje "SIN DATOS" y jugar con
+  `datos_offline/` exige `--forzar`.
 
 ## 2. Suite automática
 
@@ -28,8 +28,9 @@ Todas pasan, incluidas `prueba_reglas` (sin dict, set, list, heapq, bisect ni
 collections en `cripta/`) y las pruebas nuevas de resolubilidad (la tabla de
 escenarios hacia pruebas está en [plan.md](plan.md)). Cada escenario de la
 spec (H1.E1 a H1.E12, H2.E1 a H2.E4, H3.E1 a H3.E3, H4.E1 a H4.E6, H5.E1 a
-H5.E3) está marcado en su prueba con los FR que ejerce (SC-001). La única
-excepción esperada es H5.E1 mientras `datos_offline/` no tenga llaves.
+H5.E3) está marcado en su prueba con los FR que ejerce (SC-001). H5.E1 salta
+con "SIN DATOS" mientras `datos_offline/` no tenga llaves (tasks.md T061 la
+vuelve obligatoria).
 
 `prueba_resolubilidad_oraculo` compara el reporte con el oráculo en unas 200
 criptas al azar con semilla fija. Si falla, imprime la semilla y la cripta.
