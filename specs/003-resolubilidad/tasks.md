@@ -60,21 +60,21 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
 
 **Purpose**: los tipos de datos que comparten todas las historias y las ayudas de prueba que dependen de ellos (incluido el oráculo). Los tipos no tienen lógica, así que no llevan prueba propia: los ejercen las pruebas de la fase 3.
 
-- [ ] T007 Agregar `UbicacionLlaveDTO` (`@dataclass(frozen=True)`) en `cripta/modelo/puertos/dto.py` con los campos de data-model.md §1: `id: str` ("id de la llave, texto no vacío (FR-030)"), `sala: int` ("sala del suelo, o sala donde **inicia** el enemigo; entero, sin bool"), `enemigo: str | None` ("id de la instancia que la suelta; None si está en el suelo"), con `enemigo = None` por omisión. FR-004, FR-025.
-- [ ] T008 Crear el paquete `cripta/modelo/resolubilidad/` (`__init__.py`) y `cripta/modelo/resolubilidad/resultadoResolubilidad.py`:
+- [X] T007 Agregar `UbicacionLlaveDTO` (`@dataclass(frozen=True)`) en `cripta/modelo/puertos/dto.py` con los campos de data-model.md §1: `id: str` ("id de la llave, texto no vacío (FR-030)"), `sala: int` ("sala del suelo, o sala donde **inicia** el enemigo; entero, sin bool"), `enemigo: str | None` ("id de la instancia que la suelta; None si está en el suelo"), con `enemigo = None` por omisión. FR-004, FR-025.
+- [X] T008 Crear el paquete `cripta/modelo/resolubilidad/` (`__init__.py`) y `cripta/modelo/resolubilidad/resultadoResolubilidad.py`:
   - constantes de veredicto `RESOLUBLE`, `NO_RESOLUBLE`, `NO_VERIFICADA` y de motivo `LLAVE_SALIDA_NO_OBTENIBLE`, `SIN_PUERTA_DE_SALIDA`;
   - las clases inmutables `ResultadoResolubilidad`, `LlaveOrdenada`, `LlaveNoObtenible`, `PuertaFrontera`, `PasoCiclo` y `CicloLlaves`, con exactamente los campos de data-model.md §3 y colecciones `ListaEnlazada`;
   - docstrings y tipos en toda firma pública.
   FR-007, FR-011 a FR-015, FR-031.
 
-- [ ] T009 [P] Crear `pruebas/apoyo_resolubilidad.py` (no va en la suite, como `apoyo_terreno.py`):
+- [X] T009 [P] Crear `pruebas/apoyo_resolubilidad.py` (no va en la suite, como `apoyo_terreno.py`):
   - una descripción compacta de cripta: salas con salidas `(dir, destino, cerrada, llave, cierre_automatico)`, sala_inicial, sala_salida, llave_salida y ubicaciones `(id, sala, enemigo)`;
   - conversión a `SalaDTO`, `DatosCriptaDTO` y `UbicacionLlaveDTO` en `ListaEnlazada`, con una opción para **desordenar** salas, salidas de páginas y entradas de llaves (FR-010, SC-004);
   - `FuenteMemoria` con `llaves()` y un contador de llamadas;
   - un generador de criptas pequeñas al azar con `random.Random(semilla)` (de 3 a 12 salas, de 0 a 5 llaves; puertas de una sola cara, sin llave, con cierre automático; llaves repetidas, de enemigo e inexistentes; R13);
   - reexporta `VistaRegistradora` de `apoyo_terreno.py`.
   Depende de T007.
-- [ ] T010 Crear `pruebas/oraculo_resolubilidad.py` con las definiciones **literales** de la spec, sin optimizar (research.md R13). Recibe la descripción de cripta de `apoyo_resolubilidad` (T009) y devuelve un **resultado estructurado en tuplas de Python**, sin usar ninguna clase del programa ni el formateador:
+- [X] T010 Crear `pruebas/oraculo_resolubilidad.py` con las definiciones **literales** de la spec, sin optimizar (research.md R13). Recibe la descripción de cripta de `apoyo_resolubilidad` (T009) y devuelve un **resultado estructurado en tuplas de Python**, sin usar ninguna clase del programa ni el formateador:
   - `(veredicto, motivo, sala_salida_solo_sin_puerta, orden, no_obtenibles, frontera, ciclos)`;
   - `orden`: tupla de `(id, sala, enemigo)`;
   - `no_obtenibles`: tupla de `(id, tupla de (sala, enemigo))`;

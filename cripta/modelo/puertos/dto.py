@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 from ..estructuras.listaEnlazada import ListaEnlazada
 
@@ -77,6 +78,27 @@ class PaginaSalasDTO:
     pagina: int
     total_paginas: int
     salas: ListaEnlazada         # ListaEnlazada de SalaDTO
+
+
+# ---------------------------------------------------------------------------
+# Ubicación de las llaves (003-resolubilidad)
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class UbicacionLlaveDTO:
+    """Una entrada de GET /criptas/{id}/llaves (FR-025).
+
+    id: id de la llave, texto no vacío (FR-030).
+    sala: sala del suelo, o sala donde INICIA el enemigo que la suelta; entero,
+        sin bool (FR-004, FR-030).
+    enemigo: id de la instancia que la suelta; None si está en el suelo.
+
+    Una misma llave puede aparecer en varias entradas: son varias ubicaciones
+    (FR-016). Las ubicaciones pertenecen a una versión de cripta (FR-027).
+    """
+    id: str
+    sala: int
+    enemigo: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
