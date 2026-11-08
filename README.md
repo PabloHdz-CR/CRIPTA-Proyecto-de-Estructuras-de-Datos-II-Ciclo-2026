@@ -126,10 +126,11 @@ Especificación, plan y tareas en `specs/003-resolubilidad/`.
   anota (`FORZADA NO_RESOLUBLE` o `FORZADA NO_VERIFICADA`).
 - **Continuar una partida guardada** y los replays no verifican: en una
   partida cargada, **V** dice en la bitácora que no hay reporte.
-- **`datos_offline/` debe regenerarse** para la segunda parte con
-  `python guardar_respuestas.py` (necesita red), que ahora baja también
-  `llaves.json`. Mientras falte, jugar sin conexión exige `--forzar` y la
-  medición de la cripta de referencia del bench dice SIN DATOS.
+- **`datos_offline/`** tiene las criptas de la segunda parte (cripta-02 a
+  cripta-06) con su `llaves.json`, descargadas con
+  `python guardar_respuestas.py` (necesita red). cripta-05 es la no resoluble
+  publicada. Si un paquete sin conexión no trae `llaves.json`, la cripta da
+  «no se pudo verificar» y jugarla exige `--forzar`.
 
 ## Archivos que genera el juego
 

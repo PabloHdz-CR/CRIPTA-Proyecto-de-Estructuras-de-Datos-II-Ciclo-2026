@@ -3,8 +3,9 @@
 FR-032 a FR-035, SC-002, SC-003. Escenarios:
   - H5.E1: la cripta de referencia (la de más salas de datos_offline/,
     elegida en ejecución, sin ids) se verifica en menos de 200 ms, sin red ni
-    renderizado. MIENTRAS datos_offline/ NO TENGA llaves.json, se salta con
-    "SIN DATOS" (tasks.md T047); T063 la vuelve obligatoria;
+    renderizado. Es OBLIGATORIA (tasks.md T063): si datos_offline/ no tiene
+    llaves.json, la prueba falla (hay que regenerarlo con
+    guardar_respuestas.py);
   - H5.E2: en cadenas de 100, 200 y 400 llaves, resolubles y con ciclo, el
     reporte de la verificación es igual al de la alternativa ingenua;
   - H5.E3: al duplicar las llaves, el cociente de SALIDAS EXAMINADAS es
@@ -27,9 +28,9 @@ TAMANOS = (100, 200, 400)
 
 def h5_e1_referencia():
     referencia = bench.medir_referencia(repeticiones=5)
-    if referencia.sin_datos:
-        print(f"H5.E1 SIN DATOS: datos_offline/ no tiene llaves.json; se salta ({referencia.motivo})")
-        return
+    assert not referencia.sin_datos, (
+        f"H5.E1 SIN DATOS: {referencia.motivo}. Regenerar datos_offline/ con "
+        "python guardar_respuestas.py (tasks.md T003)")
     assert referencia.ms_minimo < LIMITE_MS, (
         f"la verificación de la cripta de referencia ({referencia.salas} salas) tardó "
         f"{referencia.ms_minimo:.2f} ms, no menos de {LIMITE_MS} ms")

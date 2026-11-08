@@ -1198,3 +1198,9 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** respuesta a la pregunta "¿Ya lo confirmó [Pablo, que sus features no usan la tecla V]?" → "Sí, V está libre".
 - **Uso:** marcar T006 con la respuesta, asignar V en PantallaJuego (panel con reporte y verbo ver_resolubilidad sin reporte), agregar la fila al README y cerrar la fase 5.
+
+## Entrada 151
+- **Fecha:** 08/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "haz lo que te hace falta, no hagas el push todavia"
+- **Uso:** T003: se comprobó con una consulta que el API ya publica /criptas/<id>/llaves; datos_offline/ (en git) se borró y se regeneró con guardar_respuestas.py (73 solicitudes): cripta-02 a cripta-06, versiones nuevas y llaves.json; cripta-01 ya no se publica. --verificar: cripta-05 es la no resoluble (ciclo hierro -> negra -> hierro) y las demás son resolubles. La cripta de referencia pasa a ser cripta-06 (300 salas); benchCazador sigue en PASA (1,68 ms con 100 cazadores). Commit fbcd808. T063: H5.E1 pasa a ser obligatoria (2,74 a 2,76 ms frente a 200 ms); sin llaves.json falla con código 1 (se comprobó quitando un momento el archivo y restaurándolo desde git); README, DECISIONES.md (D75 y D78), plan.md y quickstart.md al día. Suite 55/55. Sin push.

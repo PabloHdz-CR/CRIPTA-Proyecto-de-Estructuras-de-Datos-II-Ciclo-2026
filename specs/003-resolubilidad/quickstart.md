@@ -13,10 +13,8 @@ fija el plan; `tasks.md` los asigna.
   `llaves.json`).
 - Para el juego sin conexión y el bench: `datos_offline/` descargado de nuevo
   con `python guardar_respuestas.py`, que ahora incluye
-  `criptas/<id>/llaves.json`. **Tarea del equipo**: necesita red y que el
-  servicio publique `/llaves`. Mientras no se haga, la referencia del bench
-  dice SIN DATOS, H5.E1 salta con el mensaje "SIN DATOS" y jugar con
-  `datos_offline/` exige `--forzar`.
+  `criptas/<id>/llaves.json` (hecho en T003; necesita red). Sin
+  `llaves.json`, H5.E1 falla y jugar con ese paquete exige `--forzar`.
 
 ## 2. Suite automática
 
@@ -28,9 +26,8 @@ Todas pasan, incluidas `prueba_reglas` (sin dict, set, list, heapq, bisect ni
 collections en `cripta/`) y las pruebas nuevas de resolubilidad (la tabla de
 escenarios hacia pruebas está en [plan.md](plan.md)). Cada escenario de la
 spec (H1.E1 a H1.E12, H2.E1 a H2.E4, H3.E1 a H3.E3, H4.E1 a H4.E6, H5.E1 a
-H5.E3) está marcado en su prueba con los FR que ejerce (SC-001). H5.E1 salta
-con "SIN DATOS" mientras `datos_offline/` no tenga llaves (tasks.md T061 la
-vuelve obligatoria).
+H5.E3) está marcado en su prueba con los FR que ejerce (SC-001). H5.E1 es
+obligatoria (tasks.md T063): falla si `datos_offline/` no tiene llaves.
 
 `prueba_resolubilidad_oraculo` compara el reporte con el oráculo en unas 200
 criptas al azar con semilla fija. Si falla, imprime la semilla y la cripta.
@@ -91,8 +88,8 @@ py main.py --bench
 Tablas de `benchResolubilidad`
 ([contracts/linea-de-comandos.md](contracts/linea-de-comandos.md)):
 
-- cripta de referencia por debajo de 200 ms: PASA (SC-002), o SIN DATOS si
-  `datos_offline/` no tiene llaves;
+- cripta de referencia por debajo de 200 ms: PASA (SC-002); SIN DATOS, y no
+  PASA, si `datos_offline/` no tiene llaves;
 - cocientes de **salidas examinadas** (no de tiempo) al duplicar las llaves:
   verificación ≤ 2,5 y alternativa ingenua ≥ 3,5, PASA (SC-003);
 - "mismo reporte: sí" en todas las filas (FR-035).
