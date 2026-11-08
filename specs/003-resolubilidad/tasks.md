@@ -305,7 +305,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
 
 - [X] T045 [US3] Crear `cripta/controlador/modoVerificar.py`. Llama a `servicio.iniciar_cripta(id)` (captura `ErrorCripta` → NO_VERIFICADA) y a `verificar_cripta`, imprime las líneas de `textoResolubilidad` con `Reporte` y el resumen de red de `ReporteFinal`, y devuelve 0, 1 o 2 según contracts/linea-de-comandos.md. FR-022, FR-024, FR-031.
 - [X] T046 [US3] En `cripta/controlador/fabricaAplicacion.py`, leer `--verificar ID` antes de `--replay`, armar el servicio (en línea o `--offline`), ejecutar `ModoVerificar` y `sys.exit(codigo)`, sin importar `vistaArcade` ni crear `ControladorMenu`. Sin ID: mensaje de uso y salida con 2. Docstring de uso en `main.py`. FR-022, FR-023, FR-024.
-- [ ] T047 [US3] Suite completa y `prueba_reglas` en verde (54). Commit: "Resolubilidad US3: --verificar (T043 a T047)".
+- [X] T047 [US3] Suite completa y `prueba_reglas` en verde (54). Commit: "Resolubilidad US3: --verificar (T043 a T047)".
 
 **Checkpoint**: cualquier cripta se revisa por terminal con un código de salida útil en revisión.
 
@@ -319,21 +319,21 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
 
 ### Tests for User Story 5 (escribir primero; deben fallar)
 
-- [ ] T048 [P] [US5] Escribir `pruebas/prueba_rendimiento_resolubilidad.py` (FR-032 a FR-035, SC-002, SC-003).
+- [X] T048 [P] [US5] Escribir `pruebas/prueba_rendimiento_resolubilidad.py` (FR-032 a FR-035, SC-002, SC-003).
   Escenarios:
   - H5.E1: la cripta de referencia (la de más salas de `datos_offline/`, elegida en ejecución, sin ids) se verifica en menos de 200 ms (mínimo de varias repeticiones, sin red ni renderizado). **Si esa cripta no tiene `llaves.json`, imprime `H5.E1 SIN DATOS: datos_offline/ no tiene llaves.json; se salta` y sigue con lo demás**;
   - H5.E2: en cadenas de 100, 200 y 400 llaves, resolubles y con ciclo, el texto del reporte de la verificación es igual al de la alternativa ingenua;
   - H5.E3: los cocientes de **salidas examinadas** 200/100 y 400/200 son ≤ 2,5 en la verificación y ≥ 3,5 en la ingenua. Se mide el contador, no el tiempo.
-- [ ] T049 [US5] Registrar T048 en `pruebas/ejecutar_pruebas.py` y confirmar que falla (no existen la alternativa ni el bench). Anotarlo para el commit.
+- [X] T049 [US5] Registrar T048 en `pruebas/ejecutar_pruebas.py` y confirmar que falla (no existen la alternativa ni el bench). Anotarlo para el commit.
 
 ### Implementation for User Story 5
 
-- [ ] T050 [US5] Crear `cripta/controlador/bench/alternativasResolubilidad.py` con la alternativa ingenua (research.md R11). Repite la fase 1 **desde cero** por cada llave obtenida, eligiendo la disponible de menor id, y cuenta sus salidas examinadas. Reutiliza la fase 2 y el formateador, así que solo difiere en cómo obtiene el orden. Sin estructuras prohibidas (vive en `cripta/`). FR-035.
-- [ ] T051 [US5] Crear `cripta/controlador/bench/benchResolubilidad.py` con las dos tablas de contracts/linea-de-comandos.md:
+- [X] T050 [US5] Crear `cripta/controlador/bench/alternativasResolubilidad.py` con la alternativa ingenua (research.md R11). Repite la fase 1 **desde cero** por cada llave obtenida, eligiendo la disponible de menor id, y cuenta sus salidas examinadas. Reutiliza la fase 2 y el formateador, así que solo difiere en cómo obtiene el orden. Sin estructuras prohibidas (vive en `cripta/`). FR-035.
+- [X] T051 [US5] Crear `cripta/controlador/bench/benchResolubilidad.py` con las dos tablas de contracts/linea-de-comandos.md:
   - (1) la referencia: salas, salidas, llaves, ms mínimo y PASA/FALLA contra 200 ms, o **SIN DATOS** (nunca PASA) si no hay `llaves.json`;
   - (2) las cadenas de 100, 200 y 400 llaves, resolubles y con ciclo: ms (informativo), salidas examinadas de las dos, cocientes con PASA/FALLA contra ≤ 2,5 y ≥ 3,5, y "mismo reporte: sí/no".
   Generar las cadenas en el mismo módulo, sin ids de criptas reales; `--rapido` reduce las repeticiones, no los tamaños. Registrar en `cripta/controlador/bench/benchTodo.py`. FR-032 a FR-035.
-- [ ] T052 [US5] Correr `py main.py --bench` completo y anotar las cifras reales (referencia o SIN DATOS, ms y salidas examinadas por tamaño, cocientes) para DECISIONES.md (T061). Si un criterio de SC-002 o SC-003 **falla**, se para: se diagnostica con mediciones (principio VI), y solo si la spec pide algo imposible se enmienda spec.md en un commit propio. Nunca se relaja un umbral en la prueba.
+- [X] T052 [US5] Correr `py main.py --bench` completo y anotar las cifras reales (referencia o SIN DATOS, ms y salidas examinadas por tamaño, cocientes) para DECISIONES.md (T061). Si un criterio de SC-002 o SC-003 **falla**, se para: se diagnostica con mediciones (principio VI), y solo si la spec pide algo imposible se enmienda spec.md en un commit propio. Nunca se relaja un umbral en la prueba.
 - [ ] T053 [US5] Suite completa y `prueba_reglas` en verde (55, con H5.E1 saltada si no hay datos). Commit: "Resolubilidad US5: bench y alternativa ingenua (T048 a T053)".
 
 **Checkpoint**: la escalabilidad queda demostrada por conteo; los 200 ms, por tiempo cuando haya datos.
