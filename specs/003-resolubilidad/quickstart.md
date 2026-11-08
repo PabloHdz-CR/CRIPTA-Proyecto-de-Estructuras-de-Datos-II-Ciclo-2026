@@ -69,7 +69,8 @@ py main.py --offline=pruebas/datos/resolubilidad --forzar
 1. Sin `--forzar`, una cripta no resoluble muestra la pantalla de reporte;
    ENTER o ESC vuelven al menú y no se crea log (FR-019).
 2. Con `--forzar`, la misma pantalla deja seguir con ENTER; la partida
-   inicia y su log tiene `FORZADA` en el encabezado
+   inicia y su log termina el encabezado con `FORZADA NO_RESOLUBLE` (o
+   `FORZADA NO_VERIFICADA` en `res-sin-llaves`)
    ([contracts/registro.md](contracts/registro.md)).
 3. En una cripta resoluble, la bitácora dice "La cripta es resoluble. V
    muestra el reporte."; V abre y cierra el panel con el orden de llaves

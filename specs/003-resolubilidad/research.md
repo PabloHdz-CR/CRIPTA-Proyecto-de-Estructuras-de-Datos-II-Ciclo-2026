@@ -320,6 +320,14 @@ la tomaría por una acción y rompería los logs existentes al reproducir.
 
 ---
 
+**Ajuste tras /speckit-analyze (I2)**: FR-020 pide anotar "que la cripta no
+era resoluble y que se forzó", así que `FORZADA` va siempre con una palabra de
+veredicto: `FORZADA NO_RESOLUBLE` o `FORZADA NO_VERIFICADA`. Se agrega
+`EncabezadoPartida.veredicto_forzado`. Las reglas de lectura están en
+[contracts/registro.md](contracts/registro.md).
+
+---
+
 ## R10. `--verificar <cripta>`
 
 **Decisión**: `FabricaAplicacion` lee `--verificar ID` y `--forzar`. Con

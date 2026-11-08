@@ -1156,3 +1156,21 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "Ajusta tasks.md sin cambiar nada más: 1) Mueve T057 (confirmar con Pablo las letras de niebla, ir a y línea de tiempo) a la Fase 1 como [EQUIPO], y que T038 dependa de ella. 2) Agrega, justo antes de la Fase 5, una tarea: git fetch y merge de main en la rama, resolver conflictos y suite en verde. T056 queda como segundo repaso. 3) En T027 agrega una prueba: jugar una partida resoluble corta, reproducir su log y comparar el estado final con el original; y guardar el binario antes y después de pulsar V en una partida cargada y comprobar que es idéntico. Si el aviso de bitácora rompe la igualdad, la tarea dice parar y decidir (sacarlo del estado serializado o mostrarlo desde la Vista). 4) En T030 agrega: la lista de pruebas que fallan debe ser exactamente T027, T028 y las tres de T029; si falla otra, se investiga antes de seguir. 5) En T003 y T061 agrega: después de regenerar datos_offline/, correr la suite completa y --bench --rapido, y documentar lo que cambie. Registra este prompt en PROMPTS_LLM.md. Haz un commit y no hagas push." Seguido de "y agrega" con el texto de la entrada 142.
 - **Uso:** tasks.md queda con 62 tareas renumeradas en orden de ejecución: la confirmación con Pablo pasa a T005 (fase 1, [EQUIPO]) y bloquea la tecla V (T040); la sincronización con main es T028, entre las fases 4 y 5, y T058 es el segundo repaso; T029 (antes T027) agrega el replay fiel de una partida resoluble y el binario idéntico antes y después de V, con la regla de parar y decidir; T032 (antes T030) exige que fallen exactamente cinco pruebas; T003 y T062 (antes T061) corren la suite y --bench --rapido y documentan los cambios. El commit incluye también las entradas 140 y 141 y el paso de "H5.E1 falla" a "salta" en plan.md, research.md y quickstart.md, de la generación de tareas.
+
+## Entrada 144
+- **Fecha:** 08/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-analyze`
+- **Prompt:** `/speckit-analyze` sin texto adicional.
+- **Uso:** análisis de solo lectura de spec.md, plan.md y tasks.md de resolubilidad contra la constitución: 14 hallazgos. Uno CRITICAL (C1: FR-036 sin prueba automatizada que lo cite) y tres HIGH: C2 (la parte del README de FR-037 sin prueba), I1 (prueba_controlador y prueba_replay_menu no fallaban antes del código, aunque T032 lo exigía) e I3 (T020 esperaba DatosInvalidos, pero verificar_cripta lo convierte en NO_VERIFICADA). Además I2 (FORZADA no distinguía no resoluble de no verificada) y otros medios y bajos. Cobertura por tareas 100 %; con prueba automatizada, 35 de 37 FR.
+
+## Entrada 145
+- **Fecha:** 08/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "sí, propón los cambios para C1, C2, I1, I2 e I3"
+- **Uso:** propuesta sin aplicar: prueba_sin_datos_concretos para FR-036; la fila de V del README pasa a la tarea de la Vista, con una aserción en prueba_vista_resolubilidad; una aserción del aviso en prueba_controlador y prueba_replay_menu; para I2, opción A (FORZADA con NO_RESOLUBLE o NO_VERIFICADA, sin tocar la spec) u opción B (aclarar FR-020); para I3, NO_VERIFICADA con el error que nombra la sala, y un caso borde del grafo con DatosInvalidos.
+
+## Entrada 146
+- **Fecha:** 08/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "aplica con la opción A, haz commit y no hagas push"
+- **Uso:** tasks.md con 63 tareas renumeradas: T005 nueva (prueba_sin_datos_concretos, FR-036; la confirmación con Pablo pasa a T006); T011 con el caso borde del grafo; T021 con NO_VERIFICADA para una sala inexistente; T030 con FORZADA NO_RESOLUBLE y NO_VERIFICADA, y el caso resoluble con forzar; T031 con la fila de V del README; T032 con la aserción del aviso; T034 y T037 con veredicto_forzado; T041 agrega la fila de V al README; los conteos de la suite pasan a 47, 50, 51, 53, 54 y 55. contracts/registro.md con las tres palabras de marca y sus reglas; data-model.md (EncabezadoPartida.veredicto_forzado), research.md R9, plan.md y quickstart.md al día. spec.md no cambia.

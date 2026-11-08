@@ -196,7 +196,7 @@ Los casos borde de la spec van en `prueba_resolubilidad_reglas` y
 | Punto | Riesgo | Cómo se evita |
 |---|---|---|
 | Último campo de `EstadoVista` | Las dos ramas agregan un campo al final con valor por omisión y chocan en el merge, o cambian el orden de los argumentos | `resolubilidad` va con nombre y valor None por omisión, y todo constructor usa argumentos con nombre. Al hacer merge se conservan los dos campos y ninguno queda por posición |
-| Encabezado del log | Si otra feature también agrega un campo opcional por posición, "5 campos" significa cosas distintas | El campo es una **palabra** (`FORZADA`), no una posición. El lector acepta, después de los 4 fijos, palabras conocidas en cualquier orden y rechaza las desconocidas. Si Pablo agrega otra, se suma a la lista de palabras conocidas (contracts/registro.md) |
+| Encabezado del log | Si otra feature también agrega un campo opcional por posición, "5 campos" significa cosas distintas | Las marcas son **palabras** (`FORZADA` con `NO_RESOLUBLE` o `NO_VERIFICADA`), no posiciones. El lector acepta, después de los 4 fijos, palabras conocidas en cualquier orden y rechaza las desconocidas. Si Pablo agrega otra, se suma a la lista de palabras conocidas (contracts/registro.md) |
 | Teclas | V puede chocar con las de niebla, ir a o línea de tiempo | Antes de implementar la tecla se confirma con Pablo qué letras usa. `prueba_vista_resolubilidad` falla si dos acciones de la partida comparten tecla |
 | Numeración de DECISIONES.md y PROMPTS_LLM.md | Las dos ramas toman el mismo D siguiente (D75...) o el mismo número de entrada | Las secciones se numeran al cerrar, después de `git pull` de `main`. Si al hacer merge se repite un número, se renumera la rama que entra segunda |
 | `VistaJuego`, `fabricaAplicacion.py`, `benchTodo.py`, `ejecutar_pruebas.py`, README | Las dos ramas agregan métodos, banderas, benches, pruebas y filas en los mismos lugares | Son agregados al final de cada lista o tabla; se resuelven conservando ambos |
@@ -276,7 +276,8 @@ pruebas/
 ├── prueba_verificar.py               # FR-022 a FR-024 (H3)
 ├── prueba_datos_llaves.py            # FR-025 a FR-031 (H4)
 ├── prueba_rendimiento_resolubilidad.py  # FR-032 a FR-035 (H5)
-└── prueba_vista_resolubilidad.py     # FR-037: pantalla, V sin choque
+├── prueba_vista_resolubilidad.py     # FR-037: pantalla, V sin choque, fila de V en el README
+└── prueba_sin_datos_concretos.py     # FR-036: ids y versiones de los paquetes ausentes del código
 
 guardar_respuestas.py                 # + llaves.json
 README.md                             # FR-037: tecla V, --verificar, --forzar

@@ -165,9 +165,10 @@ no tiene reporte de resolubilidad."; en el replay, V no hace nada.
 
 ### EncabezadoPartida (`modelo/puertos/registroAcciones.py`)
 
-Gana `forzada: bool = False` (FR-020). Se escribe como la palabra de marca
-`FORZADA` después de los 4 campos fijos. Formato en
-[contracts/registro.md](contracts/registro.md).
+Gana `forzada: bool = False` y `veredicto_forzado: str | None = None`
+(`NO_RESOLUBLE` o `NO_VERIFICADA`; None si no es forzada) (FR-020). Se
+escriben como las palabras de marca `FORZADA` y el veredicto, después de los 4
+campos fijos. Formato en [contracts/registro.md](contracts/registro.md).
 
 ---
 
