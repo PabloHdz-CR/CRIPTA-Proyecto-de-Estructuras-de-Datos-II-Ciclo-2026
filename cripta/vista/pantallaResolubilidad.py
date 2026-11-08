@@ -1,8 +1,11 @@
 """PantallaResolubilidad: el reporte de una cripta no resoluble antes de la
 partida (003-resolubilidad, FR-019, FR-020, contracts/vista.md).
 
-Muestra las líneas de ReporteResolubilidadVisible tal cual, con
-desplazamiento (flechas de a una línea, RePág/AvPág de a una página).
+Muestra las líneas de ReporteResolubilidadVisible completas: cada una se
+parte en filas que caben en el ancho de la ventana (partir_linea, con
+sangría de continuación y sin perder texto), con fuente monoespaciada, y
+las filas se desplazan con las flechas (de a una) y RePág/AvPág (de a una
+página).
   - Sin --forzar (puede_continuar False): ENTER y ESC mandan "volver".
   - Con --forzar (puede_continuar True): ENTER manda "aceptar_resolubilidad"
     (la partida empieza igual) y ESC manda "volver".
@@ -21,9 +24,10 @@ from ..modelo.estructuras.listaEnlazada import ListaEnlazada
 from . import estilo
 from .comando import Comando
 from .pantallaBase import _PantallaCripta
+from .partirLineas import partir_lineas
 
-_FUENTE_MONO = ("Consolas", "Courier New", "monospace")
 _ALTO_LINEA = 17
+_MARGEN_TEXTO = 48              # de cada lado, dentro del panel
 _TAMANO = 11
 
 
@@ -33,7 +37,9 @@ class PantallaResolubilidad(_PantallaCripta):
     def __init__(self, vista_arcade, reporte):
         super().__init__(vista_arcade)
         self._reporte = reporte            # ReporteResolubilidadVisible
-        self._textos = ListaEnlazada()     # arcade.Text, uno por línea
+        self._textos = ListaEnlazada()     # arcade.Text, uno por fila
+        self._filas = ListaEnlazada()      # las líneas ya partidas
+        self._maximo_caracteres = 0
         self._cabecera = ListaEnlazada()
         self._desplazamiento = 0
 
@@ -44,6 +50,16 @@ class PantallaResolubilidad(_PantallaCripta):
     @property
     def desplazamiento(self) -> int:
         return self._desplazamiento
+
+    @property
+    def filas(self) -> ListaEnlazada:
+        """Las filas que se dibujan (las líneas del reporte ya partidas)."""
+        return self._filas
+
+    @property
+    def maximo_caracteres(self) -> int:
+        """Caracteres por fila según el ancho de la ventana."""
+        return self._maximo_caracteres
 
     def on_show_view(self) -> None:
         super().on_show_view()
@@ -91,13 +107,15 @@ class PantallaResolubilidad(_PantallaCripta):
         cabecera.agregar_al_final(estilo.texto(ayuda, ancho / 2, 18, 12, estilo.TEXTO_SUAVE,
                                                anchor_x="center"))
         self._cabecera = cabecera
+        ancho_caracter = estilo.ancho_caracter_mono(_TAMANO)
+        self._maximo_caracteres = max(1, int((ancho - 2 * _MARGEN_TEXTO) / ancho_caracter))
+        self._filas = partir_lineas(self._reporte.lineas, self._maximo_caracteres)
         textos = ListaEnlazada()
         primera = True
-        for linea in self._reporte.lineas:
+        for fila in self._filas:
             color = estilo.DORADO if primera else estilo.TEXTO
-            textos.agregar_al_final(arcade.Text(linea, 0, 0, color, _TAMANO,
-                                                font_name=_FUENTE_MONO, bold=primera,
-                                                anchor_y="top"))
+            textos.agregar_al_final(estilo.texto_mono(fila, 0, 0, _TAMANO, color,
+                                                      anchor_y="top", bold=primera))
             primera = False
         self._textos = textos
 
@@ -115,7 +133,7 @@ class PantallaResolubilidad(_PantallaCripta):
                 continue
             if indice >= self._desplazamiento + visibles:
                 break
-            texto.x = 48
+            texto.x = _MARGEN_TEXTO
             texto.y = y
             texto.draw()
             y -= _ALTO_LINEA

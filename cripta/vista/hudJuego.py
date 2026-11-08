@@ -30,6 +30,7 @@ from ..modelo.estructuras.listaEnlazada import ListaEnlazada
 from . import estilo, texturas
 from .dibujoSala import dibujar_barra, dibujar_objeto, valor_animado
 from .estadoVista import SALIDA_ABIERTA, SALIDA_CERRADA_CON_LLAVE
+from .partirLineas import partir_lineas
 
 _MARGEN = 20
 _SEPARACION = 10
@@ -39,6 +40,8 @@ _MENSAJES_COMPLETOS = 20        # bitácora completa (§4.8)
 _ROJO_SUAVE = (240, 140, 125)
 _VERDE_SUAVE = (150, 215, 150)
 _CELESTE = (120, 180, 240)
+_TAMANO_REPORTE = 11            # panel de V (fuente monoespaciada)
+_ALTO_FILA_REPORTE = 17
 
 # Color de cada tipo de efecto (cadena de if en _color_efecto, no dict).
 _COLOR_ANTORCHA = (245, 160, 60)
@@ -117,7 +120,7 @@ class HudJuego:
     def __init__(self, estado, anterior, geometria: Geometria, modo: str = "normal",
                  verbo_objetivo=None, lista_objetivo=None, cursor_objetivo: int = 0,
                  aviso=None, bitacora_completa: bool = False,
-                 panel_resolubilidad: bool = False):
+                 panel_resolubilidad: bool = False, desplazamiento_resolubilidad: int = 0):
         self._estado = estado
         self._anterior = anterior
         self._g = geometria
@@ -128,6 +131,11 @@ class HudJuego:
         self._aviso = aviso
         self._bitacora_completa = bitacora_completa
         self._panel_resolubilidad = panel_resolubilidad
+        self._desplazamiento_pedido = max(0, desplazamiento_resolubilidad)
+        self._desplazamiento_resolubilidad = 0
+        self._filas_resolubilidad = ListaEnlazada()
+        self._maximo_resolubilidad = 0
+        self._visibles_resolubilidad = 0
         self._superpuestos = ListaEnlazada()  # (izq, der, abajo, arriba): panel sobre el mapa
         self._textos_superpuestos = ListaEnlazada()
         self._paneles = ListaEnlazada()     # (izq, der, abajo, arriba, resaltado)
@@ -513,8 +521,11 @@ class HudJuego:
 
     def _armar_panel_resolubilidad(self) -> None:
         """V (003-resolubilidad, FR-019): el reporte de resolubilidad en un
-        panel sobre el mapa, con las líneas tal cual (contracts/reporte.md).
-        Si no caben todas, se muestran las primeras y se avisa."""
+        panel sobre el mapa, COMPLETO: cada línea se parte en filas que
+        caben en el panel (partir_linea, sin perder texto) con fuente
+        monoespaciada. Si no caben todas las filas, se muestra una ventana
+        que se desplaza con flecha arriba/abajo y RePág/AvPág, y la ayuda lo
+        dice. "…" queda solo si el panel no tiene lugar ni para una fila."""
         izq = self._g.mapa_izq
         der = izq + self._g.lado_mapa
         abajo, arriba = self._g.mapa_abajo + 8, self._g.mapa_arriba - 8
@@ -528,16 +539,55 @@ class HudJuego:
         textos.agregar_al_final(estilo.texto(
             "V para cerrar", der - 22, arriba - 18, 10, estilo.TEXTO_SUAVE, anchor_x="right",
             anchor_y="center"))
-        caracteres = max(20, int((der - izq - 50) / 6.4))
-        y = arriba - 42
-        for linea in self._estado.resolubilidad.lineas:
-            if y < abajo + 12:
-                textos.agregar_al_final(estilo.texto(
-                    "…", izq + 22, y + 8, 11, estilo.TEXTO_SUAVE, anchor_y="center"))
-                break
+        ancho_caracter = estilo.ancho_caracter_mono(_TAMANO_REPORTE)
+        self._maximo_resolubilidad = max(1, int((der - izq - 44) / ancho_caracter))
+        filas = partir_lineas(self._estado.resolubilidad.lineas, self._maximo_resolubilidad)
+        self._filas_resolubilidad = filas
+        primera_y = arriba - 42
+        ultima_y = abajo + 30                      # deja lugar para la ayuda de abajo
+        visibles = int((primera_y - ultima_y) // _ALTO_FILA_REPORTE) + 1
+        if visibles < 1:
             textos.agregar_al_final(estilo.texto(
-                _recortar(linea, caracteres), izq + 22, y, 11, estilo.TEXTO, anchor_y="center"))
-            y -= 18
+                "…", izq + 22, primera_y, 11, estilo.TEXTO_SUAVE, anchor_y="center"))
+            self._visibles_resolubilidad = 0
+            return
+        total = len(filas)
+        self._visibles_resolubilidad = min(visibles, total)
+        maximo_desplazamiento = max(0, total - visibles)
+        self._desplazamiento_resolubilidad = min(self._desplazamiento_pedido, maximo_desplazamiento)
+        y = primera_y
+        for indice, fila in enumerate(filas):
+            if indice < self._desplazamiento_resolubilidad:
+                continue
+            if indice >= self._desplazamiento_resolubilidad + visibles:
+                break
+            textos.agregar_al_final(estilo.texto_mono(fila, izq + 22, y, _TAMANO_REPORTE))
+            y -= _ALTO_FILA_REPORTE
+        if total > visibles:
+            desde = self._desplazamiento_resolubilidad + 1
+            hasta = self._desplazamiento_resolubilidad + visibles
+            textos.agregar_al_final(estilo.texto(
+                f"Flechas arriba/abajo, RePág/AvPág: desplazar   (filas {desde}-{hasta} de {total})",
+                izq + 22, abajo + 12, 10, estilo.TEXTO_SUAVE, anchor_y="center"))
+
+    @property
+    def filas_resolubilidad(self) -> ListaEnlazada:
+        """Todas las filas del panel de V (para las pruebas y el desplazamiento)."""
+        return self._filas_resolubilidad
+
+    @property
+    def maximo_resolubilidad(self) -> int:
+        """Caracteres por fila del panel de V."""
+        return self._maximo_resolubilidad
+
+    @property
+    def visibles_resolubilidad(self) -> int:
+        """Cuántas filas del panel de V se ven a la vez (0 si no hay panel)."""
+        return self._visibles_resolubilidad
+
+    @property
+    def desplazamiento_resolubilidad(self) -> int:
+        return self._desplazamiento_resolubilidad
 
     def _controles(self):
         if self._estado.replay is not None:

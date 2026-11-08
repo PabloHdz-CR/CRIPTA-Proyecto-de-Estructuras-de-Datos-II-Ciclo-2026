@@ -57,6 +57,7 @@ class VistaArcade(VistaJuego):
         # Presentación pura, como la bitácora: se mantiene entre turnos y se
         # cierra al salir de la partida.
         self._panel_resolubilidad = False
+        self._desplazamiento_resolubilidad = 0
 
     @property
     def ventana(self) -> arcade.Window:
@@ -97,6 +98,7 @@ class VistaArcade(VistaJuego):
     def mostrar_menu(self, criptas) -> None:
         self._ultimo_estado = None
         self._panel_resolubilidad = False
+        self._desplazamiento_resolubilidad = 0
         self._mostrar(PantallaMenu(self, criptas, self._nombre_jugador))
 
     def mostrar_titulo(self) -> None:
@@ -123,6 +125,16 @@ class VistaArcade(VistaJuego):
 
     def alternar_resolubilidad(self) -> None:
         self._panel_resolubilidad = not self._panel_resolubilidad
+        self._desplazamiento_resolubilidad = 0
+
+    @property
+    def desplazamiento_resolubilidad(self) -> int:
+        return self._desplazamiento_resolubilidad
+
+    def desplazar_resolubilidad(self, delta: int, maximo: int) -> None:
+        """Mueve la ventana del panel de V entre 0 y 'maximo' (presentación)."""
+        self._desplazamiento_resolubilidad = max(
+            0, min(maximo, self._desplazamiento_resolubilidad + delta))
 
     def cambiar_skin(self, id_skin: str) -> None:
         """Lo llama el menú (presentación pura, no pasa por la Cola)."""
@@ -131,6 +143,7 @@ class VistaArcade(VistaJuego):
     def mostrar_resolubilidad(self, reporte) -> None:
         self._ultimo_estado = None
         self._panel_resolubilidad = False
+        self._desplazamiento_resolubilidad = 0
         self._mostrar(PantallaResolubilidad(self, reporte))
 
     def mostrar_benchmark(self, resultado) -> None:
@@ -145,6 +158,7 @@ class VistaArcade(VistaJuego):
     def mostrar_fin(self, resultado) -> None:
         self._ultimo_estado = None
         self._panel_resolubilidad = False
+        self._desplazamiento_resolubilidad = 0
         self._mostrar(PantallaFin(self, resultado))
 
     def mostrar_error(self, mensaje: str) -> None:

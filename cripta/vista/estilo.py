@@ -23,6 +23,30 @@ _PANEL_RESALTADO = (44, 33, 26, 235)
 _BORDE = (88, 70, 58)
 _TECLA = (58, 48, 42)
 _TECLA_BORDE = (130, 112, 92)
+# Fuente monoespaciada (reportes y tablas): con ella, la cantidad de
+# caracteres que caben en un ancho se calcula sin adivinar.
+FUENTE_MONO = ("Consolas", "Courier New", "monospace")
+# La última medición de ancho_caracter_mono: (tamaño, píxeles). Una sola
+# entrada, no un índice: casi siempre se pide el mismo tamaño.
+_ULTIMO_ANCHO_MONO = None
+
+
+def ancho_caracter_mono(tamano: int) -> float:
+    """El ancho en píxeles de un carácter de FUENTE_MONO a ese tamaño,
+    MEDIDO con arcade sobre una muestra de 40 caracteres (no estimado)."""
+    global _ULTIMO_ANCHO_MONO
+    if _ULTIMO_ANCHO_MONO is not None and _ULTIMO_ANCHO_MONO[0] == tamano:
+        return _ULTIMO_ANCHO_MONO[1]
+    muestra = arcade.Text("M" * 40, 0, 0, TEXTO, tamano, font_name=FUENTE_MONO)
+    ancho = max(1.0, muestra.content_width / 40)
+    _ULTIMO_ANCHO_MONO = (tamano, ancho)
+    return ancho
+
+
+def texto_mono(contenido: str, x: float, y: float, tamano: int = 11, color=TEXTO,
+               anchor_x: str = "left", anchor_y: str = "center", bold: bool = False) -> arcade.Text:
+    return arcade.Text(contenido, x, y, color, tamano, font_name=FUENTE_MONO,
+                       anchor_x=anchor_x, anchor_y=anchor_y, bold=bold)
 
 
 def dibujar_fondo(ventana) -> None:

@@ -169,6 +169,31 @@ class PantallaJuego(_PantallaCripta):
         else:
             self._vista_arcade._encolar(Comando("ver_resolubilidad"))
 
+    def _panel_resolubilidad_abierto(self) -> bool:
+        return (self._vista_arcade.panel_resolubilidad
+                and self._estado.resolubilidad is not None and self._estado.replay is None)
+
+    def _desplazar_resolubilidad(self, symbol) -> bool:
+        """Con el panel de V abierto, flecha arriba/abajo y RePág/AvPág lo
+        desplazan en vez de mover al jugador (presentación pura, no es un
+        Comando). True si la tecla fue para el panel."""
+        if symbol not in (arcade.key.UP, arcade.key.DOWN, arcade.key.PAGEUP, arcade.key.PAGEDOWN):
+            return False
+        hud = self._hud
+        visibles = max(1, hud.visibles_resolubilidad)
+        maximo = max(0, len(hud.filas_resolubilidad) - visibles)
+        if symbol == arcade.key.UP:
+            delta = -1
+        elif symbol == arcade.key.DOWN:
+            delta = 1
+        elif symbol == arcade.key.PAGEUP:
+            delta = -visibles
+        else:
+            delta = visibles
+        self._vista_arcade.desplazar_resolubilidad(delta, maximo)
+        self._armar_textos()
+        return True
+
     def _tecla_en_replay(self, symbol) -> None:
         if symbol == arcade.key.L:
             self._alternar_bitacora()
@@ -186,6 +211,9 @@ class PantallaJuego(_PantallaCripta):
     def _tecla_en_modo_normal(self, symbol, modifiers) -> None:
         if self._estado.replay is not None:
             self._tecla_en_replay(symbol)
+            return
+        if (self._panel_resolubilidad_abierto() and not modifiers & arcade.key.MOD_SHIFT
+                and self._desplazar_resolubilidad(symbol)):
             return
         # Shift + flecha abre la puerta en esa dirección (con la llave del
         # inventario); la flecha sola se mueve.
@@ -288,7 +316,8 @@ class PantallaJuego(_PantallaCripta):
         self._hud = HudJuego(self._estado, self._anterior, geometria, self._modo,
                              self._verbo_objetivo, self._lista_objetivo, self._cursor_objetivo,
                              self._aviso, self._vista_arcade.bitacora_completa,
-                             self._vista_arcade.panel_resolubilidad)
+                             self._vista_arcade.panel_resolubilidad,
+                             self._vista_arcade.desplazamiento_resolubilidad)
 
     # -- textos de una línea (los usan las pruebas de vista) --
 
