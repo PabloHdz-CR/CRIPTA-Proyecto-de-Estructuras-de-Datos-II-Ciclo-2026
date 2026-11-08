@@ -228,7 +228,7 @@ compararla con la alternativa ingenua.
 
 - **FR-032**: La verificación MUST tomar menos de 200 ms en la cripta publicada más grande disponible (la de más salas entre las disponibles al medir), sin red ni renderizado, medido con --bench.
 - **FR-033**: El costo total de la verificación MUST crecer aproximadamente de forma lineal con la cantidad de salas, salidas y llaves: MUST NOT repetirse el recorrido completo de la cripta cada vez que se obtiene una llave. --bench MUST reportar la cantidad de salidas examinadas, que no se multiplica por la cantidad de llaves.
-- **FR-034**: La frontera bloqueada y las dependencias entre llaves MUST obtenerse del mismo recorrido que decide la resolubilidad, sin recorridos adicionales por cada llave.
+- **FR-034**: La frontera bloqueada MUST obtenerse del mismo recorrido que decide la resolubilidad. Las dependencias entre llaves y los ciclos MUST obtenerse sin repetir el recorrido por cada llave: una sola pasada para todas las llaves, que puede continuar más allá de la frontera bloqueada.
 - **FR-035**: --bench MUST medir también la alternativa ingenua (repetir el recorrido por cada llave obtenida) sobre criptas sintéticas con muchas llaves encadenadas, comprobar que ambas dan el mismo resultado y reportar tiempos y salidas examinadas de las dos.
 
 **Datos de criptas concretas**
