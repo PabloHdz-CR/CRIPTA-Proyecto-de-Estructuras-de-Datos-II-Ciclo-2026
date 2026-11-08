@@ -74,14 +74,20 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - un generador de criptas pequeñas al azar con `random.Random(semilla)` (de 3 a 12 salas, de 0 a 5 llaves; puertas de una sola cara, sin llave, con cierre automático; llaves repetidas, de enemigo e inexistentes; R13);
   - reexporta `VistaRegistradora` de `apoyo_terreno.py`.
   Depende de T007.
-- [ ] T010 [P] Crear `pruebas/oraculo_resolubilidad.py` con las definiciones **literales** de la spec, sin optimizar (research.md R13). Arma un `ResultadoResolubilidad` (T008) que se formatea con el mismo formateador del programa:
+- [ ] T010 Crear `pruebas/oraculo_resolubilidad.py` con las definiciones **literales** de la spec, sin optimizar (research.md R13). Recibe la descripción de cripta de `apoyo_resolubilidad` (T009) y devuelve un **resultado estructurado en tuplas de Python**, sin usar ninguna clase del programa ni el formateador:
+  - `(veredicto, motivo, sala_salida_solo_sin_puerta, orden, no_obtenibles, frontera, ciclos)`;
+  - `orden`: tupla de `(id, sala, enemigo)`;
+  - `no_obtenibles`: tupla de `(id, tupla de (sala, enemigo))`;
+  - `frontera`: tupla de `(origen, direccion, destino, llave o None)`;
+  - `ciclos`: tupla de ciclos, cada uno tupla de pasos `(llave, origen, direccion, destino, llave_requerida)`.
+  Mismos órdenes canónicos que data-model.md §3. Lo calcula así:
   - **orden**: en cada paso, recorrido desde cero con las llaves ya ordenadas; se elige la disponible de menor id (FR-007, FR-009);
   - **veredicto y motivo**: FR-001 y FR-011;
   - **frontera**: FR-012;
   - **dependencias**: una búsqueda por cada puerta bloqueada (FR-014);
   - **grupos**: clausura transitiva;
   - **ciclos**: la regla de FR-015.
-  Puede usar dict, set y list (está fuera de `cripta/`). Depende de T007 y T008.
+  Agregar en `pruebas/apoyo_resolubilidad.py` la función `a_tuplas(resultado)`, que convierte un `ResultadoResolubilidad` del programa (T008) a esa misma forma. Puede usar dict, set y list (está fuera de `cripta/`). Depende de T009; `a_tuplas` depende de T008. **No** depende del formateador (T018): el texto exacto lo cubre `prueba_resolubilidad_reporte` (T012).
 
 **Checkpoint**: suite verde (47, con `prueba_sin_datos_concretos`) y `prueba_reglas` limpia; commit "Tipos de resolubilidad, ayudas y oráculo de prueba".
 
@@ -100,6 +106,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - H1.E3: dos ejecuciones, el mismo orden y el menor por id; con itm_llave_bronce e itm_llave_azul disponibles a la vez, va antes itm_llave_azul;
   - H1.E4: cadena A, B, llave_salida;
   - H1.E5: una llave que no hace falta va en el orden una sola vez;
+  - `# borde:` llave_salida no va forzada al final (FR-008): llave_salida es alcanzable desde el comienzo y otra llave obtenible (con id menor que llave_salida como texto) solo se alcanza después de abrir una puerta con llave_salida. El orden esperado es `llave_salida, otra`;
   - H1.E9: el cierre automático no bloquea;
   - H1.E10: caras de puerta distintas, cada una en su sentido;
   - H1.E12: dos caminos a sala_salida, uno por la salida de llave_salida: resoluble, aunque el camino abierto se recorra antes.
@@ -109,6 +116,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - una llave con varias ubicaciones, una alcanzable;
   - una salida abierta que declara llave no la requiere;
   - la verificación no pide contenido de salas ni catálogo (FR-017: la fuente falsa falla si se le piden);
+  - `# borde: trampas (FR-005, FR-017)`: una cripta cuyo contenido tiene trampas en el único camino (en la fuente falsa, pero nunca pedido) da el mismo veredicto y orden que sin trampas, y la fuente comprueba que no se pidió contenido ni catálogo;
   - armar el grafo con una ubicación en una sala que no existe, o con una salida hacia una sala que no existe, lanza `DatosInvalidos` con un mensaje que nombra la entrada (FR-030).
 - [ ] T012 [P] [US1] Escribir `pruebas/prueba_resolubilidad_reporte.py` (FR-011 a FR-016, SC-004). Compara el **texto exacto** de contracts/reporte.md. Escenarios:
   - H1.E1: ciclo de una llave;
@@ -126,7 +134,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - sala_salida solo alcanzable sin su puerta;
   - el texto es idéntico carácter por carácter con las entradas desordenadas (FR-010, SC-004);
   - "Llaves no obtenibles (0):" y "Frontera bloqueada (0):" con conteo 0.
-- [ ] T013 [P] [US1] Escribir `pruebas/prueba_resolubilidad_oraculo.py` (FR-001, FR-007, FR-009, FR-011 a FR-016; research.md R13): 200 criptas de `apoyo_resolubilidad` con semillas fijas 0 a 199, y para cada una, texto del reporte del programa == texto del oráculo (T010). Ante una diferencia, imprime la semilla, la descripción de la cripta y los dos textos, y sale con 1.
+- [ ] T013 [P] [US1] Escribir `pruebas/prueba_resolubilidad_oraculo.py` (FR-001, FR-007, FR-009, FR-011 a FR-016; research.md R13): 200 criptas de `apoyo_resolubilidad` con semillas fijas 0 a 199, y para cada una, `a_tuplas(resultado del programa) == resultado del oráculo` (T010), campo por campo. Ante una diferencia, imprime la semilla, la descripción de la cripta, el primer campo distinto y los dos valores, y sale con 1. Compara el resultado estructurado, **no el texto**: no depende de T018. Depende de T009 y T010.
 - [ ] T014 [US1] Registrar T011 a T013 en `PRUEBAS` de `pruebas/ejecutar_pruebas.py` bajo el comentario `# 003-resolubilidad`, con los FR y las marcas de cada una, correr la suite y **confirmar que las tres fallan** (no existen el grafo ni el verificador). Anotar el motivo en el commit de la fase.
 
 ### Implementation for User Story 1
@@ -167,7 +175,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
 
 ### Tests for User Story 4 (escribir primero; deben fallar)
 
-- [ ] T020 [P] [US4] Agregar la ruta `/criptas/<id>/llaves` a `ServidorFalso` en `pruebas/prueba_falso_1_6.py`, con ubicaciones configurables en el constructor y sujeta a `inyectar_429` igual que las otras rutas.
+- [ ] T020 [P] [US4] Agregar la ruta `/criptas/<id>/llaves` a `ServidorFalso` en `pruebas/prueba_falso_1_6.py`, con ubicaciones configurables en el constructor y sujeta a `inyectar_429` igual que las otras rutas. Justo después, correr `py -m pruebas.prueba_falso_1_9` y `py -m pruebas.prueba_errores_red` (usan `ServidorFalso`) y confirmar que siguen en verde.
 - [ ] T021 [P] [US4] Escribir `pruebas/prueba_datos_llaves.py` (FR-025 a FR-031).
   Escenarios:
   - H4.E1: una consulta, que cuenta en el presupuesto; un 429 reintentado cuenta dos;
@@ -194,7 +202,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - `pruebas/apoyo_terreno.py` (`FuenteMemoria`);
   - `pruebas/prueba_1_4.py` (`Falsa`; `Incompleta` sigue sin implementar a propósito);
   - `pruebas/prueba_1_8.py` y `pruebas/prueba_5_5.py` (`FuenteFalsa`).
-  Las que no la usan devuelven una `ListaEnlazada` vacía. FR-025, FR-026, FR-029.
+  Las que no la usan devuelven una `ListaEnlazada` vacía. **Justo después de cambiar las falsas**, correr `py -m pruebas.prueba_1_4`, `py -m pruebas.prueba_1_8` y `py -m pruebas.prueba_5_5` (y `prueba_falso_1_9`, por `ServidorFalso`) y confirmar que siguen en verde antes de seguir con T025. Si `prueba_1_4` cuenta los métodos abstractos del puerto, se actualiza el conteo esperado en el mismo paso. FR-025, FR-026, FR-029.
 - [ ] T025 [US4] Agregar `guardar_llaves(id_cripta, version_cripta, ubicaciones)` y `cargar_llaves(id_cripta, version_cripta)` a `cripta/modelo/puertos/almacenLocal.py` (`cargar_llaves` devuelve None si no existe, si la versión no coincide o si el archivo está dañado) e implementarlos en `cripta/adaptadores/almacenLocalDisco.py` en `<carpeta>/llaves/<id_cripta>.json` con `{"version_cripta", "llaves"}`, reutilizando `llaves_desde_json` al leer. FR-027, FR-028.
 - [ ] T026 [US4] Implementar `ServicioDatos.ubicacion_llaves()` en `cripta/modelo/datos/servicioDatos.py`. Resuelve en cascada: memoria (id y versión de la cripta actual), luego disco (`cargar_llaves`) y por último red (`self._sincrona.llaves`, que después se guarda). Usa la versión de `datos_cripta()`. FR-027, SC-007.
 - [ ] T027 [US4] Implementar `verificar_cripta(servicio)` en `cripta/modelo/resolubilidad/verificacion.py`: obtiene las ubicaciones, arma el grafo y verifica. Cualquier `ErrorCripta` (red, presupuesto, datos inválidos o ausentes) da un `ResultadoResolubilidad` NO_VERIFICADA con el mensaje, nunca NO_RESOLUBLE. Requiere que `servicio.iniciar_cripta` ya se haya llamado. FR-017, FR-029, FR-031.
@@ -262,7 +270,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - `iniciar_nueva(id_cripta, semilla)` se **conserva** con su firma y sin verificar (camino de pruebas; el bench y los replays no pasan por aquí).
   FR-018, FR-019, FR-020, FR-021.
 - [ ] T038 [US2] En `cripta/controlador/constructorEstadoVista.py`, pasar el reporte de la partida en curso a `EstadoVista.resolubilidad` (None si no hay). FR-019.
-- [ ] T039 [US2] En `cripta/controlador/controladorMenu.py`: parámetro `forzar: bool = False`. En `_empezar_partida`, para una partida nueva: si es RESOLUBLE, inicia; si no, `vista.mostrar_resolubilidad(..., puede_continuar=forzar)` y guarda el juego pendiente. Verbos `aceptar_resolubilidad` (solo con un pendiente y `forzar`: `iniciar_preparada(semilla, True)`) y `volver` (descarta el pendiente, `servicio.reiniciar_sesion()` y vuelve al menú). Continuar una guardada no verifica. FR-018 a FR-021, FR-031.
+- [ ] T039 [US2] En `cripta/controlador/controladorMenu.py`: parámetro `forzar: bool = False`. En `_empezar_partida`, para una partida nueva: si es RESOLUBLE, inicia; si no, `vista.mostrar_resolubilidad(..., puede_continuar=forzar)` y guarda el juego pendiente. Verbos `aceptar_resolubilidad` (solo con un pendiente y `forzar`: `iniciar_preparada(semilla, True)`) y `volver` (descarta el pendiente, `servicio.reiniciar_sesion()` y vuelve al menú). Continuar una guardada no verifica. **Antes de cambiar el flujo**, revisar en `cripta/adaptadores/registroArchivo.py` si crear el objeto (`registro_de(id_cripta)`, que hoy se llama antes de crear el `ControladorJuego`) toca el disco: crear el archivo o la carpeta, o abrir algo. Si lo toca, el registro se obtiene recién en `iniciar_preparada`, para que una cripta no resoluble sin `--forzar` no deje ningún archivo de log (FR-019, H2.E1). Anotar en el commit lo que se encontró. FR-018 a FR-021, FR-031.
 - [ ] T040 [US2] En `cripta/controlador/fabricaAplicacion.py`, leer `--forzar` y pasarlo a `ControladorMenu`; actualizar los docstrings de `fabricaAplicacion.py` y `main.py` (contracts/linea-de-comandos.md). FR-020.
 - [ ] T041 [US2] Vista arcade:
   - `cripta/vista/pantallaResolubilidad.py` (nueva): las líneas, desplazamiento con flechas y RePág/AvPág, ENTER y ESC según `puede_continuar`, y la línea de ayuda de contracts/vista.md;
@@ -287,7 +295,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
 
 - [ ] T043 [P] [US3] Escribir `pruebas/prueba_verificar.py` (FR-022 a FR-024).
   Escenarios:
-  - H3.E1: en un subproceso con directorio de trabajo temporal y ruta absoluta del paquete, el reporte sale por la terminal y no aparecen `partidas/`, `guardados/` ni `puntajes.jsonl`. Además, en el mismo proceso, `FabricaAplicacion(("--verificar", id, "--offline=..."))` no deja `arcade` en `sys.modules`;
+  - H3.E1: en un subproceso con directorio de trabajo temporal y ruta absoluta del paquete, el reporte sale por la terminal y no aparecen `partidas/`, `guardados/` ni `puntajes.jsonl`. Además, en el mismo proceso, `FabricaAplicacion(("--verificar", id, "--offline=...")).ejecutar()` no deja `arcade` en `sys.modules`. Como `ejecutar()` termina con `sys.exit`, la prueba lo envuelve en `try`/`except SystemExit` y comprueba el código de salida leído de la excepción (`.code`);
   - H3.E2: códigos 0 (`res-cadena`), 1 (`res-autociclo`) y 2 (`res-sin-llaves`); `--verificar` sin ID da 2 con el mensaje de uso;
   - H3.E3: el texto con `--offline` es idéntico al obtenido con `ClienteHttp` contra `ServidorFalso` sirviendo el mismo JSON de la misma versión.
   `--forzar` no cambia el código de `--verificar`.
@@ -362,6 +370,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
 - [ ] T061 PROMPTS_LLM.md al día: cada prompt de la implementación registrado, con numeración continua revisada en T059.
 - [ ] T062 Cierre parcial: suite completa, `prueba_reglas` y `--bench --rapido` en verde. Marcar las tareas hechas en este archivo. Commit: "Resolubilidad: documentación y cierre (T054 a T062)". El push lo pide el usuario.
 - [ ] T063 **H5.E1 obligatorio** (depende de T003): con `datos_offline/` regenerado, quitar el salto "SIN DATOS" de `pruebas/prueba_rendimiento_resolubilidad.py`: sin `llaves.json`, la prueba **falla**. Correr la suite y `--bench` con la cripta de referencia real (< 200 ms, PASA), y actualizar la cifra en DECISIONES.md (T060) y plan.md. Si no pasa, se aplica la regla de T052. Correr además la suite completa y `py main.py --bench --rapido` con los datos regenerados y documentar en el commit y en DECISIONES.md lo que cambie (tablas de otras features que usan `datos_offline/`, cifras de referencia). Commit: "Resolubilidad: H5.E1 obligatorio con datos de la Parte II".
+  **Plan alternativo** si al cierre el servicio todavía no publica `/llaves` (T003 imposible): H5.E1 sigue saltando con "SIN DATOS" y **no** se da por cumplido SC-002. Se documenta como pendiente en DECISIONES.md (qué falta, desde cuándo, qué se midió en su lugar: las cadenas sintéticas de SC-003) y se avisa al profesor. El cierre de la feature lo indica en el README y en el commit, sin quitar el salto ni inventar una ubicación de llaves.
 
 ---
 
@@ -399,7 +408,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
 ### Phase Dependencies
 
 - **Setup (fase 1)**: sin dependencias.
-- **Foundational (fase 2)**: bloquea todo lo demás. T009 y T010 dependen de T007 y T008.
+- **Foundational (fase 2)**: bloquea todo lo demás. T009 depende de T007; T010 depende de T009, y su `a_tuplas`, de T008. El oráculo no depende del formateador (T018).
 - **US1 (fase 3)**: depende de la fase 2. Es el MVP.
 - **US4 (fase 4)**: depende de la fase 2 y usa el verificador de US1 en `verificar_cripta`.
 - **Sincronización con main (T029)**: después de US4 y antes de US2.
@@ -416,7 +425,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
 ### Parallel Opportunities
 
 - Fase 1: T002, T004 y T005 en paralelo. T003 y T006 corren en paralelo a todo, a cargo del equipo.
-- Fase 2: T007 y T008 en paralelo; después, T009 y T010 en paralelo.
+- Fase 2: T007 y T008 en paralelo; después, T009 y luego T010 (el oráculo usa la descripción de cripta de T009).
 - Fase 3: T011, T012 y T013 en paralelo.
 - Fase 4: T020, T021 y T023 en paralelo.
 - Fase 5: T030 y T031 en paralelo; T035 y T036 en paralelo.

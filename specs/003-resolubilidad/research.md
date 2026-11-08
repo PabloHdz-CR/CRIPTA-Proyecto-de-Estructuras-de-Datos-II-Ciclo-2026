@@ -410,9 +410,13 @@ estructuras de Python porque está fuera de `cripta/`:
 - **grupos**: clausura transitiva de la relación;
 - **ciclos**: la regla de FR-015 aplicada sobre esa relación.
 
-Se compara el **texto completo** del reporte (contracts/reporte.md), así
-cubre a la vez orden, motivo, frontera, ubicaciones y ciclos. Una
-discrepancia imprime la semilla y la cripta para reproducirla.
+Se compara el **resultado estructurado** (veredicto, motivo, orden, no
+obtenibles, frontera y ciclos, convertidos a tuplas de Python), no el texto.
+Así el oráculo no depende del formateador del programa ni de sus clases, y
+una diferencia del formateador no se esconde detrás de un formateador
+compartido. El texto exacto lo cubre `prueba_resolubilidad_reporte`
+(contracts/reporte.md). Una discrepancia imprime la semilla, la cripta y el
+primer campo distinto para reproducirla. (Ajuste tras /speckit-analyze, U1.)
 
 **Justificación**: la fase 2 (Tarjan y relleno por prioridad, R4) es la parte
 más fácil de equivocar. La alternativa ingenua del bench reutiliza la fase 2,

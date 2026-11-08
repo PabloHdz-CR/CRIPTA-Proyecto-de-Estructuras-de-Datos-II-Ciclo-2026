@@ -1174,3 +1174,15 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "aplica con la opción A, haz commit y no hagas push"
 - **Uso:** tasks.md con 63 tareas renumeradas: T005 nueva (prueba_sin_datos_concretos, FR-036; la confirmación con Pablo pasa a T006); T011 con el caso borde del grafo; T021 con NO_VERIFICADA para una sala inexistente; T030 con FORZADA NO_RESOLUBLE y NO_VERIFICADA, y el caso resoluble con forzar; T031 con la fila de V del README; T032 con la aserción del aviso; T034 y T037 con veredicto_forzado; T041 agrega la fila de V al README; los conteos de la suite pasan a 47, 50, 51, 53, 54 y 55. contracts/registro.md con las tres palabras de marca y sus reglas; data-model.md (EncabezadoPartida.veredicto_forzado), research.md R9, plan.md y quickstart.md al día. spec.md no cambia.
+
+## Entrada 147
+- **Fecha:** 08/11/2026
+- **Herramienta:** Claude
+- **Prompt:** informe completo de speckit-analyze de resolubilidad
+- **Uso:** revisar el informe de analyze, decidir incorporar los hallazgos pendientes y dar el prompt de ajuste para Claude Code.
+
+## Entrada 148
+- **Fecha:** 08/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Incorpora a tasks.md los hallazgos pendientes del análisis, sin cambiar spec.md. Un solo commit, sin push. - U1: el oráculo compara el resultado estructurado (veredicto, motivo, orden, no obtenibles, frontera y ciclos, convertidos a tuplas de Python) y no el texto [...] - U2: [...] verificar en RegistroArchivo si crear el objeto toca el disco; si lo toca, crearlo en iniciar_preparada. - R1: [...] plan alternativo [...] sin dar por cumplido SC-002. - G1: [...] el orden esperado no la deja última (FR-008). - G2: caso # borde: trampas (FR-005, FR-017) [...]. - L1: la prueba de --verificar en el mismo proceso captura SystemExit y lee su código. - L2: correr prueba_1_4, prueba_1_8 y prueba_5_5 justo después de cambiar las falsas y ServidorFalso. Actualiza referencias cruzadas y conteos si cambian. Registra este prompt en PROMPTS_LLM.md." Seguido de "y agrega" con el texto de la entrada 147.
+- **Uso:** tasks.md sin tareas nuevas (siguen 63; los conteos de la suite no cambian). U1: T010 devuelve tuplas sin clases del programa ni formateador, a_tuplas en apoyo_resolubilidad, T013 compara campo por campo, y se quitan el [P] de T010 y su dependencia del formateador; research.md R13 y plan.md al día. U2: T039 revisa RegistroArchivo antes de cambiar el flujo. R1: plan alternativo en T063. G1 y G2: casos borde en T011. L1: T043 captura SystemExit. L2: T020 corre prueba_falso_1_9 y prueba_errores_red, y T024 corre prueba_1_4, 1_8, 5_5 y falso_1_9. spec.md sin cambios.

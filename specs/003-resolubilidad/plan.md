@@ -186,8 +186,9 @@ FR que ejerce (SC-001). Los 4 obligatorios del Apéndice B están marcados con
 | H5.E2 | cadenas 100, 200, 400: mismo reporte que la ingenua | `prueba_rendimiento_resolubilidad` |
 | H5.E3 | cocientes de salidas examinadas ≤ 2,5 y ≥ 3,5 | `prueba_rendimiento_resolubilidad` |
 
-Además: `prueba_resolubilidad_oraculo` (research.md R13) compara el texto del
-reporte con un oráculo en unas 200 criptas pequeñas al azar con semilla fija.
+Además: `prueba_resolubilidad_oraculo` (research.md R13) compara el resultado
+estructurado (tuplas, no el texto) con un oráculo en unas 200 criptas pequeñas
+al azar con semilla fija.
 Los casos borde de la spec van en `prueba_resolubilidad_reglas` y
 `prueba_resolubilidad_reporte`, marcados como `# borde: <nombre>`.
 
