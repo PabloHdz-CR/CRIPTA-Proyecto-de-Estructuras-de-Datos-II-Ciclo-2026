@@ -64,6 +64,8 @@ PRUEBAS = (
     "prueba_rendimiento_cazador",  # FR-025, SC-003: ciclo < 20 ms (H4.E1)
     "prueba_persistencia_cazador",  # FR-022, FR-027, SC-005: guardar, cargar y --replay
     "prueba_vista_costos",       # FR-023, FR-024 (H3.E1, H3.E2)
+    # 003-resolubilidad (specs/003-resolubilidad/tasks.md)
+    "prueba_sin_datos_concretos",  # FR-036: ids y versiones de criptas ausentes de cripta/ (T005)
 
 )
 

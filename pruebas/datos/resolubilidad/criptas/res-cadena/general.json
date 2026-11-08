@@ -1,0 +1,18 @@
+{
+  "id": "res-cadena",
+  "version": "v1",
+  "salas_total": 4,
+  "paginas": 1,
+  "salas_por_pagina": 50,
+  "sala_inicial": 1,
+  "sala_salida": 4,
+  "llave_salida": "itm_res_salida",
+  "presupuesto_solicitudes": 50,
+  "inventario_max": 10,
+  "jugador": {
+    "vida_max": 40,
+    "ataque": 6,
+    "defensa": 2,
+    "velocidad": 100
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "id": "itm_res_ka",
+  "nombre": "Llave del ala norte",
+  "clase": "llave",
+  "peso": 1,
+  "valor": 0,
+  "abre": "itm_res_ka"
+}

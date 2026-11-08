@@ -1,0 +1,12 @@
+{
+  "sala": 2,
+  "enemigos": [
+    {
+      "instancia": "e-201",
+      "tipo": "ent_res_errante",
+      "vida": 10
+    }
+  ],
+  "objetos": [],
+  "trampas": []
+}

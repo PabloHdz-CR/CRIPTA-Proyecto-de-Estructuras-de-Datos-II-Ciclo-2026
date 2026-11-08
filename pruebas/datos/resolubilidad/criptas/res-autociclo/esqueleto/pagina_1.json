@@ -1,0 +1,40 @@
+{
+  "pagina": 1,
+  "total_paginas": 1,
+  "salas": [
+    {
+      "id": 1,
+      "nombre": "Entrada",
+      "salidas": {
+        "E": {
+          "sala": 2,
+          "cerrada": true,
+          "llave": "itm_res_salida"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "nombre": "Cámara sellada",
+      "salidas": {
+        "O": {
+          "sala": 1
+        },
+        "E": {
+          "sala": 3,
+          "cerrada": true,
+          "llave": "itm_res_salida"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "nombre": "Salida",
+      "salidas": {
+        "O": {
+          "sala": 2
+        }
+      }
+    }
+  ]
+}

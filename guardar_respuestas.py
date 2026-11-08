@@ -3,7 +3,7 @@ organización en disco que espera FuenteOffline (un archivo por entidad):
 
     datos_offline/
         criptas.json
-        criptas/<id>/general.json, version.json
+        criptas/<id>/general.json, version.json, llaves.json
         criptas/<id>/esqueleto/pagina_<n>.json
         criptas/<id>/contenido/<id_sala>.json
         catalogo/version.json, catalogo/<id_ficha>.json
@@ -11,6 +11,10 @@ organización en disco que espera FuenteOffline (un archivo por entidad):
 Uso (desde la raíz del proyecto):
     python guardar_respuestas.py                 # todas las criptas publicadas
     python guardar_respuestas.py cripta-01 ...   # solo esas
+
+llaves.json es la respuesta tal cual de GET /criptas/<id>/llaves (ubicación de
+las llaves, 003-resolubilidad, FR-025 y FR-029); FuenteOffline la lee con la
+misma conversión que la respuesta en línea.
 
 Herramienta de desarrollo, fuera de cripta/: habla directo con requests y
 json. Pide contenido y catálogo en lotes de 10 (§3.3) y respeta HTTP 429.
@@ -69,6 +73,9 @@ def descargar_cripta(id_cripta, ids_fichas):
     general = pedir(f"/criptas/{id_cripta}")
     escribir(f"criptas/{id_cripta}/general.json", general)
     escribir(f"criptas/{id_cripta}/version.json", pedir(f"/criptas/{id_cripta}/version"))
+    # 003-resolubilidad: la ubicación de las llaves, una solicitud más por
+    # cripta (cuenta igual que las demás y respeta 429, ver pedir()).
+    escribir(f"criptas/{id_cripta}/llaves.json", pedir(f"/criptas/{id_cripta}/llaves"))
 
     ids_salas = []
     for pagina in range(1, general["paginas"] + 1):

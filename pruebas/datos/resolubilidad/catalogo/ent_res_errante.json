@@ -1,0 +1,13 @@
+{
+  "id": "ent_res_errante",
+  "nombre": "Guardián errante",
+  "clase": "enemigo",
+  "vida_max": 10,
+  "ataque": 3,
+  "defensa": 0,
+  "velocidad": 100,
+  "comportamiento": "errante",
+  "suelta": [
+    "itm_res_salida"
+  ]
+}

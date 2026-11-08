@@ -1,0 +1,16 @@
+{
+  "llaves": [
+    {
+      "id": "itm_res_ka",
+      "sala": 2
+    },
+    {
+      "id": "itm_res_salida",
+      "sala": 2
+    },
+    {
+      "id": "itm_res_kb",
+      "sala": 3
+    }
+  ]
+}

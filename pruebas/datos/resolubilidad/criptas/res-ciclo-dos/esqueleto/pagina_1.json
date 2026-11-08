@@ -1,0 +1,54 @@
+{
+  "pagina": 1,
+  "total_paginas": 1,
+  "salas": [
+    {
+      "id": 1,
+      "nombre": "Vestíbulo",
+      "salidas": {
+        "N": {
+          "sala": 2,
+          "cerrada": true,
+          "llave": "itm_res_kb"
+        },
+        "S": {
+          "sala": 3,
+          "cerrada": true,
+          "llave": "itm_res_ka"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "nombre": "Ala norte",
+      "salidas": {
+        "S": {
+          "sala": 1
+        },
+        "N": {
+          "sala": 4,
+          "cerrada": true,
+          "llave": "itm_res_salida"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "nombre": "Ala sur",
+      "salidas": {
+        "N": {
+          "sala": 1
+        }
+      }
+    },
+    {
+      "id": 4,
+      "nombre": "Salida",
+      "salidas": {
+        "S": {
+          "sala": 2
+        }
+      }
+    }
+  ]
+}
