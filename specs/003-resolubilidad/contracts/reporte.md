@@ -39,7 +39,7 @@ Frontera bloqueada (2):
   - sala 3 S -> sala 7: requiere itm_salida
   - sala 5 E -> sala 9: sin llave
 Ciclos (1):
-  1. itm_salida, encerrada por sala 3 S -> sala 7 (requiere itm_salida)
+  1. itm_salida, encerrada por sala 3 S -> sala 7 (requiere itm_salida) -> itm_salida
 ```
 
 Motivo, según el caso (FR-011):

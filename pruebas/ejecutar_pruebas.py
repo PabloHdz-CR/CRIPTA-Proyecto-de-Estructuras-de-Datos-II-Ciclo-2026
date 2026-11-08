@@ -66,6 +66,9 @@ PRUEBAS = (
     "prueba_vista_costos",       # FR-023, FR-024 (H3.E1, H3.E2)
     # 003-resolubilidad (specs/003-resolubilidad/tasks.md)
     "prueba_sin_datos_concretos",  # FR-036: ids y versiones de criptas ausentes de cripta/ (T005)
+    "prueba_resolubilidad_reglas",   # FR-001 a FR-010, FR-016, FR-017, FR-030 (H1.E2 a E5, E9, E10, E12)
+    "prueba_resolubilidad_reporte",  # FR-011 a FR-016, SC-004 (H1.E1, E6, E7, E8, E11)
+    "prueba_resolubilidad_oraculo",  # 200 criptas al azar contra el oráculo (R13)
 
 )
 

@@ -101,7 +101,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
 
 ### Tests for User Story 1 (escribir primero; deben fallar)
 
-- [ ] T011 [P] [US1] Escribir `pruebas/prueba_resolubilidad_reglas.py` (FR-001 a FR-010, FR-016, FR-017). Llama al verificador con datos en memoria. Escenarios:
+- [X] T011 [P] [US1] Escribir `pruebas/prueba_resolubilidad_reglas.py` (FR-001 a FR-010, FR-016, FR-017). Llama al verificador con datos en memoria. Escenarios:
   - H1.E2: la llave de un errante se obtiene en su sala inicial;
   - H1.E3: dos ejecuciones, el mismo orden y el menor por id; con itm_llave_bronce e itm_llave_azul disponibles a la vez, va antes itm_llave_azul;
   - H1.E4: cadena A, B, llave_salida;
@@ -118,7 +118,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - la verificación no pide contenido de salas ni catálogo (FR-017: la fuente falsa falla si se le piden);
   - `# borde: trampas (FR-005, FR-017)`: una cripta cuyo contenido tiene trampas en el único camino (en la fuente falsa, pero nunca pedido) da el mismo veredicto y orden que sin trampas, y la fuente comprueba que no se pidió contenido ni catálogo;
   - armar el grafo con una ubicación en una sala que no existe, o con una salida hacia una sala que no existe, lanza `DatosInvalidos` con un mensaje que nombra la entrada (FR-030).
-- [ ] T012 [P] [US1] Escribir `pruebas/prueba_resolubilidad_reporte.py` (FR-011 a FR-016, SC-004). Compara el **texto exacto** de contracts/reporte.md. Escenarios:
+- [X] T012 [P] [US1] Escribir `pruebas/prueba_resolubilidad_reporte.py` (FR-011 a FR-016, SC-004). Compara el **texto exacto** de contracts/reporte.md. Escenarios:
   - H1.E1: ciclo de una llave;
   - H1.E6: llave sin ubicación en la frontera;
   - H1.E7: llave de enemigo en región inalcanzable, con `(suelta e-…)`;
@@ -134,18 +134,18 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - sala_salida solo alcanzable sin su puerta;
   - el texto es idéntico carácter por carácter con las entradas desordenadas (FR-010, SC-004);
   - "Llaves no obtenibles (0):" y "Frontera bloqueada (0):" con conteo 0.
-- [ ] T013 [P] [US1] Escribir `pruebas/prueba_resolubilidad_oraculo.py` (FR-001, FR-007, FR-009, FR-011 a FR-016; research.md R13): 200 criptas de `apoyo_resolubilidad` con semillas fijas 0 a 199, y para cada una, `a_tuplas(resultado del programa) == resultado del oráculo` (T010), campo por campo. Ante una diferencia, imprime la semilla, la descripción de la cripta, el primer campo distinto y los dos valores, y sale con 1. Compara el resultado estructurado, **no el texto**: no depende de T018. Depende de T009 y T010.
-- [ ] T014 [US1] Registrar T011 a T013 en `PRUEBAS` de `pruebas/ejecutar_pruebas.py` bajo el comentario `# 003-resolubilidad`, con los FR y las marcas de cada una, correr la suite y **confirmar que las tres fallan** (no existen el grafo ni el verificador). Anotar el motivo en el commit de la fase.
+- [X] T013 [P] [US1] Escribir `pruebas/prueba_resolubilidad_oraculo.py` (FR-001, FR-007, FR-009, FR-011 a FR-016; research.md R13): 200 criptas de `apoyo_resolubilidad` con semillas fijas 0 a 199, y para cada una, `a_tuplas(resultado del programa) == resultado del oráculo` (T010), campo por campo. Ante una diferencia, imprime la semilla, la descripción de la cripta, el primer campo distinto y los dos valores, y sale con 1. Compara el resultado estructurado, **no el texto**: no depende de T018. Depende de T009 y T010.
+- [X] T014 [US1] Registrar T011 a T013 en `PRUEBAS` de `pruebas/ejecutar_pruebas.py` bajo el comentario `# 003-resolubilidad`, con los FR y las marcas de cada una, correr la suite y **confirmar que las tres fallan** (no existen el grafo ni el verificador). Anotar el motivo en el commit de la fase.
 
 ### Implementation for User Story 1
 
-- [ ] T015 [US1] Implementar `cripta/modelo/resolubilidad/grafoVerificacion.py` (research.md R1, data-model.md §2):
+- [X] T015 [US1] Implementar `cripta/modelo/resolubilidad/grafoVerificacion.py` (research.md R1, data-model.md §2):
   - las clases `NodoSala`, `AristaSalida` y `NodoLlave` (`__lt__` por id como texto);
   - la función de construcción a partir de las salas del esqueleto, los datos generales y las ubicaciones. Ordena con `ordenamiento.mezcla` y `ClaveOrden`, y fusiona en una pasada: destinos de salidas, ids de llave deduplicados (de salidas cerradas con llave, ubicaciones y llave_salida) y ubicaciones a salas (ordenadas por sala y enemigo);
   - sin dict, set, list ni búsqueda por id;
   - una sala de ubicación o un destino que no existen lanzan `DatosInvalidos`, con un mensaje que nombra la entrada (FR-030).
   FR-006, FR-010, FR-016, FR-017.
-- [ ] T016 [US1] Implementar la fase 1 en `cripta/modelo/resolubilidad/verificadorResolubilidad.py` (research.md R2, R3):
+- [X] T016 [US1] Implementar la fase 1 en `cripta/modelo/resolubilidad/verificadorResolubilidad.py` (research.md R2, R3):
   - recorrido en anchura con `Cola` propia desde sala_inicial, salidas en orden N, S, E, O;
   - puertas pendientes por `NodoLlave` y bloqueadas sin llave;
   - `HeapMinimo` de llaves disponibles; se extrae solo con la cola vacía;
@@ -153,15 +153,15 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - `sala_salida_alcanzada`, la ubicación mostrada de cada llave del orden (la primera ya alcanzada al elegirla) y el contador `salidas_examinadas`;
   - veredicto, motivo (a)/(b), frontera filtrada por destino no alcanzado y no obtenibles.
   FR-001 a FR-009, FR-011 a FR-013, FR-016, FR-033, FR-034.
-- [ ] T017 [US1] Implementar la fase 2 en `cripta/modelo/resolubilidad/verificadorResolubilidad.py` (research.md R4), solo si NO_RESOLUBLE:
+- [X] T017 [US1] Implementar la fase 2 en `cripta/modelo/resolubilidad/verificadorResolubilidad.py` (research.md R4), solo si NO_RESOLUBLE:
   - grafo de bloqueo sobre las salas no alcanzadas y las llaves no obtenidas;
   - Tarjan **iterativo** con `Pila` propia (índices en campos de los nodos, sin recursión);
   - grupos = componentes con al menos una llave y más de un nodo;
   - relleno por prioridad: puertas que requieren una llave del grupo hacia salas del grupo, ordenadas por (id de Y, sala de origen, dirección N, S, E, O) con `mezcla`; cada sala se etiqueta una vez;
   - la dependencia mínima de cada llave y el ciclo de FR-015 desde la llave de menor id del grupo hasta repetir; grupos ordenados por menor id.
   Ninguna pasada por llave. FR-014, FR-015, FR-033, FR-034.
-- [ ] T018 [US1] Implementar `cripta/controlador/textoResolubilidad.py`: `ResultadoResolubilidad` → `ListaEnlazada` de líneas, con el formato **exacto** de contracts/reporte.md (encabezado, orden, motivo (a)/(b) con su línea extra, secciones con conteo, ciclos en una línea con ` -> `, "Ciclos: ninguno.", NO_VERIFICADA, y el aviso corto `La cripta es resoluble. V muestra el reporte.` como constante). FR-007, FR-011 a FR-015, FR-031, SC-004.
-- [ ] T019 [US1] Correr la suite completa y `prueba_reglas` hasta que estén en verde (50). Si el oráculo discrepa, se corrige el programa, o el oráculo si este no aplica la spec al pie de la letra; nunca se acepta la diferencia. Si la discrepancia muestra que la **spec** es ambigua, se para y se enmienda spec.md en un commit propio (regla de arriba). Commit: "Resolubilidad US1: verificación y reporte (T011 a T019)".
+- [X] T018 [US1] Implementar `cripta/controlador/textoResolubilidad.py`: `ResultadoResolubilidad` → `ListaEnlazada` de líneas, con el formato **exacto** de contracts/reporte.md (encabezado, orden, motivo (a)/(b) con su línea extra, secciones con conteo, ciclos en una línea con ` -> `, "Ciclos: ninguno.", NO_VERIFICADA, y el aviso corto `La cripta es resoluble. V muestra el reporte.` como constante). FR-007, FR-011 a FR-015, FR-031, SC-004.
+- [X] T019 [US1] Correr la suite completa y `prueba_reglas` hasta que estén en verde (50). Si el oráculo discrepa, se corrige el programa, o el oráculo si este no aplica la spec al pie de la letra; nunca se acepta la diferencia. Si la discrepancia muestra que la **spec** es ambigua, se para y se enmienda spec.md en un commit propio (regla de arriba). Commit: "Resolubilidad US1: verificación y reporte (T011 a T019)".
 
 **Checkpoint**: el veredicto, el orden y el reporte se pueden demostrar sin red ni vista.
 
