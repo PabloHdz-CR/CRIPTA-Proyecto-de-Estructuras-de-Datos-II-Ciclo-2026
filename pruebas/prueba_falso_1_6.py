@@ -57,11 +57,17 @@ class ServidorFalso:
     - contenido y catalogo devuelven los elementos en orden INVERSO al pedido,
       para comprobar que quien llama empareja por 'sala' o 'id', no por posición.
     - inyectar_429(n) hace que las próximas n solicitudes respondan 429.
+    - GET /criptas/<id>/llaves (003-resolubilidad) responde {"llaves": llaves};
+      por omisión, la llave de salida en la sala 1. 'cuerpo_llaves' reemplaza
+      la respuesta entera (para probar respuestas mal formadas).
     """
 
     def __init__(self, id_cripta="cripta-test", total_salas=25,
-                 salas_por_pagina=10, presupuesto=12, latencia=0.0):
+                 salas_por_pagina=10, presupuesto=12, latencia=0.0,
+                 llaves=None, cuerpo_llaves=None):
         self.id_cripta = id_cripta
+        self.llaves = llaves if llaves is not None else [{"id": "itm_llave", "sala": 1}]
+        self.cuerpo_llaves = cuerpo_llaves
         self.total_salas = total_salas
         self.salas_por_pagina = salas_por_pagina
         self.presupuesto = presupuesto
@@ -170,6 +176,10 @@ class ServidorFalso:
                 return self._pagina(consulta)
             if partes[2:] == ["contenido"]:
                 return self._contenido_lote(consulta)
+            if partes[2:] == ["llaves"]:
+                if self.cuerpo_llaves is not None:
+                    return 200, self.cuerpo_llaves
+                return 200, {"llaves": self.llaves}
         return 404, {"detail": "no encontrado"}
 
     def _datos_generales(self):

@@ -126,6 +126,10 @@ class FuenteFalsa(FuenteDatos):
             resultado.agregar_al_final(FICHAS[id_ficha])
         return resultado
 
+    def llaves(self, id_cripta):
+        # 003-resolubilidad (FR-025): esta fuente no usa la ubicación de llaves.
+        return ListaEnlazada()
+
     def version_cripta(self, id_cripta):
         self._contar()
         return "v1"

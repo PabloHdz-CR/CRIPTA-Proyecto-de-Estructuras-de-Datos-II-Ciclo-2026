@@ -41,6 +41,11 @@ class ServicioDatos:
         self._solicitudes_contenido_pendientes = ListaEnlazada()
         self._solicitudes_catalogo_pendientes = ListaEnlazada()
         self._ids_catalogo_en_vuelo = ListaEnlazada()    # evita pedir dos veces el mismo id
+        # 003-resolubilidad: la última ubicación de llaves resuelta, con la
+        # cripta y la versión a las que pertenece (FR-027).
+        self._llaves_id_cripta = None
+        self._llaves_version = None
+        self._llaves = None
 
     # ------------------------------------------------------------------
     # Arranque de una partida
@@ -75,6 +80,35 @@ class ServicioDatos:
 
     def datos_cripta(self):
         return self._datos_cripta
+
+    def ubicacion_llaves(self):
+        """La ubicación de llaves de la cripta iniciada (ListaEnlazada de
+        UbicacionLlaveDTO). Resuelve en cascada, como las fichas: memoria,
+        disco (si coincide la versión de la cripta) y red, que se guarda en
+        disco. Dos verificaciones de la misma versión hacen como máximo una
+        solicitud (FR-027, SC-007). Requiere iniciar_cripta() antes.
+
+        Puede lanzar ErrorDeRed, PresupuestoAgotado o DatosInvalidos (FR-026,
+        FR-029, FR-030): quien llama decide (verificar_cripta da NO_VERIFICADA).
+        """
+        if self._datos_cripta is None:
+            raise ErrorCripta("La ubicación de llaves necesita una cripta iniciada")
+        id_cripta = self._datos_cripta.id
+        version = self._datos_cripta.version
+        if (self._llaves is not None and self._llaves_id_cripta == id_cripta
+                and self._llaves_version == version):
+            return self._llaves
+        llaves = None
+        if self._almacen is not None:
+            llaves = self._almacen.cargar_llaves(id_cripta, version)
+        if llaves is None:
+            llaves = self._sincrona.llaves(id_cripta)
+            if self._almacen is not None:
+                self._almacen.guardar_llaves(id_cripta, version, llaves)
+        self._llaves_id_cripta = id_cripta
+        self._llaves_version = version
+        self._llaves = llaves
+        return llaves
 
     def esqueleto(self):
         return self._esqueleto

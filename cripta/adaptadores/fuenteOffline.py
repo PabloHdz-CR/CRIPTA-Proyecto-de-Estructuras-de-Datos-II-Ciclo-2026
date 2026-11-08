@@ -14,6 +14,7 @@ Organización en disco (un archivo por ENTIDAD, no por combinación de lote):
             general.json                    datos generales de la cripta
             version.json                    {"version": "..."}
             esqueleto/pagina_<n>.json       {"pagina", "total_paginas", "salas"}
+            llaves.json                     {"llaves": [...]} (003-resolubilidad)
             contenido/<id_sala>.json        UNA sala: {"sala", "enemigos", ...}
         catalogo/
             version.json                    {"version": "..."}
@@ -109,6 +110,14 @@ class FuenteOffline(FuenteDatos):
             fichas_json.append(self._leer(
                 operacion, "catalogo/" + _nombre_seguro(id_ficha)))
         return convertidorJson.fichas_desde_json({"entidades": fichas_json})
+
+    def llaves(self, id_cripta):
+        """La ubicación de llaves del paquete (FR-029). Si falta el archivo,
+        ErrorDeRed como cualquier otro archivo: nunca se supone que la cripta
+        no tiene llaves."""
+        operacion = f"leer la ubicación de llaves de '{id_cripta}'"
+        datos = self._leer(operacion, f"criptas/{id_cripta}/llaves.json")
+        return convertidorJson.llaves_desde_json(datos)
 
     def version_cripta(self, id_cripta):
         operacion = f"leer la versión de '{id_cripta}'"

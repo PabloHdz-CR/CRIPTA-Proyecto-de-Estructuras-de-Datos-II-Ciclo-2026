@@ -69,6 +69,7 @@ PRUEBAS = (
     "prueba_resolubilidad_reglas",   # FR-001 a FR-010, FR-016, FR-017, FR-030 (H1.E2 a E5, E9, E10, E12)
     "prueba_resolubilidad_reporte",  # FR-011 a FR-016, SC-004 (H1.E1, E6, E7, E8, E11)
     "prueba_resolubilidad_oraculo",  # 200 criptas al azar contra el oráculo (R13)
+    "prueba_datos_llaves",           # FR-025 a FR-031, SC-007 (H4.E1 a H4.E6)
 
 )
 

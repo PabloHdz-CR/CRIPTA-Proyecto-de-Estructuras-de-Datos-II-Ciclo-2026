@@ -175,8 +175,8 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
 
 ### Tests for User Story 4 (escribir primero; deben fallar)
 
-- [ ] T020 [P] [US4] Agregar la ruta `/criptas/<id>/llaves` a `ServidorFalso` en `pruebas/prueba_falso_1_6.py`, con ubicaciones configurables en el constructor y sujeta a `inyectar_429` igual que las otras rutas. Justo después, correr `py -m pruebas.prueba_falso_1_9` y `py -m pruebas.prueba_errores_red` (usan `ServidorFalso`) y confirmar que siguen en verde.
-- [ ] T021 [P] [US4] Escribir `pruebas/prueba_datos_llaves.py` (FR-025 a FR-031).
+- [X] T020 [P] [US4] Agregar la ruta `/criptas/<id>/llaves` a `ServidorFalso` en `pruebas/prueba_falso_1_6.py`, con ubicaciones configurables en el constructor y sujeta a `inyectar_429` igual que las otras rutas. Justo después, correr `py -m pruebas.prueba_falso_1_9` y `py -m pruebas.prueba_errores_red` (usan `ServidorFalso`) y confirmar que siguen en verde.
+- [X] T021 [P] [US4] Escribir `pruebas/prueba_datos_llaves.py` (FR-025 a FR-031).
   Escenarios:
   - H4.E1: una consulta, que cuenta en el presupuesto; un 429 reintentado cuenta dos;
   - H4.E2: la caché de la misma versión no pide;
@@ -189,12 +189,12 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - un error de red;
   - datos inválidos.
   Un archivo de caché dañado se ignora (FR-027).
-- [ ] T022 [US4] Registrar T021 en `pruebas/ejecutar_pruebas.py` y confirmar que falla (no existe `FuenteDatos.llaves`). Anotarlo para el commit.
+- [X] T022 [US4] Registrar T021 en `pruebas/ejecutar_pruebas.py` y confirmar que falla (no existe `FuenteDatos.llaves`). Anotarlo para el commit.
 
 ### Implementation for User Story 4
 
-- [ ] T023 [P] [US4] Implementar `llaves_desde_json(datos)` en `cripta/adaptadores/convertidorJson.py` con las reglas de contracts/datos-llaves.md: `id` "texto no vacío", `sala` "entero (no bool)", `enemigo` "texto o null; ausente o null = en el suelo", campos extra ignorados, `DatosInvalidos` con el índice de la entrada y el campo. Devuelve una `ListaEnlazada` de `UbicacionLlaveDTO`. FR-025, FR-030.
-- [ ] T024 [US4] Agregar el método abstracto `llaves(id_cripta)` a `cripta/modelo/puertos/fuenteDatos.py` (docstring: `ListaEnlazada` de `UbicacionLlaveDTO`, puede lanzar `ErrorDeRed` o `PresupuestoAgotado`) e implementarlo en:
+- [X] T023 [P] [US4] Implementar `llaves_desde_json(datos)` en `cripta/adaptadores/convertidorJson.py` con las reglas de contracts/datos-llaves.md: `id` "texto no vacío", `sala` "entero (no bool)", `enemigo` "texto o null; ausente o null = en el suelo", campos extra ignorados, `DatosInvalidos` con el índice de la entrada y el campo. Devuelve una `ListaEnlazada` de `UbicacionLlaveDTO`. FR-025, FR-030.
+- [X] T024 [US4] Agregar el método abstracto `llaves(id_cripta)` a `cripta/modelo/puertos/fuenteDatos.py` (docstring: `ListaEnlazada` de `UbicacionLlaveDTO`, puede lanzar `ErrorDeRed` o `PresupuestoAgotado`) e implementarlo en:
   - `cripta/adaptadores/clienteHttp.py`, por `_pedir`, que cuenta intentos y reintentos (FR-026);
   - `cripta/adaptadores/fuenteOffline.py`, sobre `criptas/<id>/llaves.json` con `_leer` (FR-029).
   Actualizar también todas las demás implementaciones del puerto para que sigan instanciándose:
@@ -203,9 +203,9 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - `pruebas/prueba_1_4.py` (`Falsa`; `Incompleta` sigue sin implementar a propósito);
   - `pruebas/prueba_1_8.py` y `pruebas/prueba_5_5.py` (`FuenteFalsa`).
   Las que no la usan devuelven una `ListaEnlazada` vacía. **Justo después de cambiar las falsas**, correr `py -m pruebas.prueba_1_4`, `py -m pruebas.prueba_1_8` y `py -m pruebas.prueba_5_5` (y `prueba_falso_1_9`, por `ServidorFalso`) y confirmar que siguen en verde antes de seguir con T025. Si `prueba_1_4` cuenta los métodos abstractos del puerto, se actualiza el conteo esperado en el mismo paso. FR-025, FR-026, FR-029.
-- [ ] T025 [US4] Agregar `guardar_llaves(id_cripta, version_cripta, ubicaciones)` y `cargar_llaves(id_cripta, version_cripta)` a `cripta/modelo/puertos/almacenLocal.py` (`cargar_llaves` devuelve None si no existe, si la versión no coincide o si el archivo está dañado) e implementarlos en `cripta/adaptadores/almacenLocalDisco.py` en `<carpeta>/llaves/<id_cripta>.json` con `{"version_cripta", "llaves"}`, reutilizando `llaves_desde_json` al leer. FR-027, FR-028.
-- [ ] T026 [US4] Implementar `ServicioDatos.ubicacion_llaves()` en `cripta/modelo/datos/servicioDatos.py`. Resuelve en cascada: memoria (id y versión de la cripta actual), luego disco (`cargar_llaves`) y por último red (`self._sincrona.llaves`, que después se guarda). Usa la versión de `datos_cripta()`. FR-027, SC-007.
-- [ ] T027 [US4] Implementar `verificar_cripta(servicio)` en `cripta/modelo/resolubilidad/verificacion.py`: obtiene las ubicaciones, arma el grafo y verifica. Cualquier `ErrorCripta` (red, presupuesto, datos inválidos o ausentes) da un `ResultadoResolubilidad` NO_VERIFICADA con el mensaje, nunca NO_RESOLUBLE. Requiere que `servicio.iniciar_cripta` ya se haya llamado. FR-017, FR-029, FR-031.
+- [X] T025 [US4] Agregar `guardar_llaves(id_cripta, version_cripta, ubicaciones)` y `cargar_llaves(id_cripta, version_cripta)` a `cripta/modelo/puertos/almacenLocal.py` (`cargar_llaves` devuelve None si no existe, si la versión no coincide o si el archivo está dañado) e implementarlos en `cripta/adaptadores/almacenLocalDisco.py` en `<carpeta>/llaves/<id_cripta>.json` con `{"version_cripta", "llaves"}`, reutilizando `llaves_desde_json` al leer. FR-027, FR-028.
+- [X] T026 [US4] Implementar `ServicioDatos.ubicacion_llaves()` en `cripta/modelo/datos/servicioDatos.py`. Resuelve en cascada: memoria (id y versión de la cripta actual), luego disco (`cargar_llaves`) y por último red (`self._sincrona.llaves`, que después se guarda). Usa la versión de `datos_cripta()`. FR-027, SC-007.
+- [X] T027 [US4] Implementar `verificar_cripta(servicio)` en `cripta/modelo/resolubilidad/verificacion.py`: obtiene las ubicaciones, arma el grafo y verifica. Cualquier `ErrorCripta` (red, presupuesto, datos inválidos o ausentes) da un `ResultadoResolubilidad` NO_VERIFICADA con el mensaje, nunca NO_RESOLUBLE. Requiere que `servicio.iniciar_cripta` ya se haya llamado. FR-017, FR-029, FR-031.
 - [ ] T028 [US4] Suite completa y `prueba_reglas` en verde (51). Commit: "Resolubilidad US4: consulta de llaves con presupuesto y caché (T020 a T028)".
 
 **Checkpoint**: la ubicación de llaves llega por las dos fuentes, cuenta en el presupuesto y se reutiliza por versión.

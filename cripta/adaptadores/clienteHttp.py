@@ -155,6 +155,13 @@ class ClienteHttp(FuenteDatos):
         datos = self._pedir(operacion, "/catalogo", {"ids": _unir_con_comas(ids)})
         return convertidorJson.fichas_desde_json(datos)
 
+    def llaves(self, id_cripta):
+        # 003-resolubilidad: por _pedir, así cuenta cada intento y reintento
+        # en el ContadorSolicitudes y respeta el presupuesto (FR-026).
+        operacion = f"consultar la ubicación de llaves de '{id_cripta}'"
+        ruta = "/criptas/" + quote(str(id_cripta), safe="") + "/llaves"
+        return convertidorJson.llaves_desde_json(self._pedir(operacion, ruta))
+
     def version_cripta(self, id_cripta):
         operacion = f"consultar la versión de '{id_cripta}'"
         ruta = "/criptas/" + quote(str(id_cripta), safe="") + "/version"

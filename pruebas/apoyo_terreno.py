@@ -336,6 +336,10 @@ class FuenteMemoria(FuenteDatos):
             resultado.agregar_al_final(encontrada)
         return resultado
 
+    def llaves(self, id_cripta):
+        # 003-resolubilidad (FR-025): esta fuente no usa la ubicación de llaves.
+        return ListaEnlazada()
+
     def version_cripta(self, id_cripta):
         return VERSION_CRIPTA
 

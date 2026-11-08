@@ -66,6 +66,14 @@ class FuenteDatos(ABC):
         """
 
     @abstractmethod
+    def llaves(self, id_cripta):
+        """Devuelve una ListaEnlazada de UbicacionLlaveDTO: GET
+        /criptas/{id}/llaves (003-resolubilidad, FR-025). Cuenta como una
+        solicitud más dentro del presupuesto (FR-026). Lanza DatosInvalidos si
+        la respuesta está mal formada (FR-030); ErrorDeRed si no se pudo
+        obtener (sin conexión: si falta el archivo, FR-029)."""
+
+    @abstractmethod
     def version_cripta(self, id_cripta):
         """Devuelve la versión actual de la cripta (texto)."""
 

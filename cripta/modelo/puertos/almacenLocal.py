@@ -26,6 +26,25 @@ class AlmacenLocal(ABC):
         """Devuelve la ficha guardada con ese id, o None si no existe o si fue
         guardada bajo una versión de catálogo distinta a 'version_catalogo'."""
 
+    # ------------------------------------------------------------------
+    # Ubicación de llaves (003-resolubilidad, FR-027, FR-028)
+    # ------------------------------------------------------------------
+    # DECISIÓN: no son abstractos, como los métodos opcionales de VistaJuego:
+    # un almacén que no los implemente simplemente no guarda llaves y el
+    # servicio las vuelve a pedir (cuenta en el presupuesto, pero nunca da un
+    # dato equivocado).
+
+    def guardar_llaves(self, id_cripta, version_cripta, ubicaciones):
+        """Persiste la ubicación de llaves (ListaEnlazada de UbicacionLlaveDTO)
+        de esa cripta bajo su versión. Sobrescribe lo guardado antes."""
+
+    def cargar_llaves(self, id_cripta, version_cripta):
+        """La ubicación guardada, o None si no existe, si se guardó con otra
+        versión de cripta o si el archivo está dañado. Con otra versión es
+        "no encontrada", igual que una ficha de otro catálogo (§4.4): así lo
+        persistido por la primera parte se invalida solo (FR-028)."""
+        return None
+
     @abstractmethod
     def tiene_ficha(self, id_ficha, version_catalogo):
         """True si hay una ficha persistida con ese id Y bajo esa versión.

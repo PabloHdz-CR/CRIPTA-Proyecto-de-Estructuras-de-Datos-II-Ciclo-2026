@@ -8,6 +8,7 @@ from ..modelo.puertos.dto import (
     FichaEnemigoDTO, FichaTrampaDTO, FichaArmaDTO, FichaArmaduraDTO,
     FichaPocionDTO, FichaAntidotoDTO, FichaLlaveDTO, FichaAntorchaDTO,
     FichaPergaminoRetrocesoDTO,
+    UbicacionLlaveDTO,
 )
 
 CLASES_OBJETO = ("arma", "armadura", "pocion", "antidoto", "llave", "antorcha", "pergamino_retroceso")
@@ -232,3 +233,43 @@ def fichas_desde_json(datos):
 
 def version_desde_json(datos, operacion):
     return _requerido(datos, "version", operacion)
+
+def llaves_desde_json(datos):
+    """Respuesta de GET /criptas/{id}/llaves (003-resolubilidad, FR-025,
+    contracts/datos-llaves.md) -> ListaEnlazada de UbicacionLlaveDTO.
+
+    Reglas (FR-030): la raíz es un objeto con "llaves" de tipo lista; cada
+    entrada es un objeto con "id" (texto no vacío), "sala" (entero, no bool)
+    y opcionalmente "enemigo" (texto, o null = en el suelo). Los campos extra
+    se ignoran y un id repetido es otra ubicación de la misma llave (FR-016).
+    Cualquier otra cosa es DatosInvalidos con el índice de la entrada y el
+    campo: nunca se descarta una entrada en silencio. Que la sala exista en
+    el esqueleto se comprueba al armar el grafo, porque aquí no se conoce.
+
+    DECISIÓN: isinstance(..., dict/list) solo LEE lo que entregó json; no crea
+    diccionarios ni listas (igual que el resto de este módulo).
+    """
+    if not isinstance(datos, dict) or not isinstance(datos.get("llaves"), list):
+        raise DatosInvalidos(
+            "La ubicación de llaves no es un objeto con el campo 'llaves' de tipo lista")
+    resultado = ListaEnlazada()
+    indice = 0
+    for entrada in datos["llaves"]:
+        prefijo = f"La entrada {indice} de la ubicación de llaves"
+        if not isinstance(entrada, dict):
+            raise DatosInvalidos(f"{prefijo} no es un objeto")
+        id_llave = entrada.get("id")
+        if type(id_llave) is not str or not id_llave:
+            raise DatosInvalidos(f"{prefijo} no trae un 'id' de texto no vacío ({id_llave!r})")
+        sala = entrada.get("sala")
+        # DECISIÓN: type(...) is int, como en los costos: True y False son
+        # int en Python, y un bool en el JSON es un error de datos.
+        if type(sala) is not int:
+            raise DatosInvalidos(f"{prefijo} ('{id_llave}') no trae una 'sala' entera ({sala!r})")
+        enemigo = entrada.get("enemigo")
+        if enemigo is not None and type(enemigo) is not str:
+            raise DatosInvalidos(
+                f"{prefijo} ('{id_llave}') trae un 'enemigo' que no es texto ({enemigo!r})")
+        resultado.agregar_al_final(UbicacionLlaveDTO(id=id_llave, sala=sala, enemigo=enemigo))
+        indice += 1
+    return resultado

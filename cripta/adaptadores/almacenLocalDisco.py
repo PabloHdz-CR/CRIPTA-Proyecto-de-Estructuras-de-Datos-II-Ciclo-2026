@@ -1,6 +1,9 @@
 import json
 from pathlib import Path
 
+from . import convertidorJson
+from ..modelo.puertos.errores import DatosInvalidos
+
 from ..modelo.puertos.almacenLocal import AlmacenLocal
 from ..modelo.puertos.dto import (FichaArmaDTO, FichaArmaduraDTO, FichaAntidotoDTO, FichaAntorchaDTO, FichaEnemigoDTO, FichaLlaveDTO, FichaPergaminoRetrocesoDTO, FichaPocionDTO, FichaTrampaDTO)
 from ..modelo.estructuras.listaEnlazada import ListaEnlazada
@@ -107,6 +110,41 @@ class AlmacenLocalDisco(AlmacenLocal):
             return _dict_a_ficha(contenido["ficha"])
         except (KeyError, ValueError):
             return None         # archivo corrupto o de otro formato: no se cae el programa
+
+    # ------------------------------------------------------------------
+    # Ubicación de llaves (003-resolubilidad, contracts/datos-llaves.md)
+    # ------------------------------------------------------------------
+
+    def _ruta_llaves(self, id_cripta):
+        return self._carpeta / "llaves" / _nombre_de_archivo(str(id_cripta))
+
+    def guardar_llaves(self, id_cripta, version_cripta, ubicaciones):
+        """<carpeta>/llaves/<id_cripta>.json con la versión de la cripta y las
+        entradas en el mismo formato que la respuesta del API."""
+        entradas = []
+        for ubicacion in ubicaciones:
+            entrada = {"id": ubicacion.id, "sala": ubicacion.sala}
+            if ubicacion.enemigo is not None:
+                entrada["enemigo"] = ubicacion.enemigo
+            entradas.append(entrada)
+        ruta = self._ruta_llaves(id_cripta)
+        ruta.parent.mkdir(parents=True, exist_ok=True)
+        with open(ruta, "w", encoding="utf-8") as archivo:
+            json.dump({"version_cripta": version_cripta, "llaves": entradas}, archivo,
+                      ensure_ascii=False)
+
+    def cargar_llaves(self, id_cripta, version_cripta):
+        try:
+            with open(self._ruta_llaves(id_cripta), "r", encoding="utf-8") as archivo:
+                contenido = json.load(archivo)
+        except (FileNotFoundError, json.JSONDecodeError, OSError):
+            return None
+        if not isinstance(contenido, dict) or contenido.get("version_cripta") != version_cripta:
+            return None         # otra versión (p. ej. de la primera parte): no encontrada
+        try:
+            return convertidorJson.llaves_desde_json(contenido)
+        except DatosInvalidos:
+            return None         # dañado: se vuelve a pedir, nunca se usa a medias
 
     def tiene_ficha(self, id_ficha, version_catalogo):
         return self.cargar_ficha(id_ficha, version_catalogo) is not None
