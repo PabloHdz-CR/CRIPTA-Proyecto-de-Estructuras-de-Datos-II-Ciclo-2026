@@ -7,6 +7,9 @@ donde se decide HTTP u offline (sin propagar un if por el modelo, §6).
     --replay ARCHIVO.log  reproduce sin vista interactiva; sale con 1 si falla
     --bench [--rapido]    mediciones de §5.3
     --cache-size N        tope de fichas en memoria (25 por defecto, §4.4)
+    --forzar              permite iniciar una cripta no resoluble o que no se
+                          pudo verificar, tras ver su reporte (003-resolubilidad,
+                          FR-020, FR-031)
 
 DECISIÓN: ninguna ruta, id ni presupuesto de una cripta concreta está aquí
 (§9): solo carpetas por defecto del programa y la URL base del API.
@@ -56,6 +59,7 @@ class FabricaAplicacion:
         modo_bench = "--bench" in self._argumentos
         modo_rapido = "--rapido" in self._argumentos
         tamano_cache = self._leer_cache_size()
+        forzar = "--forzar" in self._argumentos
 
         if modo_bench:
             # --bench usa cargas sintéticas: no necesita red, caché ni vista.
@@ -71,7 +75,7 @@ class FabricaAplicacion:
                 sys.exit(1)       # código de salida distinto de 0: útil en revisión
             return
 
-        self._correr_interactivo(servicio, reporte_final)
+        self._correr_interactivo(servicio, reporte_final, forzar)
 
     def _armar_servicio(self, offline: bool, carpeta_offline: Optional[str],
                         tamano_cache: int) -> ServicioDatos:
@@ -86,7 +90,8 @@ class FabricaAplicacion:
         almacen = AlmacenLocalDisco(CARPETA_FICHAS_POR_DEFECTO)
         return ServicioDatos(sincrona, asincrona, cache, almacen)
 
-    def _correr_interactivo(self, servicio: ServicioDatos, reporte_final: ReporteFinal) -> None:
+    def _correr_interactivo(self, servicio: ServicioDatos, reporte_final: ReporteFinal,
+                            forzar: bool = False) -> None:
         # DECISIÓN: VistaArcade se importa AQUÍ: --replay y --bench corren sin
         # que pyarcade/pyglet siquiera se importen (§6). Verificado.
         from ..vista.vistaArcade import VistaArcade
@@ -97,7 +102,7 @@ class FabricaAplicacion:
             GestorGuardado(AlmacenPartidaDisco(CARPETA_GUARDADOS_POR_DEFECTO)),
             PuntajesArchivo(ARCHIVO_PUNTAJES_POR_DEFECTO),
             CarpetaRegistros(CARPETA_LOGS_POR_DEFECTO),
-            reporte_final, con_pantalla_titulo=True)
+            reporte_final, con_pantalla_titulo=True, forzar=forzar)
         controlador.iniciar()
         try:
             # DECISIÓN (D44): el Controlador es el dueño del bucle; nunca se

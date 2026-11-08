@@ -70,6 +70,8 @@ PRUEBAS = (
     "prueba_resolubilidad_reporte",  # FR-011 a FR-016, SC-004 (H1.E1, E6, E7, E8, E11)
     "prueba_resolubilidad_oraculo",  # 200 criptas al azar contra el oráculo (R13)
     "prueba_datos_llaves",           # FR-025 a FR-031, SC-007 (H4.E1 a H4.E6)
+    "prueba_resolubilidad_inicio",   # FR-018 a FR-021, FR-031 (H2.E1 a H2.E4), encabezado del log
+    "prueba_vista_resolubilidad",    # FR-019, FR-020, FR-037 (H2.E3): pantalla de reporte y tecla V
 
 )
 

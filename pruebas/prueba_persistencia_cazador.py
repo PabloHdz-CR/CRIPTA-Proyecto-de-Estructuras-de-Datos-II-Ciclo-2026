@@ -141,9 +141,13 @@ def caso_c_replay_fiel():
     menu = ControladorMenu(
         servicio_terreno(), vista, GestorGuardado(AlmacenPartidaDisco(carpeta / "guardados")),
         PuntajesArchivo(carpeta / "puntajes.jsonl"), CarpetaRegistros(carpeta / "partidas"),
-        ReporteFinal(Reporte(imprimir=False)), semilla_fija=SEMILLA)
+        ReporteFinal(Reporte(imprimir=False)), semilla_fija=SEMILLA,
+        # 003-resolubilidad: terreno-a no es resoluble (FR-001) ni tiene
+        # llaves.json; se inicia con --forzar y se acepta el reporte.
+        forzar=True)
     menu.iniciar()
     menu.procesar(Comando("jugar", ("terreno-a",)))
+    menu.procesar(Comando("aceptar_resolubilidad"))
     for direccion in CAMINO + ("N", "S"):
         menu.procesar(Comando("mover", (direccion,)))
     menu.procesar(Comando("esperar"))

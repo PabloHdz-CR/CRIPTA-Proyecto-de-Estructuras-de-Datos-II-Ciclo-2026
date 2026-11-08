@@ -16,6 +16,15 @@ Comandos del menú:
                                    acaba de terminar
     En los dos casos el replay se compara al final con el puntaje guardado.
     "benchmark" ()                 corre --bench --rapido y muestra los resultados
+    "aceptar_resolubilidad" ()     (desde la pantalla de reporte, solo con
+                                   --forzar) inicia la partida no resoluble
+    "volver" ()                    (desde la pantalla de reporte) descarta la
+                                   partida preparada y vuelve al menú
+
+003-resolubilidad (FR-018 a FR-021): una partida NUEVA se verifica antes de
+empezar. Si es resoluble, empieza con un aviso; si no (o no se pudo
+verificar), se muestra la pantalla de reporte y no se crea partida ni log,
+salvo que se acepte con --forzar. Continuar una partida guardada no verifica.
 
 DECISIÓN: el segundo argumento de "jugar" es opcional para no romper la
 Vista actual (PantallaMenu todavía solo manda el id). Sin él se reanuda si
@@ -62,7 +71,8 @@ class ControladorMenu:
                  semilla_fija: Optional[int] = None,
                  modo_bench: Optional[ModoBench] = None,
                  reloj: Optional[Callable[..., float]] = None,
-                 con_pantalla_titulo: bool = False) -> None:
+                 con_pantalla_titulo: bool = False,
+                 forzar: bool = False) -> None:
         self._servicio = servicio
         self._vista = vista
         self._gestor_guardado = gestor_guardado
@@ -95,6 +105,11 @@ class ControladorMenu:
         # ahí, al menú si se pidió desde la pantalla de fin.
         self._replay_desde_puntajes = False
         self._terminado = False
+        # 003-resolubilidad: --forzar, y la partida preparada que espera en la
+        # pantalla de reporte (con su semilla) hasta "aceptar" o "volver".
+        self._forzar = forzar
+        self._pendiente: Optional[ControladorJuego] = None
+        self._semilla_pendiente: Optional[int] = None
 
     def iniciar(self) -> None:
         if self._con_pantalla_titulo:
@@ -125,6 +140,9 @@ class ControladorMenu:
             return
         if self._juego is not None:
             self._procesar_en_partida(comando)
+            return
+        if self._pendiente is not None:
+            self._procesar_en_reporte(comando)
             return
         verbo = comando.verbo
         argumentos = comando.argumentos
@@ -173,6 +191,31 @@ class ControladorMenu:
             # PRÓXIMA partida (§5.1: "incluyendo la lista de criptas").
             self._servicio.reiniciar_sesion()
 
+    def _procesar_en_reporte(self, comando: "Comando") -> None:
+        """La pantalla de reporte de una cripta no resoluble (FR-019, FR-020)."""
+        if comando.verbo == "volver" or comando.verbo == "salir":
+            self._pendiente = None
+            self._servicio.reiniciar_sesion()
+            self._mostrar_menu()
+        elif comando.verbo == "aceptar_resolubilidad":
+            if not self._forzar:
+                self._vista.mostrar_error(
+                    "Esta cripta no se puede iniciar: para jugarla igual, abre el juego con --forzar.")
+                return
+            juego, semilla = self._pendiente, self._semilla_pendiente
+            self._pendiente = None
+            try:
+                juego.iniciar_preparada(semilla, forzada=True)
+            except ErrorCripta as error:
+                self._servicio.reiniciar_sesion()
+                self._mostrar_menu()
+                self._vista.mostrar_error(
+                    f"No se pudo iniciar la cripta '{juego.id_preparada}': {error}")
+                return
+            self._juego = juego
+        else:
+            self._vista.mostrar_error("Primero cierra el reporte de resolubilidad.")
+
     def _mostrar_menu(self) -> None:
         try:
             resumenes = self._servicio.listar_criptas()
@@ -214,7 +257,16 @@ class ControladorMenu:
                     # Sin modo explícito: se informa y se cae a partida nueva.
                     self._vista.mostrar_error(
                         f"No se pudo cargar la partida guardada ({error}); se empieza una nueva.")
-            juego.iniciar_nueva(id_cripta, self._nueva_semilla())
+            resultado = juego.preparar_nueva(id_cripta)
+            semilla = self._nueva_semilla()
+            if not resultado.resoluble:
+                # FR-019, FR-020: la partida no empieza; queda pendiente de
+                # la pantalla de reporte (aceptar solo con --forzar).
+                self._pendiente = juego
+                self._semilla_pendiente = semilla
+                self._vista.mostrar_resolubilidad(juego.reporte_visible(self._forzar))
+                return
+            juego.iniciar_preparada(semilla, forzada=False)
         except ErrorCripta as error:
             self._vista.mostrar_error(f"No se pudo iniciar la cripta '{id_cripta}': {error}")
             return

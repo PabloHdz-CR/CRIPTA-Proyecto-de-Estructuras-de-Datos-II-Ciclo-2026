@@ -116,7 +116,8 @@ class HudJuego:
 
     def __init__(self, estado, anterior, geometria: Geometria, modo: str = "normal",
                  verbo_objetivo=None, lista_objetivo=None, cursor_objetivo: int = 0,
-                 aviso=None, bitacora_completa: bool = False):
+                 aviso=None, bitacora_completa: bool = False,
+                 panel_resolubilidad: bool = False):
         self._estado = estado
         self._anterior = anterior
         self._g = geometria
@@ -126,6 +127,7 @@ class HudJuego:
         self._cursor = cursor_objetivo
         self._aviso = aviso
         self._bitacora_completa = bitacora_completa
+        self._panel_resolubilidad = panel_resolubilidad
         self._superpuestos = ListaEnlazada()  # (izq, der, abajo, arriba): panel sobre el mapa
         self._textos_superpuestos = ListaEnlazada()
         self._paneles = ListaEnlazada()     # (izq, der, abajo, arriba, resaltado)
@@ -170,7 +172,9 @@ class HudJuego:
             y = self._armar_en_la_sala(izq, der, y)
             self._armar_inventario(izq, der, abajo, y)
         self._armar_bitacora_y_controles()
-        if self._bitacora_completa:
+        if self._panel_resolubilidad and self._estado.resolubilidad is not None:
+            self._armar_panel_resolubilidad()
+        elif self._bitacora_completa:
             self._armar_bitacora_completa()
         self._armar_cartel()
 
@@ -507,6 +511,34 @@ class HudJuego:
                 _color_mensaje(mensaje, ultimo), anchor_y="center", bold=ultimo))
             y -= alto_fila
 
+    def _armar_panel_resolubilidad(self) -> None:
+        """V (003-resolubilidad, FR-019): el reporte de resolubilidad en un
+        panel sobre el mapa, con las líneas tal cual (contracts/reporte.md).
+        Si no caben todas, se muestran las primeras y se avisa."""
+        izq = self._g.mapa_izq
+        der = izq + self._g.lado_mapa
+        abajo, arriba = self._g.mapa_abajo + 8, self._g.mapa_arriba - 8
+        if not _cabe(izq, der, abajo, arriba):
+            return
+        self._superpuestos.agregar_al_final((izq + 8, der - 8, abajo, arriba))
+        textos = self._textos_superpuestos
+        textos.agregar_al_final(estilo.texto(
+            "Reporte de resolubilidad", izq + 22, arriba - 18, 12, estilo.DORADO,
+            anchor_y="center", bold=True))
+        textos.agregar_al_final(estilo.texto(
+            "V para cerrar", der - 22, arriba - 18, 10, estilo.TEXTO_SUAVE, anchor_x="right",
+            anchor_y="center"))
+        caracteres = max(20, int((der - izq - 50) / 6.4))
+        y = arriba - 42
+        for linea in self._estado.resolubilidad.lineas:
+            if y < abajo + 12:
+                textos.agregar_al_final(estilo.texto(
+                    "…", izq + 22, y + 8, 11, estilo.TEXTO_SUAVE, anchor_y="center"))
+                break
+            textos.agregar_al_final(estilo.texto(
+                _recortar(linea, caracteres), izq + 22, y, 11, estilo.TEXTO, anchor_y="center"))
+            y -= 18
+
     def _controles(self):
         if self._estado.replay is not None:
             return (("Espacio", "Pausa / seguir"), ("Flecha izquierda", "Paso atrás"),
@@ -519,7 +551,7 @@ class HudJuego:
                 ("Espacio", "Esperar"), ("R", "Recoger"), ("A", "Atacar"),
                 ("U / Q / S", "Usar/equipar/soltar"), ("Tab / Shift+Tab", "Bajar / subir inventario"),
                 ("O", "Ordenar inventario"), ("P", "Pergamino"), ("G / C", "Guardar/Cargar"),
-                ("L", "Bitácora (20)"), ("ESC", "Volver al menú"))
+                ("L", "Bitácora (20)"), ("V", "Resolubilidad"), ("ESC", "Volver al menú"))
 
     def _armar_controles(self, izq, der, abajo, arriba) -> None:
         controles = self._controles()

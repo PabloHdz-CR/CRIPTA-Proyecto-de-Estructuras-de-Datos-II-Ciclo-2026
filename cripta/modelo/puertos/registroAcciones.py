@@ -30,14 +30,22 @@ if TYPE_CHECKING:
 
 class EncabezadoPartida:
     """id de cripta, versión de cripta, versión de catálogo y semilla: el
-    mínimo que exige §4.11 para poder reproducir la partida."""
+    mínimo que exige §4.11 para poder reproducir la partida.
+
+    003-resolubilidad (FR-020): forzada es True si la partida se inició con
+    --forzar sobre una cripta NO_RESOLUBLE o NO_VERIFICADA, y
+    veredicto_forzado dice cuál de las dos (None si no es forzada). El
+    replay los lee y los ignora para decidir (FR-021)."""
 
     def __init__(self, id_cripta: str, version_cripta: str,
-                 version_catalogo: Optional[str], semilla: int) -> None:
+                 version_catalogo: Optional[str], semilla: int,
+                 forzada: bool = False, veredicto_forzado: Optional[str] = None) -> None:
         self.id_cripta = id_cripta
         self.version_cripta = version_cripta
         self.version_catalogo = version_catalogo
         self.semilla = semilla
+        self.forzada = forzada
+        self.veredicto_forzado = veredicto_forzado
 
 
 class RegistroAcciones(ABC):

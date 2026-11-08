@@ -106,6 +106,18 @@ class InfoReplay:
 
 
 @dataclass(frozen=True)
+class ReporteResolubilidadVisible:
+    """El reporte de resolubilidad ya en texto (contracts/reporte.md), para la
+    pantalla de reporte y el panel de la tecla V (003-resolubilidad, FR-019,
+    FR-020). La Vista lo muestra tal cual: nunca conoce el resultado del
+    modelo. puede_continuar es True solo en la pantalla de una cripta no
+    resoluble con --forzar (ENTER inicia la partida)."""
+    veredicto: str
+    lineas: ListaEnlazada           # de texto, sin espacios al final
+    puede_continuar: bool = False
+
+
+@dataclass(frozen=True)
 class EstadoVista:
     """Lo que necesita UNA pantalla de juego para dibujarse completa."""
     id_cripta: str
@@ -122,6 +134,10 @@ class EstadoVista:
     # la reproducción cuando la pantalla muestra un replay (None = partida).
     nombre_jugador: Optional[str] = None
     replay: Optional[InfoReplay] = None
+    # 003-resolubilidad: el reporte de la partida en curso, para la tecla V.
+    # None en el replay y en una partida cargada (FR-021). Va al final, con
+    # nombre y valor por omisión (plan.md, "Posibles choques").
+    resolubilidad: Optional[ReporteResolubilidadVisible] = None
 
 
 @dataclass(frozen=True)

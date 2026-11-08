@@ -45,6 +45,10 @@ PAQUETE = {
         "inventario_max": 4,
         "jugador": {"vida_max": 100, "ataque": 50, "defensa": 5, "velocidad": 100}},
     f"criptas/{ID}/version.json": {"id": ID, "version": "v1"},
+    # 003-resolubilidad (T031): la llave de salida la suelta la rata e-1, que
+    # inicia en la sala 2; la puerta 2 E -> 3 la requiere: la cripta es
+    # resoluble y la partida sigue el camino normal, sin --forzar.
+    f"criptas/{ID}/llaves.json": {"llaves": [{"id": "itm_llave", "sala": 2, "enemigo": "e-1"}]},
     f"criptas/{ID}/esqueleto/pagina_1.json": {"pagina": 1, "total_paginas": 1, "salas": [
         {"id": 1, "nombre": "Entrada", "salidas": {"N": {"sala": 2}}},
         {"id": 2, "nombre": "Pasillo", "salidas": {
@@ -208,6 +212,8 @@ try:
     def ganar(esperas):
         enviar("jugar", ID, "nueva")
         sin_errores()
+        # FR-019 (003-resolubilidad, T031): una cripta resoluble avisa al iniciar.
+        assert "La cripta es resoluble. V muestra el reporte." in list(vista.estado.mensajes)
         enviar("mover", "N")
         enviar("atacar", "Rata #1")
         sin_errores()

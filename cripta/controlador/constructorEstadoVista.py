@@ -33,7 +33,7 @@ from ..modelo.reloj.efecto import (
 from ..vista.estadoVista import (
     ActorVisible, CriptaVisible, EfectoVisible, EstadoVista, InfoReplay,
     InventarioVisible, JugadorVisible, ObjetoVisible, PuntajeVisible,
-    SalaVisible, SalidaVisible, SALIDA_ABIERTA, SALIDA_CERRADA_CON_LLAVE,
+    ReporteResolubilidadVisible, SalaVisible, SalidaVisible, SALIDA_ABIERTA, SALIDA_CERRADA_CON_LLAVE,
     SALIDA_SIN_SALIDA)
 from .mapaEtiquetas import MapaEtiquetas
 
@@ -62,10 +62,12 @@ class ConstructorEstadoVista:
     def construir(self, partida: "Partida",
                   criterio_orden: Optional[str] = None,
                   nombre_jugador: Optional[str] = None,
-                  replay: Optional[InfoReplay] = None) -> EstadoVista:
+                  replay: Optional[InfoReplay] = None,
+                  resolubilidad: Optional[ReporteResolubilidadVisible] = None) -> EstadoVista:
         """criterio_orden: None (solo orden real) o uno de CRITERIOS_ORDEN.
-        nombre_jugador y replay pasan tal cual: son de la sesión, no del
-        modelo (la Partida no sabe cómo se llama el jugador)."""
+        nombre_jugador, replay y resolubilidad pasan tal cual: son de la
+        sesión, no del modelo (la Partida no sabe cómo se llama el jugador ni
+        si su cripta se verificó, 003-resolubilidad FR-019)."""
         jugador = partida.jugador
         sala = partida.mundo.sala(jugador.sala)
         return EstadoVista(
@@ -81,6 +83,7 @@ class ConstructorEstadoVista:
             mensajes=self._mensajes_visibles(partida),
             nombre_jugador=nombre_jugador,
             replay=replay,
+            resolubilidad=resolubilidad,
         )
 
     def _jugador_visible(self, jugador: "Jugador") -> JugadorVisible:

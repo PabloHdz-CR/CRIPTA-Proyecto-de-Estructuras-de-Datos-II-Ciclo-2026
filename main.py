@@ -1,6 +1,6 @@
 """Bootstrap de Cripta. Cede el control a FabricaAplicacion (D44).
 
-    python main.py [--offline] [--cache-size N]
+    python main.py [--offline] [--cache-size N] [--forzar]
     python main.py --replay partidas/x.log
     python main.py --bench [--rapido]
 """

@@ -33,11 +33,47 @@ from ..modelo.puertos.registroAcciones import (
 from .nombresArchivo import nombre_seguro
 
 PREFIJO_ENCABEZADO = "CRIPTA "
+# 003-resolubilidad (contracts/registro.md): palabras de marca opcionales
+# después de los 4 campos fijos. Son palabras, no posiciones: otra feature que
+# necesite una marca la agrega aquí sin chocar con estas.
+MARCA_FORZADA = "FORZADA"
+VEREDICTOS_FORZADOS = ("NO_RESOLUBLE", "NO_VERIFICADA")
+MARCAS_CONOCIDAS = (MARCA_FORZADA,) + VEREDICTOS_FORZADOS
 
 
 def _texto_encabezado(encabezado: EncabezadoPartida) -> str:
-    return (f"{PREFIJO_ENCABEZADO}{encabezado.id_cripta} {encabezado.version_cripta} "
-            f"{encabezado.version_catalogo} {encabezado.semilla}")
+    texto = (f"{PREFIJO_ENCABEZADO}{encabezado.id_cripta} {encabezado.version_cripta} "
+             f"{encabezado.version_catalogo} {encabezado.semilla}")
+    if encabezado.forzada:
+        if encabezado.veredicto_forzado not in VEREDICTOS_FORZADOS:
+            raise ErrorCripta("Una partida forzada necesita su veredicto "
+                              "(NO_RESOLUBLE o NO_VERIFICADA)")
+        texto += f" {MARCA_FORZADA} {encabezado.veredicto_forzado}"
+    return texto
+
+
+def _leer_marcas(marcas) -> "tuple[bool, Optional[str]]":
+    """(forzada, veredicto_forzado) de las palabras de marca. Cada palabra
+    conocida, a lo sumo una vez y en cualquier orden; FORZADA exige
+    exactamente una de veredicto y viceversa (contracts/registro.md)."""
+    vistas = ""
+    forzada = False
+    veredicto = None
+    for marca in marcas:
+        if marca not in MARCAS_CONOCIDAS:
+            raise ErrorCripta(f"Palabra de marca desconocida en el encabezado: '{marca}'")
+        if f" {marca} " in vistas:
+            raise ErrorCripta(f"Palabra de marca repetida en el encabezado: '{marca}'")
+        vistas += f" {marca} "
+        if marca == MARCA_FORZADA:
+            forzada = True
+        elif veredicto is not None:
+            raise ErrorCripta("El encabezado trae dos veredictos de partida forzada")
+        else:
+            veredicto = marca
+    if forzada != (veredicto is not None):
+        raise ErrorCripta("FORZADA y su veredicto (NO_RESOLUBLE o NO_VERIFICADA) van juntos")
+    return forzada, veredicto
 
 
 def _encabezado_desde_texto(linea: str) -> EncabezadoPartida:
@@ -49,16 +85,18 @@ def _encabezado_desde_texto(linea: str) -> EncabezadoPartida:
     # cuatro campos de una línea de texto y se descarta de inmediato; no
     # sustituye ninguna estructura del programa (nada se guarda en él).
     partes = linea[len(PREFIJO_ENCABEZADO):].split(" ")
-    if len(partes) != 4:
+    if len(partes) < 4:
         raise ErrorCripta(
             f"El encabezado de la partida debe tener 4 campos, trae {len(partes)}")
-    id_cripta, version_cripta, version_catalogo, semilla_texto = partes
+    id_cripta, version_cripta, version_catalogo, semilla_texto = partes[:4]
+    forzada, veredicto_forzado = _leer_marcas(partes[4:])
     try:
         semilla = int(semilla_texto)
     except ValueError as error:
         raise ErrorCripta(
             f"La semilla del encabezado no es un entero: '{semilla_texto}'") from error
-    return EncabezadoPartida(id_cripta, version_cripta, version_catalogo, semilla)
+    return EncabezadoPartida(id_cripta, version_cripta, version_catalogo, semilla,
+                             forzada=forzada, veredicto_forzado=veredicto_forzado)
 
 
 def _accion_desde_texto(linea: str):

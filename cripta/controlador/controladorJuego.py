@@ -21,7 +21,8 @@ AlmacenPuntajes) y GestorGuardado; nunca rutas, open() ni print (guía §4).
 
 Verbos de SESIÓN (no consumen reloj virtual ni son acciones del jugador):
     "guardar", "cargar", "salir", "inventario_siguiente",
-    "inventario_anterior", "ordenar_inventario" (peso/valor/nombre/real).
+    "inventario_anterior", "ordenar_inventario" (peso/valor/nombre/real),
+    "ver_resolubilidad" (V en una partida sin reporte, 003-resolubilidad).
 """
 from __future__ import annotations
 
@@ -34,9 +35,12 @@ from ..modelo.nucleo.partida import Partida
 from ..modelo.objetos.inventario import CRITERIOS_ORDEN
 from ..modelo.puertos.errores import ErrorCripta
 from ..modelo.puertos.registroAcciones import EncabezadoPartida
-from ..vista.estadoVista import ResultadoFinVisible
+from ..modelo.resolubilidad.resultadoResolubilidad import ResultadoResolubilidad
+from ..modelo.resolubilidad.verificacion import verificar_cripta
+from ..vista.estadoVista import ReporteResolubilidadVisible, ResultadoFinVisible
 from .constructorEstadoVista import ConstructorEstadoVista
 from .mapaEtiquetas import MapaEtiquetas
+from .textoResolubilidad import AVISO_RESOLUBLE, AVISO_SIN_REPORTE, lineas_reporte
 from .traductorComandos import ErrorTraduccion, TraductorComandos
 
 if TYPE_CHECKING:
@@ -82,6 +86,12 @@ class ControladorJuego:
         # True si ESTA partida se cargó del guardado o se guardó: solo
         # entonces el guardado es suyo y se borra al terminar (D64).
         self._usa_guardado = False
+        # 003-resolubilidad: los datos y el resultado de preparar_nueva(), y
+        # el reporte en texto que va a EstadoVista para la tecla V (None en
+        # una partida cargada, FR-021).
+        self._datos_preparados = None
+        self._resultado: Optional[ResultadoResolubilidad] = None
+        self._reporte_visible: Optional[ReporteResolubilidadVisible] = None
 
     # ------------------------------------------------------------------
     # Arranque
@@ -89,17 +99,64 @@ class ControladorJuego:
 
     def iniciar_nueva(self, id_cripta: str, semilla: int) -> None:
         """Descarga datos generales y esqueleto y arranca una Partida (§2.3,
-        §2.4). Puede lanzar ErrorCripta: quien llama decide cómo mostrarlo."""
+        §2.4), SIN verificar la resolubilidad: es el camino de las pruebas
+        que arman una partida directo (003-resolubilidad, research.md R8).
+        El menú usa preparar_nueva() + iniciar_preparada(). Puede lanzar
+        ErrorCripta: quien llama decide cómo mostrarlo."""
         datos = self._servicio.iniciar_cripta(id_cripta)
+        self._arrancar(datos, semilla, EncabezadoPartida(
+            datos.id, datos.version, self._servicio.version_catalogo(), semilla))
+
+    def preparar_nueva(self, id_cripta: str) -> ResultadoResolubilidad:
+        """Descarga datos generales, esqueleto y ubicación de llaves y
+        verifica la cripta (FR-018), sin crear partida ni log. Puede lanzar
+        ErrorCripta si no se pudieron obtener los datos generales o el
+        esqueleto; un fallo de la verificación misma es NO_VERIFICADA."""
+        self._datos_preparados = self._servicio.iniciar_cripta(id_cripta)
+        self._resultado = verificar_cripta(self._servicio)
+        return self._resultado
+
+    @property
+    def id_preparada(self) -> Optional[str]:
+        """El id de la cripta de preparar_nueva(), o None."""
+        return self._datos_preparados.id if self._datos_preparados is not None else None
+
+    def reporte_visible(self, puede_continuar: bool = False) -> ReporteResolubilidadVisible:
+        """El reporte de la última preparación, en texto (contracts/reporte.md)."""
+        return ReporteResolubilidadVisible(
+            veredicto=self._resultado.veredicto, lineas=lineas_reporte(self._resultado),
+            puede_continuar=puede_continuar)
+
+    def iniciar_preparada(self, semilla: int, forzada: bool) -> None:
+        """Arranca la partida de la cripta preparada, sin volver a pedir
+        datos. forzada: el jugador la inició con --forzar aunque no era
+        resoluble; el log lo anota con el veredicto (FR-020). Si es
+        resoluble, la bitácora avisa y el reporte queda para la tecla V
+        (FR-019)."""
+        datos = self._datos_preparados
+        resultado = self._resultado
+        resoluble = resultado.resoluble
+        marcar = forzada and not resoluble
+        self._reporte_visible = self.reporte_visible()
+        self._arrancar(datos, semilla, EncabezadoPartida(
+            datos.id, datos.version, self._servicio.version_catalogo(), semilla,
+            forzada=marcar, veredicto_forzado=resultado.veredicto if marcar else None),
+            aviso=AVISO_RESOLUBLE if resoluble else None)
+
+    def _arrancar(self, datos, semilla: int, encabezado: EncabezadoPartida,
+                  aviso: Optional[str] = None) -> None:
         self.partida = Partida(self._servicio)
         # DECISIÓN: el Diario se conecta ANTES de iniciar, así el pergamino
         # puede deshacer desde la primera acción del jugador.
         self.partida.conectar_diario(Diario())
         self._mapa_etiquetas.reiniciar()
         self.partida.iniciar(semilla)
+        if aviso is not None:
+            # Presentación: va a la bitácora, no al log ni al reloj, y no se
+            # revierte (Partida.avisar).
+            self.partida.avisar(aviso)
         # §4.11: el encabezado guarda todo lo necesario para reproducir.
-        self._registro.iniciar(EncabezadoPartida(
-            datos.id, datos.version, self._servicio.version_catalogo(), semilla))
+        self._registro.iniciar(encabezado)
         self._mostrar_estado_actual()
 
     def continuar_cargada(self, id_cripta: str) -> None:
@@ -139,6 +196,8 @@ class ControladorJuego:
             self._mover_cursor_inventario(-1)
         elif verbo == "ordenar_inventario":
             self._ordenar_inventario(comando.argumentos)
+        elif verbo == "ver_resolubilidad":
+            self._ver_resolubilidad()
         else:
             self._procesar_accion(comando)
 
@@ -213,6 +272,14 @@ class ControladorJuego:
             return
         self._mostrar_estado_actual()
 
+    def _ver_resolubilidad(self) -> None:
+        """V sin reporte (partida cargada, FR-021): lo dice en la bitácora.
+        Con reporte, la Vista abre el panel sola y no manda este verbo. No es
+        acción del jugador: no va al log ni gasta reloj."""
+        if self._reporte_visible is None:
+            self.partida.avisar(AVISO_SIN_REPORTE)
+        self._mostrar_estado_actual()
+
     def _guardar(self) -> None:
         try:
             ubicacion = self._gestor_guardado.guardar(self.partida, self._registro)
@@ -253,7 +320,8 @@ class ControladorJuego:
 
     def _mostrar_estado_actual(self) -> None:
         self._vista.mostrar_estado(self._constructor.construir(
-            self.partida, self._criterio_orden, nombre_jugador=self._nombre_jugador))
+            self.partida, self._criterio_orden, nombre_jugador=self._nombre_jugador,
+            resolubilidad=self._reporte_visible))
 
     def _finalizar(self) -> None:
         """Victoria o derrota (§2.12): puntaje, pantalla de fin y reporte de

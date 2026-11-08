@@ -75,6 +75,12 @@ class VistaJuego(ABC):
         """El nombre con el que se va a jugar, para que el menú lo muestre.
         El Controlador lo manda antes de cada mostrar_menu."""
 
+    def mostrar_resolubilidad(self, reporte) -> None:
+        """reporte: ReporteResolubilidadVisible. La pantalla de reporte antes
+        de una partida en una cripta no resoluble (003-resolubilidad, FR-019,
+        FR-020): ENTER manda "volver" o, si reporte.puede_continuar,
+        "aceptar_resolubilidad"; ESC manda "volver"."""
+
     def mostrar_espera(self, texto: str) -> None:
         """Un aviso mientras el Controlador hace algo que tarda (p. ej. el
         benchmark). La próxima pantalla lo reemplaza."""

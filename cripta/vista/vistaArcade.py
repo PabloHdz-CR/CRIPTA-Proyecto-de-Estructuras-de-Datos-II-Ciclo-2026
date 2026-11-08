@@ -32,6 +32,7 @@ from .pantallaFin import PantallaFin
 from .pantallaJuego import PantallaJuego
 from .pantallaMenu import PantallaMenu
 from .pantallaPuntajes import PantallaPuntajes
+from .pantallaResolubilidad import PantallaResolubilidad
 from .pantallaTitulo import PantallaTitulo
 from .vistaJuego import VistaJuego
 
@@ -52,6 +53,10 @@ class VistaArcade(VistaJuego):
         # Si la bitácora se ve completa (últimos 20 mensajes) o resumida: se
         # mantiene entre turnos (cada turno trae una PantallaJuego nueva).
         self._bitacora_completa = False
+        # 003-resolubilidad: si el panel del reporte (tecla V) está abierto.
+        # Presentación pura, como la bitácora: se mantiene entre turnos y se
+        # cierra al salir de la partida.
+        self._panel_resolubilidad = False
 
     @property
     def ventana(self) -> arcade.Window:
@@ -91,6 +96,7 @@ class VistaArcade(VistaJuego):
 
     def mostrar_menu(self, criptas) -> None:
         self._ultimo_estado = None
+        self._panel_resolubilidad = False
         self._mostrar(PantallaMenu(self, criptas, self._nombre_jugador))
 
     def mostrar_titulo(self) -> None:
@@ -111,9 +117,21 @@ class VistaArcade(VistaJuego):
     def alternar_bitacora(self) -> None:
         self._bitacora_completa = not self._bitacora_completa
 
+    @property
+    def panel_resolubilidad(self) -> bool:
+        return self._panel_resolubilidad
+
+    def alternar_resolubilidad(self) -> None:
+        self._panel_resolubilidad = not self._panel_resolubilidad
+
     def cambiar_skin(self, id_skin: str) -> None:
         """Lo llama el menú (presentación pura, no pasa por la Cola)."""
         self._skin = id_skin
+
+    def mostrar_resolubilidad(self, reporte) -> None:
+        self._ultimo_estado = None
+        self._panel_resolubilidad = False
+        self._mostrar(PantallaResolubilidad(self, reporte))
 
     def mostrar_benchmark(self, resultado) -> None:
         self._mostrar(PantallaBenchmark(self, resultado))
@@ -126,6 +144,7 @@ class VistaArcade(VistaJuego):
 
     def mostrar_fin(self, resultado) -> None:
         self._ultimo_estado = None
+        self._panel_resolubilidad = False
         self._mostrar(PantallaFin(self, resultado))
 
     def mostrar_error(self, mensaje: str) -> None:

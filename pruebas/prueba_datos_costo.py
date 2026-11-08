@@ -189,7 +189,17 @@ def nuevo_menu(vista):
         servicio_terreno(), vista,
         GestorGuardado(AlmacenPartidaDisco(carpeta / "guardados")),
         PuntajesArchivo(carpeta / "puntajes.jsonl"),
-        CarpetaRegistros(carpeta / "partidas"), ReporteFinal(), semilla_fija=1)
+        CarpetaRegistros(carpeta / "partidas"), ReporteFinal(), semilla_fija=1,
+        # 003-resolubilidad (T031): ninguna cripta de terreno_cazador es
+        # resoluble (FR-001) ni tiene llaves.json, así que estas pruebas de
+        # la 001 inician con --forzar y aceptan la pantalla de reporte.
+        forzar=True)
+
+
+def jugar_forzada(menu, id_cripta):
+    """"jugar" y aceptar la pantalla de reporte (NO_VERIFICADA sin llaves)."""
+    menu.procesar(Comando("jugar", (id_cripta,)))
+    menu.procesar(Comando("aceptar_resolubilidad"))
 
 
 def caso_controlador_caras_distintas():
@@ -200,7 +210,7 @@ def caso_controlador_caras_distintas():
     vista = VistaRegistradora()
     menu = nuevo_menu(vista)
     menu.iniciar()
-    menu.procesar(Comando("jugar", ("terreno-caras-distintas",)))
+    jugar_forzada(menu, "terreno-caras-distintas")
     assert len(vista.errores) == 1, vista.errores
     texto = vista.errores[0]
     for parte in ("No se pudo iniciar la cripta", "sala 1", "sala 2", "300", "200"):
@@ -213,7 +223,7 @@ def caso_controlador_terreno_valido():
     vista = VistaRegistradora()
     menu = nuevo_menu(vista)
     menu.iniciar()
-    menu.procesar(Comando("jugar", ("terreno-a",)))
+    jugar_forzada(menu, "terreno-a")
     assert vista.errores == [], vista.errores
     assert menu._juego is not None
 
@@ -272,7 +282,7 @@ def caso_controlador_sin_rango():
     vista = VistaRegistradora()
     menu = nuevo_menu(vista)
     menu.iniciar()
-    menu.procesar(Comando("jugar", ("terreno-sin-rango",)))
+    jugar_forzada(menu, "terreno-sin-rango")
     assert len(vista.errores) == 1, vista.errores
     texto = vista.errores[0]
     assert "No se pudo iniciar la cripta" in texto and "ent_cazador_sin_rango" in texto, texto

@@ -159,6 +159,16 @@ class PantallaJuego(_PantallaCripta):
         self._vista_arcade.alternar_bitacora()
         self._armar_textos()
 
+    def _tecla_resolubilidad(self) -> None:
+        """V (003-resolubilidad, FR-019, FR-037): con reporte, abre o cierra
+        el panel (presentación pura, como L: no es un Comando); sin reporte
+        (partida cargada) le pide al Controlador el aviso de la bitácora."""
+        if self._estado.resolubilidad is not None:
+            self._vista_arcade.alternar_resolubilidad()
+            self._armar_textos()
+        else:
+            self._vista_arcade._encolar(Comando("ver_resolubilidad"))
+
     def _tecla_en_replay(self, symbol) -> None:
         if symbol == arcade.key.L:
             self._alternar_bitacora()
@@ -194,6 +204,8 @@ class PantallaJuego(_PantallaCripta):
             self._vista_arcade._encolar(Comando("ordenar_inventario", (criterio,)))
         elif symbol == arcade.key.L:
             self._alternar_bitacora()
+        elif symbol == arcade.key.V:
+            self._tecla_resolubilidad()
         elif symbol == arcade.key.SPACE:
             self._vista_arcade._encolar(Comando("esperar"))
         elif symbol == arcade.key.R:
@@ -275,7 +287,8 @@ class PantallaJuego(_PantallaCripta):
                                       self.window.get_pixel_ratio(), self._vista_arcade.skin)
         self._hud = HudJuego(self._estado, self._anterior, geometria, self._modo,
                              self._verbo_objetivo, self._lista_objetivo, self._cursor_objetivo,
-                             self._aviso, self._vista_arcade.bitacora_completa)
+                             self._aviso, self._vista_arcade.bitacora_completa,
+                             self._vista_arcade.panel_resolubilidad)
 
     # -- textos de una línea (los usan las pruebas de vista) --
 

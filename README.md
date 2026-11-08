@@ -63,6 +63,7 @@ En Windows se usa `py`; `python` puede abrir la Microsoft Store.
 | P | Leer un pergamino: deshace tu última acción (máximo 5) |
 | G / C | Guardar / cargar la partida de esa cripta |
 | L | Mostrar / ocultar la bitácora completa (últimos 20 mensajes) |
+| V | Mostrar / ocultar el reporte de resolubilidad (orden de llaves) |
 | ESC | Volver al menú (lo no guardado se descarta) |
 
 Al elegir objetivo: flecha arriba/abajo, ENTER confirma y ESC cancela.
