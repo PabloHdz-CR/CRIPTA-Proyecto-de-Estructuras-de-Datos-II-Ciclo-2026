@@ -107,6 +107,7 @@ de detención y las líneas de partida.log.
 9. **Given** un viaje que llega a su destino, **When** se completa el último paso, **Then** el viaje termina con el motivo "llegada" (FR-024, FR-025).
 10. **Given** una orden «ir a» de tres pasos, **When** se lee partida.log, **Then** contiene una línea de comentario con la orden «ir a» y su destino y, después, tres líneas de movimiento individuales; al reproducirlo con --replay se obtiene el mismo estado final (FR-026, FR-027).
 11. **Given** dos rutas de igual costo total hacia el destino, una cuyo primer paso va a la sala vecina 9 y otra cuyo primer paso va a la vecina 10, **When** se ordena «ir a», **Then** el primer paso va a la sala 9, porque los ids de sala se comparan como números (FR-020).
+12. **Given** un viaje de varios pasos en la ventana del juego, **When** transcurre el viaje, **Then** entre un paso y el siguiente pasa una pausa breve de presentación (alrededor de 0,15 s) en la que el jugador ve cada paso y puede usar I o el pergamino; el tiempo del juego, los pasos y el motivo de detención son los mismos que sin la pausa, y fuera de la ventana (--replay, --bench, pruebas sin vista) no hay pausa (FR-036).
 
 ---
 
@@ -260,6 +261,7 @@ tiempos con los límites.
 - **FR-027**: --replay MUST ignorar las líneas de comentario de partida.log al ejecutar acciones y MUST reproducir los viajes a partir de sus movimientos individuales, con el mismo estado final, incluido el conocimiento del jugador.
 - **FR-028**: Como opción adicional, el jugador MUST poder interrumpir un viaje sin usar el pergamino; el paso en curso termina y no se da ninguno más.
 - **FR-029**: Si el jugador usa el pergamino de retroceso mientras un viaje está en curso, el viaje MUST detenerse al terminar el paso en curso y el pergamino MUST revertir solo ese último paso, con su tiempo y sus cambios de conocimiento; el viaje MUST NOT continuar. No hace falta interrumpir el viaje antes. Usar el pergamino después de un viaje ya detenido MUST revertir igualmente solo el último movimiento individual.
+- **FR-036**: En la ventana del juego, cada paso del viaje MUST mostrarse con una pausa breve de presentación, de alrededor de 0,15 s de tiempo real, antes del paso siguiente, para que el jugador vea el viaje y pueda usar I o el pergamino a mitad de camino. La pausa MUST NOT cambiar el tiempo del juego, la ruta, los pasos ni el motivo de detención, y MUST NOT existir en --replay, --bench ni en las pruebas sin vista.
 - **FR-030**: El resultado de una orden «ir a» (ruta elegida, pasos dados y motivo de detención) MUST depender solo del estado del juego y de la semilla, nunca de la hora del sistema ni del orden de llegada de respuestas (constitución, principio II).
 
 **Rendimiento**
@@ -281,7 +283,7 @@ tiempos con los límites.
 
 ### Measurable Outcomes
 
-- **SC-001**: Los 30 escenarios de aceptación de esta especificación (5 + 3 + 11 + 4 + 5 + 2), incluidos los 6 obligatorios del Apéndice B, tienen al menos una prueba automatizada o un partida.log que los ejerce y todas pasan.
+- **SC-001**: Los 31 escenarios de aceptación de esta especificación (5 + 3 + 12 + 4 + 5 + 2), incluidos los 6 obligatorios del Apéndice B, tienen al menos una prueba automatizada o un partida.log que los ejerce y todas pasan.
 - **SC-002**: En el 100 % de las partidas de prueba, ningún dato que recibe la vista ni ningún paso de «ir a» proviene de una sala desconocida, del nombre o salidas de una sala avistada, o de una puerta en un estado distinto del recordado.
 - **SC-003**: Para 1000 secuencias de acciones aleatorias con semilla fija sobre criptas sintéticas, aplicar las acciones y luego revertirlas con el pergamino devuelve el conocimiento del jugador idéntico al inicial; y guardar y cargar en cualquier punto devuelve un conocimiento idéntico.
 - **SC-004**: Con el mapa conocido completo de la cripta de referencia, el cálculo de cada paso de «ir a» tarda menos de 5 ms en todos los pares de salas medidos con --bench.

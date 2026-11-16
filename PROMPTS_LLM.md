@@ -1276,3 +1276,9 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 - **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-implement` (continuación)
 - **Prompt:** "Ya lo probé, funciona. Sigue con US2 y US3 seguidas, con un commit por historia y las pruebas y reglas en cada una. Detente al terminar US3 para probar «ir a» en la ventana. Registra este prompt en PROMPTS_LLM.md."
 - **Uso:** US1 probada a mano por Pablo en la ventana. Implementación de US2 (T019 a T022) y US3 (T023 a T035), con pruebas primero, suite y prueba_reglas al cierre de cada historia y un commit por historia; se detiene al terminar US3.
+
+## Entrada 164
+- **Fecha:** 15/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Agrega una pausa visible entre los pasos de «ir a» para que se pueda ver el viaje y apretar I o P a mitad de camino. Primero la spec, en su propio commit ("Spec 002: ritmo visible del viaje"): un requisito nuevo FR-036 que diga que en la ventana del juego cada paso del viaje se muestra con una pausa breve de presentación (alrededor de 0,15 s) que no cambia el tiempo del juego ni el resultado, y que --replay, --bench y las pruebas sin vista no la tienen; y un escenario en US3. Después el código en otro commit, sin que el Modelo ni el reloj del juego sepan de la pausa (la decide el Controlador o la Vista según quién tenga el ritmo en tiempo real), con su prueba. Registra este prompt en PROMPTS_LLM.md."
+- **Uso:** spec.md: FR-036 y escenario 12 de US3; SC-001 pasa a 31 escenarios (commit "Spec 002: ritmo visible del viaje"). Código en otro commit: la pausa la decide el ControladorJuego con un reloj real inyectado (como ControladorReplay), que ControladorMenu le pasa en la ventana; sin reloj (pruebas sin vista, --replay, --bench) no hay pausa. El Modelo y el reloj del juego no cambian. Tarea nueva T055 en tasks.md y su prueba en prueba_ir_a.
