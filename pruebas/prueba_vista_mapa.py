@@ -182,8 +182,44 @@ def caso_t034_cursor_y_enter():
         vista.cerrar()
 
 
+def _se_encima(a, b):
+    return a[0] < b[1] and b[0] < a[1] and a[2] < b[3] and b[2] < a[3]
+
+
+def caso_controles_sin_encimarse():
+    """FR-017 (las teclas M e I se documentan en la partida): el panel de
+    Controles muestra todas sus filas sin encimarse y dentro del panel, a
+    1280x720 y a la ventana por defecto del juego (1024x720)."""
+    controlador, vista_registro, _ = controlador_sobre(cripta(), sala_inicial=10)
+    estado = vista_registro.ultimo_estado
+    for ancho, alto in ((1280, 720), (1024, 720)):
+        vista = VistaArcade(ancho=ancho, alto=alto, titulo="prueba", visible=False)
+        try:
+            vista.mostrar_estado(estado)
+            vista.actualizar()
+            hud = vista._pantalla_actual._hud
+            cajas = list(hud.cajas_controles)
+            teclas = [t for t, _ in hud.controles_mostrados]
+            assert "M" in teclas and "I" in teclas and "ESC" in teclas, f"FR-017: {teclas}"
+            assert len(cajas) == len(hud.controles_mostrados), "una caja por control"
+            textos = " ".join(x.text for x in hud._textos)
+            assert "…" not in textos.split("Controles")[-1], (
+                f"{ancho}x{alto}: hay descripciones recortadas en Controles")
+            izq, der, abajo, arriba = hud.panel_controles
+            for i, caja in enumerate(cajas):
+                assert izq <= caja[0] and caja[1] <= der and abajo <= caja[2] and caja[3] <= arriba, (
+                    f"{ancho}x{alto}: '{teclas[i]}' se sale del panel: {caja} fuera de "
+                    f"{(izq, der, abajo, arriba)}")
+                for j in range(i + 1, len(cajas)):
+                    assert not _se_encima(caja, cajas[j]), (
+                        f"{ancho}x{alto}: '{teclas[i]}' se encima con '{teclas[j]}'")
+        finally:
+            vista.cerrar()
+
+
 CASOS = (caso_us1_e4_nada_desconocido, caso_us1_e5_mapa_sin_tiempo, caso_orden_por_id,
-         caso_tecla_m, caso_panel_se_dibuja, caso_t034_cursor_y_enter)
+         caso_tecla_m, caso_panel_se_dibuja, caso_t034_cursor_y_enter,
+         caso_controles_sin_encimarse)
 
 
 def main():

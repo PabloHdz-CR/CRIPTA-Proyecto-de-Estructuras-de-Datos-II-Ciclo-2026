@@ -54,6 +54,21 @@ _VERBOS = (("atacar", "Atacar: elige un enemigo"), ("usar", "Usar: elige un obje
            ("recoger", "Recoger: elige del suelo"))
 
 
+_ALTO_FILA_CONTROLES_MIN = 17   # una tecla dibujada mide 17 px de alto
+_HOLGURA_CONTROL = 6           # aire entre el final de un texto y la columna siguiente
+_ANCHO_LETRA_CONTROL = 6.6     # estimación (fuente de 10 px) para elegir columnas
+
+
+def _ancho_tecla(tecla: str) -> float:
+    return 12 + 6.5 * len(tecla)
+
+
+def _ancho_control(tecla: str, descripcion: str) -> float:
+    """Ancho estimado de una fila de Controles, para elegir cuántas columnas usar.
+    El ancho real se mide con el texto ya armado y, si hace falta, se recorta."""
+    return _ancho_tecla(tecla) + 8 + _ANCHO_LETRA_CONTROL * len(descripcion)
+
+
 def _recortar(texto: str, maximo: int) -> str:
     if len(texto) <= maximo:
         return texto
@@ -142,6 +157,9 @@ class HudJuego:
         self._cursor_mapa = cursor_mapa
         self._filas_mapa = ListaEnlazada()
         self._visibles_mapa = 0
+        self._cajas_controles = ListaEnlazada()  # (izq, der, abajo, arriba) por fila de Controles
+        self._controles_mostrados = ()
+        self._panel_controles = (0, 0, 0, 0)
         self._superpuestos = ListaEnlazada()  # (izq, der, abajo, arriba): panel sobre el mapa
         self._textos_superpuestos = ListaEnlazada()
         self._paneles = ListaEnlazada()     # (izq, der, abajo, arriba, resaltado)
@@ -477,7 +495,8 @@ class HudJuego:
 
     def _armar_bitacora_y_controles(self) -> None:
         izq, der, abajo, arriba = self._g.inferior
-        corte = izq + (der - izq) * 0.56
+        # 002-niebla-guerra: 52 % para la bitácora deja tres columnas de Controles a 1024.
+        corte = izq + (der - izq) * 0.52
         if self._panel(izq, corte, abajo, arriba, "Bitácora"):
             mensajes = self._estado.mensajes
             total = len(mensajes)
@@ -670,30 +689,68 @@ class HudJuego:
                     ("ESC", "Salir del replay"))
         if self._modo == "objetivo":
             return (("Flecha arriba/abajo", "Elegir"), ("ENTER", "Confirmar"), ("ESC", "Cancelar"))
-        return (("Flechas", "Moverse"), ("Shift+Flecha", "Abrir puerta"),
+        # Teclas cortas (Shift+Tab sube el inventario: lo dice el README).
+        # Textos cortos para que quepan en tres columnas a 1024 de ancho.
+        return (("Flechas", "Moverse"), ("Shift+Flecha", "Abrir"),
                 ("Espacio", "Esperar"), ("R", "Recoger"), ("A", "Atacar"),
-                ("U / Q / S", "Usar/equipar/soltar"), ("Tab / Shift+Tab", "Bajar / subir inventario"),
-                ("O", "Ordenar inventario"), ("P", "Pergamino"), ("G / C", "Guardar/Cargar"),
-                ("L", "Bitácora (20)"), ("V", "Resolubilidad"), ("M", "Mapa e «ir a»"),
-                ("I", "Detener viaje"),
-                ("ESC", "Volver al menú"))
+                ("U/Q/S", "Usar/equipar"), ("Tab", "Inventario"),
+                ("O", "Ordenar"), ("P", "Pergamino"), ("G/C", "Guardar/cargar"),
+                ("L", "Bitácora"), ("V", "Resolubilidad"), ("M", "Mapa / ir a"),
+                ("I", "Detener viaje"), ("ESC", "Menú"))
 
     def _armar_controles(self, izq, der, abajo, arriba) -> None:
+        """Reparte los controles en la menor cantidad de columnas (2 a 4) en la
+        que todas las filas caben a lo alto y cada descripción cabe a lo ancho
+        de su columna; si ninguna alcanza, usa 4 y recorta las descripciones al
+        ancho medido de la columna. Ninguna fila se encima con otra (002, FR-017:
+        las teclas nuevas se documentan sin tapar las anteriores)."""
         controles = self._controles()
-        filas = (len(controles) + 1) // 2
-        alto_fila = max(14, min(21, (arriba - abajo - 32) / max(filas, 1)))
-        ancho_columna = (der - izq - 20) / 2
+        cantidad = len(controles)
+        alto_util = arriba - abajo - 32
+        columnas = 4
+        for candidata in (2, 3, 4):
+            filas = (cantidad + candidata - 1) // candidata
+            ancho = (der - izq - 20) / candidata
+            if alto_util / filas >= _ALTO_FILA_CONTROLES_MIN and all(
+                    _ancho_control(t, d) <= ancho - _HOLGURA_CONTROL for t, d in controles):
+                columnas = candidata
+                break
+        filas = (cantidad + columnas - 1) // columnas
+        alto_fila = max(1.0, min(21.0, alto_util / filas))
+        ancho_columna = (der - izq - 20) / columnas
+        self._panel_controles = (izq, der, abajo, arriba)
+        self._controles_mostrados = controles
         for indice, (tecla, descripcion) in enumerate(controles):
             columna = indice // filas
             fila = indice % filas
             x = izq + 12 + columna * ancho_columna
             y = arriba - 36 - fila * alto_fila
-            ancho_tecla = 12 + 6.5 * len(tecla)
+            ancho_tecla = _ancho_tecla(tecla)
             self._figura("tecla", x + ancho_tecla / 2, y, ancho_tecla, 17)
             self._texto(tecla, x + ancho_tecla / 2, y, 9, estilo.TEXTO, anchor_x="center",
                         bold=True)
-            self._texto(_recortar(descripcion, 22), x + ancho_tecla + 8, y, 10,
-                        estilo.TEXTO_SUAVE)
+            disponible = ancho_columna - ancho_tecla - 8 - _HOLGURA_CONTROL
+            texto = self._texto(descripcion, x + ancho_tecla + 8, y, 10, estilo.TEXTO_SUAVE)
+            recorte = len(descripcion)
+            while texto.content_width > disponible and recorte > 1:
+                recorte -= 1
+                texto.text = _recortar(descripcion, recorte)
+            alto_caja = min(17.0, alto_fila - 1)
+            self._cajas_controles.agregar_al_final(
+                (x, x + ancho_tecla + 8 + texto.content_width, y - alto_caja / 2, y + alto_caja / 2))
+
+    @property
+    def cajas_controles(self) -> ListaEnlazada:
+        """(izq, der, abajo, arriba) de cada fila del panel de Controles (pruebas)."""
+        return self._cajas_controles
+
+    @property
+    def controles_mostrados(self) -> tuple:
+        return self._controles_mostrados
+
+    @property
+    def panel_controles(self) -> tuple:
+        return self._panel_controles
 
     def _armar_cartel(self) -> None:
         if not self._aviso:
