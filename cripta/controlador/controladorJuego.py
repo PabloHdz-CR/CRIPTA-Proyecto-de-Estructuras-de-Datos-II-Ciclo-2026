@@ -41,7 +41,7 @@ from typing import TYPE_CHECKING, Callable, Optional
 from ..modelo.estructuras.listaEnlazada import ListaEnlazada
 from ..modelo.nucleo.accion import Mover
 from ..modelo.nucleo.viajeIrA import (
-    INTERRUMPIDO, SIN_RUTA, ViajeIrA)
+    INTERRUMPIDO, PERGAMINO, SIN_RUTA, ViajeIrA)
 from ..modelo.nucleo.diario import Diario
 from ..modelo.nucleo.partida import Partida
 from ..modelo.objetos.inventario import CRITERIOS_ORDEN
@@ -228,8 +228,10 @@ class ControladorJuego:
         verbo = comando.verbo
         if self._viaje is not None and verbo not in VERBOS_PRESENTACION:
             # FR-028 (research R6): lo que cambia la partida detiene el viaje
-            # antes de procesarse; "interrumpir" solo lo detiene.
-            self._detener_viaje(INTERRUMPIDO)
+            # antes de procesarse; "interrumpir" solo lo detiene. FR-029: el
+            # pergamino lo detiene con su propio motivo y después deshace el
+            # intervalo más reciente, es decir, solo el último paso.
+            self._detener_viaje(PERGAMINO if verbo == "pergamino" else INTERRUMPIDO)
             if verbo == "interrumpir":
                 return
         if verbo == "interrumpir":

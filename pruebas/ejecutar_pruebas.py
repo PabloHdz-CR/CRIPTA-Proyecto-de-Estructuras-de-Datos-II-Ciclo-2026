@@ -83,6 +83,8 @@ PRUEBAS = (
     "prueba_ir_a_equivalencia",      # SC-006, SC-002: 1000 pares contra el oráculo, instrumentada (T024)
     "prueba_replay_ir_a",            # FR-026, FR-027, SC-007 (US3 10, US5 5, T025)
     "prueba_niebla_antorcha",        # FR-007 a FR-009, FR-021 (Ap. B 4, US4 1 a 4, T036)
+    "prueba_niebla_retroceso",       # FR-010, FR-011, FR-029, FR-034, SC-003 (Ap. B 5 y 6, T038)
+    "prueba_persistencia_niebla",    # FR-012, FR-013, SC-003 (US5 3 y 4, T039)
 
 )
 

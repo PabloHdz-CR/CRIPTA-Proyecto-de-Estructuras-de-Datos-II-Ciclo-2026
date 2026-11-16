@@ -22,7 +22,9 @@ Formato (todo escrito con EscritorBinario/LectorBinario, little-endian):
   SALAS: cantidad(entero), luego cada Sala una tras otra (se recuerda el
   offset y la longitud de cada una para el índice). Cada salida guarda
   destino, cerrada, llave, cierre_automatico y, desde la versión 2, su
-  costo EFECTIVO (entero >= 1, 001-terreno-cazador): al cargar,
+  costo EFECTIVO (entero >= 1, 001-terreno-cazador). Desde la versión 3
+  (002-niebla-guerra), cada sala guarda su conocimiento (uentero32) después
+  del nombre y cada salida su recuerdo (uentero32) después del costo. Al cargar,
   Mundo.enlazar() vuelve a resolver origen, destino y entrantes, y la Partida
   recrea su mapa de distancias (specs/001-terreno-cazador/contracts/
   partida-binaria.md).
@@ -67,7 +69,8 @@ from ..modelo.estructuras.colaAcotada import ColaAcotada
 from ..modelo.nucleo.fabricaEntidades import FabricaEntidades
 from ..modelo.objetos.objeto import crear_objeto
 from ..modelo.puertos.dto import DIRECCIONES
-from ..modelo.puertos.errores import VersionIncompatible
+from ..modelo.mundo.conocimiento import CERRADA, EXPLORADA
+from ..modelo.puertos.errores import ErrorCripta, VersionIncompatible
 from ..modelo.reloj.agenda import Agenda
 from ..modelo.reloj.efecto import (
     EfectoAntorcha, EfectoRegeneracion, EfectoVelocidad, EfectoVeneno)
@@ -77,11 +80,11 @@ from ..modelo.reloj.eventos import (
 from .codificadorBinario import EscritorBinario, LectorBinario
 
 MAGIC = b"CRPB"
-# 2 desde 001-terreno-cazador (costo por salida). Provisional según el orden
-# de merge a main: si otra feature toma el 2 antes, se ajusta al integrarse
-# (contracts/partida-binaria.md, T048). Un archivo de otra versión se reporta
-# incompatible y no se migra (principio V).
-FORMATO_VERSION = 2
+# 2 desde 001-terreno-cazador (costo por salida); 3 desde 002-niebla-guerra
+# (conocimiento por sala y recuerdo por salida, specs/002-niebla-guerra/
+# contracts/partida-binaria.md; la feature 004 usará el 4). Un archivo de otra
+# versión se reporta incompatible y no se migra (principio V, FR-013 de 002).
+FORMATO_VERSION = 3
 
 # Nombres de tipo de evento, para no depender del nombre de la clase de Python
 # (si se refactoriza un nombre de clase, el formato de archivo no se rompe).
@@ -244,6 +247,7 @@ class PartidaBinaria:
     def _escribir_sala(escritor, sala: Sala) -> None:
         escritor.entero(sala.id)
         escritor.texto(sala.nombre)
+        escritor.uentero32(sala.conocimiento)        # versión 3: conocimiento (002)
         for salida in sala.salidas:
             escritor.booleano(salida is not None)
             if salida is not None:
@@ -252,6 +256,7 @@ class PartidaBinaria:
                 escritor.texto(salida.llave)
                 escritor.entero_opcional(salida.cierre_automatico)
                 escritor.entero(salida.costo)          # versión 2: costo efectivo
+                escritor.uentero32(salida.recordada)   # versión 3: recuerdo (002)
         escritor.entero_opcional(sala.rastro)
         escritor.booleano(sala.contenido_cargado)
 
@@ -548,6 +553,8 @@ class PartidaBinaria:
     def _leer_sala(lector, servicio) -> Sala:
         id_sala = lector.entero()
         nombre = lector.texto()
+        # Versión 3 (002-niebla-guerra, FR-012): conocimiento de la sala.
+        conocimiento = _en_rango(lector.uentero32(), EXPLORADA, "conocimiento", id_sala)
         # DECISIÓN: 4 variables (no una lista de Python) para armar la tupla
         # fija de salidas, igual que Mundo._construir_salidas.
         norte = sur = este = oeste = None
@@ -560,8 +567,11 @@ class PartidaBinaria:
             llave = lector.texto()
             cierre_automatico = lector.entero_opcional()
             costo = lector.entero()                    # versión 2: costo efectivo
+            recordada = _en_rango(lector.uentero32(), CERRADA, "recordada", id_sala,
+                                  DIRECCIONES[indice])      # versión 3 (002)
             salida = Salida(DIRECCIONES[indice], destino, cerrada, llave, cierre_automatico,
                             costo)
+            salida.recordada = recordada
             if indice == 0:
                 norte = salida
             elif indice == 1:
@@ -572,6 +582,7 @@ class PartidaBinaria:
                 oeste = salida
 
         sala = Sala(id_sala, nombre, (norte, sur, este, oeste))
+        sala.conocimiento = conocimiento
         sala.rastro = lector.entero_opcional()
         sala.contenido_cargado = lector.booleano()
 
@@ -763,3 +774,12 @@ class PartidaBinaria:
             bloque = archivo.read(longitud_sala)
 
         return PartidaBinaria._leer_sala(LectorBinario(bloque), servicio)
+
+
+def _en_rango(valor: int, maximo: int, campo: str, id_sala: int, direccion=None) -> int:
+    """002-niebla-guerra (contracts/partida-binaria.md): un conocimiento o un
+    recuerdo fuera de rango es un archivo corrupto; nunca se carga en silencio."""
+    if valor > maximo:
+        donde = f"sala {id_sala}" + (f", salida {direccion}" if direccion else "")
+        raise ErrorCripta(f"Archivo de partida corrupto: {campo} = {valor} en la {donde}")
+    return valor

@@ -242,7 +242,7 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 
 ### Tests for User Story 5 (escribir primero; deben fallar)
 
-- [ ] T038 [P] [US5] Crear `pruebas/prueba_niebla_retroceso.py`:
+- [X] T038 [P] [US5] Crear `pruebas/prueba_niebla_retroceso.py`:
   - **Apéndice B 5** / US5 escenario 1 (FR-010, FR-011): una entrada con antorcha que explora varias vecinas y el pergamino: `huella_conocimiento` vuelve a la de antes de entrar y el registro de conocidas también;
   - **Apéndice B 6** / US5 escenario 2 (FR-011, FR-024, FR-029): con un viaje en curso, el comando `pergamino` detiene el viaje al terminar el paso en curso con el motivo "pergamino de retroceso", revierte solo ese paso (sala, `reloj` y conocimiento del paso) y no hay más pasos con `procesar(None)`;
   - casos borde (FR-011): revertir la primera entrada a una sala la devuelve a avistada y sus destinos nuevos a desconocidos; revertir un movimiento a una sala ya explorada restaura solo los recuerdos de puertas; varios pergaminos seguidos revierten de a un paso;
@@ -251,7 +251,7 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
   - FR-010 (la parte de "solo"): un cierre automático con el jugador lejos no cambia la huella del conocimiento ni agrega registros de conocimiento al intervalo, y revertir ese intervalo con el pergamino tampoco la cambia.
 
   Registrar en `pruebas/ejecutar_pruebas.py`. Depende de: T003, T031, T037.
-- [ ] T039 [P] [US5] Crear `pruebas/prueba_persistencia_niebla.py`:
+- [X] T039 [P] [US5] Crear `pruebas/prueba_persistencia_niebla.py`:
   - US5 escenario 3 (FR-012): una partida con exploradas, avistadas y recuerdos desactualizados se guarda y se carga con `huella_conocimiento` idéntica, registro de conocidas con las mismas salas y `cargar_sala` con los mismos campos;
   - SC-003 (FR-012), segunda mitad: las **mismas 1000 secuencias** de T038 (misma semilla y mismo generador, compartido en `pruebas/apoyo_niebla.py`); en cada una se guarda y se carga en **un punto elegido con la semilla** (entre 0 y la cantidad de acciones de la secuencia) y la `huella_conocimiento` cargada es idéntica a la guardada;
   - **US5 escenario 4** (FR-013; clarificación 4): cargar `pruebas/datos/niebla/guardado_formato_2.bin` lanza `VersionIncompatible` con "se esperaba 3 y se encontró 2" y no crea partida; el Controlador lo muestra con `mostrar_error`;
@@ -261,10 +261,10 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 
 ### Implementation for User Story 5
 
-- [ ] T040 [US5] En `cripta/controlador/controladorJuego.py`, con un viaje en curso el comando `pergamino` detiene el viaje con el motivo `PERGAMINO` (no `INTERRUMPIDO`) y luego aplica `UsarPergamino` como siempre, que deshace solo el intervalo del último paso (research R6). Cubre: FR-029. Depende de: T031. T038 (escenario Apéndice B 6) pasa.
-- [ ] T041 [US5] En `cripta/adaptadores/partidaBinaria.py`: `FORMATO_VERSION = 3`; escribir `uentero32` con `conocimiento` por sala y `uentero32` con `recordada` por salida; leerlos en la carga completa y en `cargar_sala`, con `ErrorCripta` si están fuera de rango; actualizar el docstring del formato (contracts/partida-binaria.md). Depende de: T002 (el fixture ya existe), T008. Cubre: FR-012, FR-013.
-- [ ] T042 [US5] En `cripta/modelo/nucleo/partida.py`, `reconstruir_tras_cargar()` asigna a `mundo.conocidas` un `RegistroConocidas()` **nuevo** (no vacía uno existente, que podría ser de otro `Mundo`) y lo reconstruye con una pasada O(salas) agregando las salas con `conocimiento != DESCONOCIDA` (sin pasar por el Mutador), y crea `self.conocimiento`. Cubre: FR-012, FR-016. Depende de: T041. T039 pasa.
-  **Avance (US1):** la parte del modelo se adelantó en US1 porque sin ella una partida cargada no tenía `conocimiento` y fallaban `prueba_controlador`, `prueba_replay_menu`, `prueba_cazador_equivalencia` y `prueba_persistencia_cazador`. Falta que T041 guarde y lea el conocimiento: hasta entonces, una partida cargada vuelve con todas las salas desconocidas.
+- [X] T040 [US5] En `cripta/controlador/controladorJuego.py`, con un viaje en curso el comando `pergamino` detiene el viaje con el motivo `PERGAMINO` (no `INTERRUMPIDO`) y luego aplica `UsarPergamino` como siempre, que deshace solo el intervalo del último paso (research R6). Cubre: FR-029. Depende de: T031. T038 (escenario Apéndice B 6) pasa.
+- [X] T041 [US5] En `cripta/adaptadores/partidaBinaria.py`: `FORMATO_VERSION = 3`; escribir `uentero32` con `conocimiento` por sala y `uentero32` con `recordada` por salida; leerlos en la carga completa y en `cargar_sala`, con `ErrorCripta` si están fuera de rango; actualizar el docstring del formato (contracts/partida-binaria.md). Depende de: T002 (el fixture ya existe), T008. Cubre: FR-012, FR-013.
+- [X] T042 [US5] En `cripta/modelo/nucleo/partida.py`, `reconstruir_tras_cargar()` asigna a `mundo.conocidas` un `RegistroConocidas()` **nuevo** (no vacía uno existente, que podría ser de otro `Mundo`) y lo reconstruye con una pasada O(salas) agregando las salas con `conocimiento != DESCONOCIDA` (sin pasar por el Mutador), y crea `self.conocimiento`. Cubre: FR-012, FR-016. Depende de: T041. T039 pasa.
+  **Avance (US1):** la parte del modelo se adelantó en US1 porque sin ella una partida cargada no tenía `conocimiento` y fallaban `prueba_controlador`, `prueba_replay_menu`, `prueba_cazador_equivalencia` y `prueba_persistencia_cazador`. Con T041 el conocimiento se guarda y se lee; T042 queda completa.
 
 **Checkpoint**: US5 en verde; el pergamino, el guardado y el replay respetan el conocimiento.
 

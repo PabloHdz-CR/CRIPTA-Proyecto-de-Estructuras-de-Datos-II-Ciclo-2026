@@ -87,7 +87,9 @@ def caso_a_guardar_y_cargar():
     PartidaBinaria.guardar(original, ruta)
     with open(ruta, "rb") as archivo:
         encabezado = archivo.read(8)
-    assert int.from_bytes(encabezado[4:8], "little") == partidaBinaria.FORMATO_VERSION == 2
+    # 2 desde 001 (costo por salida); 002-niebla-guerra lo sube a 3 (conocimiento).
+    # Lo que importa aquí es que el archivo lleve la versión vigente, con costos.
+    assert int.from_bytes(encabezado[4:8], "little") == partidaBinaria.FORMATO_VERSION >= 2
 
     servicio = servicio_terreno()
     servicio.iniciar_cripta("terreno-a")              # como continuar_cargada
