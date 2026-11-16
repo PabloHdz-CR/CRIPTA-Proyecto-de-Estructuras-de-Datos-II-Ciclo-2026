@@ -244,10 +244,12 @@ class ControladorMenu:
             self._vista.mostrar_error(f"No hay ninguna partida guardada de '{id_cripta}'.")
             return
 
+        # 002-niebla-guerra (FR-036): el mismo reloj real que marca el ritmo del
+        # replay marca la pausa entre pasos de «ir a» en la ventana.
         juego = ControladorJuego(
             self._servicio, self._vista, self._almacen_registros.registro_de(id_cripta),
             self._gestor_guardado, self._almacen_puntajes, self._reporte_final,
-            self._nombre_jugador)
+            self._nombre_jugador, reloj_real=self._reloj)
         try:
             if hay_guardado and modo != MODO_NUEVA:
                 try:

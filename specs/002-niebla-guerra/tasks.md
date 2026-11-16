@@ -203,6 +203,7 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 
   Las pruebas del Controlador (mensaje de detención, `interrumpir`, comandos que detienen o no el viaje, `None` hacia la partida) están en T023. Depende de: T012, T032.
 - [X] T035 [US3] En `cripta/vista/pantallaJuego.py`, con el panel M abierto: ↑/↓ mueven un cursor que salta las avistadas, Enter encola `Comando("ir_a", (id,))`, y las flechas no mueven al jugador; **I** encola `Comando("interrumpir")`. En `cripta/vista/hudJuego.py`, la línea "Viajando a <id> <nombre> — paso <n> (I para detener)" y la marca del cursor en el panel. Cubre: FR-028, FR-035. Depende de: T018, T033, T034. T034 pasa.
+- [X] T055 [US3] FR-036 (enmienda de la spec `5d32f60`, agregada durante la implementación): pausa de presentación de `PAUSA_PASO_VIAJE = 0,15` s de tiempo real entre pasos de «ir a» en la ventana. La decide `ControladorJuego` con un `reloj_real` inyectado (el mismo `time.perf_counter` que `ControladorMenu` ya le pasa al replay); sin reloj (pruebas sin vista, `--replay`, `--bench`) no hay pausa. El Modelo y el reloj del juego no cambian. Pruebas primero en `pruebas/prueba_ir_a.py` (`caso_fr036_pausa_entre_pasos`, `caso_fr036_pausa_no_cambia_el_juego`; US3 escenario 12). Cubre: FR-036. Depende de: T031, T032.
 
 **Checkpoint**: US1, US2 y US3 en verde: MVP de la Parte II para esta feature (niebla + «ir a»).
 
@@ -315,6 +316,7 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 | US1 4–5 | `prueba_vista_mapa` | T012 |
 | US2 1–3 | `prueba_niebla_puertas` | T019 |
 | US3 1 (**Apéndice B 1**), 2 (**Apéndice B 2**), 3 (**Apéndice B 3**), 4 y 11 (mismo armado), 5–9 | `prueba_ir_a` | T023 |
+| US3 12 | `prueba_ir_a` | T055 |
 | US3 10 | `prueba_replay_ir_a` | T025 |
 | US4 1 (**Apéndice B 4**), 2–4 | `prueba_niebla_antorcha` | T036 |
 | US5 1 (**Apéndice B 5**), 2 (**Apéndice B 6**) | `prueba_niebla_retroceso` | T038 |
@@ -323,7 +325,7 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 | US6 1 | `prueba_rendimiento_ir_a` | T043 |
 | US6 2 | `prueba_conteo_niebla` | T044 |
 
-30 escenarios (5 + 3 + 11 + 4 + 5 + 2), los 6 del Apéndice B marcados.
+31 escenarios (5 + 3 + 12 + 4 + 5 + 2), los 6 del Apéndice B marcados.
 
 ## Cobertura de requisitos
 
@@ -349,6 +351,7 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 | FR-032, FR-033 | T044 | T007, T013, T037, T046 |
 | FR-034 | T038 | T010 |
 | FR-035 | T034 | T035 |
+| FR-036 | T055 | T055 |
 | SC-001 | T052 | — |
 | SC-002 | T012, T024 | T016, T027 |
 | SC-003 | T038, T039 | T010, T037 |

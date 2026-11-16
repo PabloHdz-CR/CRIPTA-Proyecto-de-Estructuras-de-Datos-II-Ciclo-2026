@@ -36,7 +36,7 @@ Verbos de SESIÓN (no consumen reloj virtual ni son acciones del jugador):
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Callable, Optional
 
 from ..modelo.estructuras.listaEnlazada import ListaEnlazada
 from ..modelo.nucleo.accion import Mover
@@ -68,6 +68,9 @@ if TYPE_CHECKING:
 ORDEN_REAL = "real"
 # 002-niebla-guerra (research R6): verbos que no cambian la partida y por eso
 # no detienen un viaje en curso. Tupla de 5: el `in` es O(1) en la práctica.
+# 002-niebla-guerra (FR-036): pausa de PRESENTACIÓN entre pasos de «ir a» en
+# la ventana, en segundos de tiempo real. No toca el reloj del juego.
+PAUSA_PASO_VIAJE = 0.15
 VERBOS_PRESENTACION = ("alternar_mapa", "inventario_siguiente", "inventario_anterior",
                        "ordenar_inventario", "ver_resolubilidad")
 
@@ -77,7 +80,8 @@ class ControladorJuego:
     def __init__(self, servicio: "ServicioDatos", vista: "VistaJuego",
                  registro: "RegistroAcciones", gestor_guardado: "GestorGuardado",
                  almacen_puntajes: "AlmacenPuntajes", reporte_final: "ReporteFinal",
-                 nombre_jugador: str = "Jugador") -> None:
+                 nombre_jugador: str = "Jugador",
+                 reloj_real: Optional[Callable[..., float]] = None) -> None:
         self._servicio = servicio
         self._vista = vista
         self._registro = registro
@@ -115,6 +119,13 @@ class ControladorJuego:
         # 002-niebla-guerra: el viaje «ir a» en curso, o None. No es estado del
         # juego: no se guarda ni se revierte (el log tiene los movimientos).
         self._viaje: Optional[ViajeIrA] = None
+        # FR-036: reloj de TIEMPO REAL que marca el ritmo del viaje en la
+        # ventana (ControladorMenu pasa el suyo, como hace con el replay). Sin
+        # reloj (pruebas sin vista, --replay, --bench) no hay pausa: un paso
+        # por vuelta. Nunca se mezcla con el reloj del juego: solo decide
+        # CUÁNDO dar el paso siguiente, no qué pasa en él.
+        self._reloj_real = reloj_real
+        self._proximo_paso = 0.0
 
     # ------------------------------------------------------------------
     # Arranque
@@ -209,8 +220,9 @@ class ControladorJuego:
         if self._terminado:
             return
         if comando is None:
-            # 002-niebla-guerra (FR-023): un paso por vuelta del bucle externo.
-            if self._viaje is not None:
+            # 002-niebla-guerra (FR-023): un paso por vuelta del bucle externo;
+            # en la ventana, solo si ya pasó la pausa de presentación (FR-036).
+            if self._viaje is not None and self._paso_disponible():
                 self._dar_paso()
             return
         verbo = comando.verbo
@@ -303,6 +315,11 @@ class ControladorJuego:
         self._registro.registrar_comentario(f"IR_A {id_sala}")
         self._dar_paso()
 
+    def _paso_disponible(self) -> bool:
+        """FR-036: True si no hay reloj real (sin pausa) o si ya pasaron
+        PAUSA_PASO_VIAJE segundos desde el paso anterior. O(1)."""
+        return self._reloj_real is None or self._reloj_real() >= self._proximo_paso
+
     def _dar_paso(self) -> None:
         """UN paso del viaje (FR-023, FR-024): recalcula la ruta desde cero con
         el conocimiento vigente; sin ruta se detiene sin aplicar nada (sin
@@ -324,6 +341,8 @@ class ControladorJuego:
             self._detener_viaje(SIN_RUTA)
             return
         self._registro.registrar_accion(accion)
+        if self._reloj_real is not None:
+            self._proximo_paso = self._reloj_real() + PAUSA_PASO_VIAJE    # FR-036
         viaje.evaluar(resultado, self.partida)
         if self.partida.terminada():
             # FR-025: también el motivo "partida terminada", antes de la

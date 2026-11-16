@@ -439,7 +439,8 @@ def viajar(controlador, id_sala: int, maximo: int = 60) -> list:
 
 
 def controlador_sobre(descripcion, semilla: int = 1, sala_inicial: int = 1,
-                      sala_salida=None, vida_jugador: int = 100, registro=None):
+                      sala_salida=None, vida_jugador: int = 100, registro=None,
+                      reloj_real=None):
     """(ControladorJuego, VistaNiebla, registro) con una partida nueva iniciada
     sobre la descripción. Por omisión el registro es un RegistroEnMemoria."""
     servicio = servicio_niebla(descripcion, sala_inicial=sala_inicial,
@@ -450,7 +451,7 @@ def controlador_sobre(descripcion, semilla: int = 1, sala_inicial: int = 1,
     carpeta = Path(tempfile.mkdtemp(prefix="apoyo_niebla_ctrl_"))
     controlador = ControladorJuego(
         servicio, vista, registro, GestorGuardado(AlmacenPartidaDisco(carpeta / "guardados")),
-        PuntajesArchivo(carpeta / "puntajes.jsonl"), ReporteFinal())
+        PuntajesArchivo(carpeta / "puntajes.jsonl"), ReporteFinal(), reloj_real=reloj_real)
     controlador.iniciar_nueva(ID_CRIPTA, semilla)
     return controlador, vista, registro
 

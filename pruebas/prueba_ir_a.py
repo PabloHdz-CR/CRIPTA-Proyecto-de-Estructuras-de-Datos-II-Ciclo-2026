@@ -386,6 +386,58 @@ def caso_controlador_menu_entrega_none():
     assert salas[:4] == [2, 3, 4, 4], f"FR-023: un paso por vuelta: {salas}"
 
 
+class RelojFalso:
+    """Reloj real de mentira para FR-036: avanza solo cuando la prueba lo dice."""
+
+    def __init__(self) -> None:
+        self.t = 100.0
+
+    def __call__(self) -> float:
+        return self.t
+
+
+def caso_fr036_pausa_entre_pasos():
+    """US3 escenario 12 (FR-036): con un reloj real (la ventana) cada paso
+    espera alrededor de 0,15 s; en la pausa se puede interrumpir."""
+    reloj = RelojFalso()
+    controlador, vista, _ = controlador_sobre(pasillo_n(5), reloj_real=reloj)
+    partida = controlador.partida
+    conocer(partida, 2, 3, 4, 5)
+    controlador.procesar(Comando("ir_a", (5,)))
+    assert partida.jugador.sala == 2, "FR-036: el primer paso sale enseguida"
+    controlador.procesar(None)
+    reloj.t += 0.10
+    controlador.procesar(None)
+    assert partida.jugador.sala == 2, "FR-036: antes de la pausa no hay otro paso"
+    reloj.t += 0.06
+    controlador.procesar(None)
+    assert partida.jugador.sala == 3, "FR-036: pasada la pausa, el paso siguiente"
+    controlador.procesar(Comando("interrumpir"))
+    assert controlador.viaje is None and vista.mensajes[-1] == INTERRUMPIDO, (
+        "FR-036/FR-028: se puede interrumpir durante la pausa")
+
+
+def caso_fr036_pausa_no_cambia_el_juego():
+    """FR-036: con o sin pausa, el mismo tiempo del juego, los mismos pasos y el
+    mismo motivo; sin reloj real (pruebas sin vista) no hay pausa."""
+    reloj = RelojFalso()
+    con_pausa, vista_a, registro_a = controlador_sobre(pasillo_n(6), reloj_real=reloj)
+    conocer(con_pausa.partida, 2, 3, 4, 5, 6)
+    con_pausa.procesar(Comando("ir_a", (6,)))
+    vueltas = 0
+    while con_pausa.viaje is not None:
+        reloj.t += 0.05
+        con_pausa.procesar(None)
+        vueltas += 1
+    sin_pausa, vista_b, registro_b = controlador_sobre(pasillo_n(6))
+    conocer(sin_pausa.partida, 2, 3, 4, 5, 6)
+    assert viajar(sin_pausa, 6) == [LLEGADA]
+    assert vueltas >= 4 * 3, f"FR-036: con pausa hacen falta más vueltas ({vueltas})"
+    assert (con_pausa.partida.reloj, movimientos(registro_a), vista_a.mensajes[-1]) == (
+        sin_pausa.partida.reloj, movimientos(registro_b), vista_b.mensajes[-1]), (
+        "FR-036: la pausa no cambia el tiempo del juego, los pasos ni el motivo")
+
+
 CASOS = (caso_apendice_b1_destino_no_explorado, caso_apendice_b2_sin_otra_ruta,
          caso_apendice_b2_con_otra_ruta, caso_apendice_b3_enemigos_dormidos,
          caso_entrar_con_enemigos_activos, caso_us3_e4_y_e11_empate_por_menor_id,
@@ -395,7 +447,8 @@ CASOS = (caso_apendice_b1_destino_no_explorado, caso_apendice_b2_sin_otra_ruta,
          caso_borde_errante_sin_dano, caso_borde_victoria, caso_borde_muerte,
          caso_borde_desde_sala_con_enemigos, caso_controlador_mensaje_y_viaje_visible,
          caso_controlador_interrumpir, caso_controlador_comando_de_partida_detiene,
-         caso_controlador_presentacion_no_detiene, caso_controlador_menu_entrega_none)
+         caso_controlador_presentacion_no_detiene, caso_controlador_menu_entrega_none,
+         caso_fr036_pausa_entre_pasos, caso_fr036_pausa_no_cambia_el_juego)
 
 
 def main():
