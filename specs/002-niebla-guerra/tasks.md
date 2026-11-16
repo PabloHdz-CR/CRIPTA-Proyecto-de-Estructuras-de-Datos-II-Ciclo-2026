@@ -217,7 +217,7 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 
 ### Tests for User Story 4 (escribir primero; deben fallar)
 
-- [ ] T036 [P] [US4] Crear `pruebas/prueba_niebla_antorcha.py`:
+- [X] T036 [P] [US4] Crear `pruebas/prueba_niebla_antorcha.py`:
   - **Apéndice B 4** / US4 escenario 1 (FR-008, FR-009): con la antorcha encendida, entrar explora todas las vecinas por salidas abiertas y cerradas; sus enemigos siguen dormidos, sus trampas armadas y su contenido no llega al DTO;
   - US4 escenario 2 (FR-004, FR-008): los destinos desconocidos de las vecinas pasan a avistados;
   - US4 escenario 3 (FR-008): con la antorcha apagada solo se explora la sala;
@@ -228,7 +228,7 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 
 ### Implementation for User Story 4
 
-- [ ] T037 [US4] En `cripta/modelo/mundo/conocimiento.py`, `entrar(sala, antorcha)`: con `antorcha=True`, cada destino de `sala.salidas` (abierta o cerrada) pasa a `EXPLORADA` y sus destinos desconocidos a `AVISTADA`, sin observar sus caras ni tocar su contenido; registra solo lo que cambia. En `cripta/modelo/nucleo/partida.py`, `_mover_jugador` pasa `self.jugador.antorcha_encendida`. Cubre: FR-008, FR-009, FR-033. Depende de: T020. T036 pasa.
+- [X] T037 [US4] En `cripta/modelo/mundo/conocimiento.py`, `entrar(sala, antorcha)`: con `antorcha=True`, cada destino de `sala.salidas` (abierta o cerrada) pasa a `EXPLORADA` y sus destinos desconocidos a `AVISTADA`, sin observar sus caras ni tocar su contenido; registra solo lo que cambia. En `cripta/modelo/nucleo/partida.py`, `_mover_jugador` pasa `self.jugador.antorcha_encendida`. Cubre: FR-008, FR-009, FR-033. Depende de: T020. T036 pasa.
 
 **Checkpoint**: US4 en verde sin romper US1 a US3.
 

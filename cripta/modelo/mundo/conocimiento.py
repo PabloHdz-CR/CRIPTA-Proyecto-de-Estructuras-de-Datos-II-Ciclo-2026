@@ -122,13 +122,27 @@ class ConocimientoJugador:
         de partida, no un cambio reversible."""
         self.entrar(sala_inicial)
 
-    def entrar(self, sala) -> None:
+    def entrar(self, sala, antorcha: bool = False) -> None:
         """El jugador entra a `sala` (FR-004): queda explorada, los destinos
         desconocidos de sus salidas quedan avistados y observa sus puertas
-        (FR-005). O(salidas y entrantes de la sala)."""
+        (FR-005). O(salidas y entrantes de la sala).
+
+        Con la antorcha encendida al entrar (FR-008, FR-009), además cada
+        vecina (destino de cualquier salida, abierta o cerrada) queda
+        explorada y sus destinos desconocidos, avistados. No se observan las
+        caras de las vecinas (salvo las de la sala del jugador, que ya se
+        observaron) ni se toca su contenido: sus enemigos y trampas siguen
+        como estaban. O(salidas de la sala y de sus vecinas), proporcional a
+        lo revelado y no al tamaño del mapa (FR-033)."""
         self._subir(sala, EXPLORADA)
         self._avistar_destinos(sala)
         self.observar_sala(sala)
+        if antorcha:
+            for salida in sala.salidas:
+                if salida is not None and salida.sala_destino is not None:
+                    vecina = salida.sala_destino
+                    self._subir(vecina, EXPLORADA)
+                    self._avistar_destinos(vecina)
 
     def observar_sala(self, sala) -> None:
         """El jugador observa todas las puertas de la sala donde está (FR-005,

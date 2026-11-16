@@ -61,6 +61,7 @@ RATA = "rata"                 # guardián: no se mueve, ataca si está en la sal
 ERRANTE = "errante"           # se mueve al azar
 PINCHOS = "pinchos"           # trampa de 5 de daño
 ANTORCHA = "antorcha"
+ANTORCHA_CORTA = "antorcha_corta"   # se apaga a los 250 de tiempo
 LLAVE = "llave_roja"
 PERGAMINO = "pergamino"
 CAZADOR = "cazador"           # persigue y ataca (rango enorme, rápido)
@@ -75,6 +76,8 @@ def fichas_base() -> tuple:
                         velocidad=100, comportamiento="errante", suelta=ListaEnlazada()),
         FichaTrampaDTO(id=PINCHOS, nombre="Pinchos", dano=5),
         FichaAntorchaDTO(id=ANTORCHA, nombre="Antorcha", peso=1, valor=1, duracion=100000),
+        FichaAntorchaDTO(id=ANTORCHA_CORTA, nombre="Antorcha corta", peso=1, valor=1,
+                         duracion=250),
         FichaLlaveDTO(id=LLAVE, nombre="Llave roja", peso=1, valor=1, abre=LLAVE),
         FichaPergaminoRetrocesoDTO(id=PERGAMINO, nombre="Pergamino", peso=1, valor=1),
         FichaEnemigoDTO(id=CAZADOR, nombre="Cazador", vida_max=50, ataque=3, defensa=0,
@@ -313,9 +316,9 @@ def dar_objeto(partida: Partida, id_ficha: str):
     return objeto
 
 
-def encender_antorcha(partida: Partida) -> None:
+def encender_antorcha(partida: Partida, ficha: str = ANTORCHA) -> None:
     """Da una antorcha y la usa (acción del juego, con su tiempo)."""
-    objeto = dar_objeto(partida, ANTORCHA)
+    objeto = dar_objeto(partida, ficha)
     aplicar(partida, Usar(objeto.id_instancia))
 
 

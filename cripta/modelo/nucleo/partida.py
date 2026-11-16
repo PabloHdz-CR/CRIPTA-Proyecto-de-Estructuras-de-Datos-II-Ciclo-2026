@@ -284,7 +284,8 @@ class Partida:
         self.mutador.asignar(self.jugador, "sala", destino.id)
         # 002-niebla-guerra (FR-004, research R3): el conocimiento cambia al
         # entrar, antes de trampas y enemigos, dentro del intervalo de la acción.
-        self.conocimiento.entrar(destino)
+        # FR-008: con la antorcha encendida en el momento de entrar.
+        self.conocimiento.entrar(destino, self.jugador.antorcha_encendida)
         self.mutador.asignar(destino, "rastro", self.reloj)
         self.avisar(f"Entras a {destino.nombre}.")
         # 002-niebla-guerra (FR-024 (b)): ¿había enemigos, activos o dormidos, al
