@@ -26,11 +26,12 @@ py -m pip install -r requirements.txt
 | `py main.py --forzar` | Permite jugar una cripta no resoluble (o que no se pudo verificar) después de ver su reporte. |
 | `py main.py --bench` (o `--bench --rapido`) | Mide las estructuras (§5.3). |
 | `py main.py --cache-size N` | Cambia el tope de fichas en memoria (25 por defecto). |
-| `py pruebas/ejecutar_pruebas.py` | Corre las 55 pruebas sin red. Las `prueba_real_*` usan el API real (gastan presupuesto) y se corren aparte. |
+| `py pruebas/ejecutar_pruebas.py` | Corre las 67 pruebas sin red. Las `prueba_real_*` usan el API real (gastan presupuesto) y se corren aparte. |
 | `py pruebas/prueba_reglas.py` | Verifica las reglas del proyecto sobre `cripta/`. |
 | `py main.py --offline=pruebas/datos/terreno_cazador` | Juega con el paquete de prueba de terreno y cazador (costos de salida y un cazador). |
 | `py -m cripta.controlador.bench.benchCazador` (o `--rapido`) | Mide el cazador: ciclo con 20, 50 y 100 cazadores, política de cota y salas examinadas. |
 | `py main.py --offline=pruebas/datos/resolubilidad` | Juega con el paquete de prueba de resolubilidad (criptas resolubles, con ciclos y sin ubicación de llaves). |
+| `py -m cripta.controlador.bench.benchNiebla` (o `--rapido`) | Mide la niebla y «ir a»: paso de «ir a» en la cripta de referencia (5 ms) y en una malla de 1024 salas, consultas y exploración con antorcha según el tamaño del mapa conocido, frente a las alternativas descartadas. |
 | `py -m cripta.controlador.bench.benchResolubilidad` (o `--rapido`) | Mide la verificación de resolubilidad: cripta de referencia (200 ms) y cadenas de llaves frente a la alternativa ingenua. |
 
 En Windows se usa `py`; `python` puede abrir la Microsoft Store.
@@ -68,6 +69,9 @@ En Windows se usa `py`; `python` puede abrir la Microsoft Store.
 | G / C | Guardar / cargar la partida de esa cripta |
 | L | Mostrar / ocultar la bitácora completa (últimos 20 mensajes) |
 | V | Mostrar / ocultar el reporte de resolubilidad (orden de llaves) |
+| M | Mostrar / ocultar el mapa conocido; con el mapa abierto, flecha arriba/abajo eligen una sala explorada, **ENTER** viaja a ella («ir a») y RePág/AvPág desplazan |
+| I | Detener el viaje «ir a» en curso |
+| H | Reservada para la línea de tiempo (feature 004) |
 | ESC | Volver al menú (lo no guardado se descarta) |
 
 Al elegir objetivo: flecha arriba/abajo, ENTER confirma y ESC cancela.
@@ -132,11 +136,42 @@ Especificación, plan y tareas en `specs/003-resolubilidad/`.
   publicada. Si un paquete sin conexión no trae `llaves.json`, la cripta da
   «no se pudo verificar» y jugarla exige `--forzar`.
 
+## Niebla de guerra e «ir a»
+
+Especificación, plan y tareas en `specs/002-niebla-guerra/`.
+
+- **Niebla.** Cada sala está explorada (entraste, la exploró la antorcha o es
+  la inicial), avistada (una salida de una explorada lleva a ella: solo sabes
+  que existe) o desconocida. La ventana muestra solo lo que conoces.
+- **Puertas recordadas.** Ves una puerta mientras estás en una de las dos
+  salas que conecta; el mapa recuerda cómo la viste por última vez, aunque
+  después cambie (una puerta que se cierra sola puede figurar abierta).
+- **Antorcha.** Con la antorcha encendida, al entrar a una sala también
+  quedan exploradas sus vecinas (nombre y salidas, sin contenido, sin
+  despertar enemigos ni disparar trampas). Sus puertas que no tocan tu sala
+  figuran «no observada».
+- **Mapa (M).** Lista las salas por id: las exploradas con cada salida, su
+  costo y su estado recordado (abierta, cerrada o no observada), y las
+  avistadas solo con su id.
+- **«ir a» (M, flechas y ENTER).** Viaja a una sala explorada por la ruta más
+  barata que conoces: solo salas exploradas y puertas que recuerdas abiertas
+  (sin costo declarado vale 100; a igual costo, el primer paso va a la vecina
+  de menor id). No abre puertas. Cada paso es un movimiento normal, con su
+  tiempo y sus eventos, y se ve con una pausa breve. Se detiene al llegar, al
+  entrar a una sala con enemigos, al recibir daño (incluido el veneno), si ya
+  no hay ruta conocida, si termina la partida, con **I** o con cualquier
+  acción, guardar, cargar o salir; la bitácora dice el motivo. Abrir el mapa,
+  Tab y O no lo detienen.
+- **Pergamino durante un viaje.** **P** detiene el viaje y deshace solo el
+  último paso; el viaje no sigue.
+- **Log.** Cada orden queda como una línea `# IR_A <id>` y cada paso como un
+  `MOVER`; `--replay` salta los comentarios.
+
 ## Archivos que genera el juego
 
 No se suben al repositorio (están en `.gitignore`):
 
-- `guardados/<cripta>.bin`: la partida guardada de cada cripta (formato binario propio, §4.10). Se borra al ganar o morir la partida que lo usó. Desde terreno y cazador el formato es la versión 2 (guarda el costo de cada salida): **un guardado del formato anterior se reporta incompatible y no se migra**; hay que empezar una partida nueva de esa cripta.
+- `guardados/<cripta>.bin`: la partida guardada de cada cripta (formato binario propio, §4.10). Se borra al ganar o morir la partida que lo usó. Desde niebla de guerra el formato es la **versión 3** (guarda, además del costo de cada salida de la versión 2, el conocimiento de cada sala y el recuerdo de cada puerta): **un guardado de un formato anterior (1 o 2) se reporta incompatible y no se migra**; hay que empezar una partida nueva de esa cripta.
 - `partidas/<cripta>.log`: el log de la partida en curso; `partidas/historial/`: un log archivado por partida terminada, para el replay.
 - `puntajes.jsonl`: la tabla de puntajes.
 - `fichas_guardadas/`: copia en disco de las fichas del catálogo, para no volver a pedirlas a la red, y en `fichas_guardadas/llaves/` la ubicación de llaves de cada cripta con su versión.
