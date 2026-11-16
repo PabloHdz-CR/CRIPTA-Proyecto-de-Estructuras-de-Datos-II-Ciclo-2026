@@ -18,7 +18,8 @@ from cripta.vista.comando import Comando
 from cripta.vista.vistaArcade import VistaArcade
 
 from pruebas.apoyo_niebla import (
-    cerrar_fuentes, con_contenido, controlador_sobre, doble, sala_n, PINCHOS, RATA)
+    ANTORCHA, cerrar_fuentes, con_contenido, controlador_sobre, dar_objeto, doble, sala_n,
+    PINCHOS, RATA)
 
 
 def cripta():
@@ -224,9 +225,47 @@ def caso_controles_sin_encimarse():
             vista.cerrar()
 
 
+def _llevar_al_controlador(vista, controlador):
+    """Lo que la Vista encoló, procesado por el Controlador (una vuelta del bucle)."""
+    for comando in _comandos(vista):
+        controlador.procesar(comando)
+
+
+def caso_us1_e6_seleccion_cierra_el_mapa():
+    """US1 escenario 6 (FR-037): con el mapa abierto, S, U y Q cierran el mapa y
+    abren solo su selección, con un único cursor; ESC la cancela y el mapa
+    sigue cerrado."""
+    for tecla, verbo in ((arcade.key.S, "soltar"), (arcade.key.U, "usar"),
+                         (arcade.key.Q, "equipar")):
+        vista = VistaArcade(ancho=1024, alto=720, titulo="prueba", visible=False)
+        try:
+            controlador, _, _ = controlador_sobre(cripta(), sala_inicial=10, vista=vista)
+            dar_objeto(controlador.partida, ANTORCHA)
+            controlador.procesar(Comando("alternar_mapa"))
+            assert vista._pantalla_actual._estado.mapa is not None, "el mapa está abierto"
+            _comandos(vista)
+            vista._pantalla_actual.on_key_press(tecla, 0)
+            _llevar_al_controlador(vista, controlador)
+            pantalla = vista._pantalla_actual
+            assert pantalla._estado.mapa is None, f"FR-037: {verbo} cerró el mapa"
+            assert pantalla.modo == "objetivo" and pantalla.verbo_objetivo == verbo, (
+                f"FR-037: se abrió la selección de {verbo}: {pantalla.modo}, {pantalla.verbo_objetivo}")
+            assert len(pantalla._hud.filas_mapa) == 0, "FR-037: un solo cursor (sin panel del mapa)"
+            _comandos(vista)
+            pantalla.on_key_press(arcade.key.ESCAPE, 0)
+            _llevar_al_controlador(vista, controlador)
+            pantalla = vista._pantalla_actual
+            assert pantalla.modo == "normal", "ESC cancela la selección"
+            assert pantalla._estado.mapa is None and not controlador._mapa_abierto, (
+                "FR-037: cancelar no vuelve a abrir el mapa")
+        finally:
+            vista.cerrar()
+            cerrar_fuentes()
+
+
 CASOS = (caso_us1_e4_nada_desconocido, caso_us1_e5_mapa_sin_tiempo, caso_orden_por_id,
          caso_tecla_m, caso_panel_se_dibuja, caso_t034_cursor_y_enter,
-         caso_controles_sin_encimarse)
+         caso_controles_sin_encimarse, caso_us1_e6_seleccion_cierra_el_mapa)
 
 
 def main():

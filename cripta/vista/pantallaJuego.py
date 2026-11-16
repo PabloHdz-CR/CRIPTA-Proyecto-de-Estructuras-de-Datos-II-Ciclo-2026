@@ -112,6 +112,16 @@ class PantallaJuego(_PantallaCripta):
 
     def on_show_view(self) -> None:
         super().on_show_view()
+        # 002-niebla-guerra (FR-037): la selección que se pidió con el mapa
+        # abierto se abre aquí, en la pantalla que ya llega sin mapa.
+        pendiente = self._vista_arcade.tomar_objetivo_pendiente()
+        if pendiente is not None and self._estado.mapa is None and self._estado.replay is None:
+            lista = self._lista_para(pendiente)
+            if not lista.esta_vacia():
+                self._modo = "objetivo"
+                self._verbo_objetivo = pendiente
+                self._lista_objetivo = lista
+                self._cursor_objetivo = 0
         self._armar_textos()
 
     def on_draw(self) -> None:
@@ -330,6 +340,12 @@ class PantallaJuego(_PantallaCripta):
         """No entra a modo objetivo si la lista está vacía (atacar sin
         enemigos, o usar/equipar/soltar con el inventario vacío): no hay
         nada que elegir."""
+        if self._estado.mapa is not None:
+            # FR-037: primero se cierra el mapa (lo decide el Controlador) y la
+            # selección se abre en la pantalla siguiente: nunca dos a la vez.
+            self._vista_arcade.pedir_objetivo(verbo)
+            self._vista_arcade._encolar(Comando("alternar_mapa"))
+            return
         if lista.esta_vacia():
             return
         self._modo = "objetivo"
@@ -337,6 +353,14 @@ class PantallaJuego(_PantallaCripta):
         self._lista_objetivo = lista
         self._cursor_objetivo = 0
         self._armar_textos()
+
+    def _lista_para(self, verbo: str):
+        """Lo que se elige en la selección `verbo`, como en _tecla_en_modo_normal."""
+        if verbo == "recoger":
+            return self._estado.sala.objetos
+        if verbo == "atacar":
+            return self._estado.sala.enemigos
+        return self._estado.inventario.objetos
 
     def _tecla_en_modo_objetivo(self, symbol, modifiers) -> None:
         if symbol == arcade.key.UP:

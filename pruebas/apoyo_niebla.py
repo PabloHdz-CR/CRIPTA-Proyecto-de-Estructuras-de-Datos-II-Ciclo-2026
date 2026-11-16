@@ -443,12 +443,13 @@ def viajar(controlador, id_sala: int, maximo: int = 60) -> list:
 
 def controlador_sobre(descripcion, semilla: int = 1, sala_inicial: int = 1,
                       sala_salida=None, vida_jugador: int = 100, registro=None,
-                      reloj_real=None):
+                      reloj_real=None, vista=None):
     """(ControladorJuego, VistaNiebla, registro) con una partida nueva iniciada
     sobre la descripción. Por omisión el registro es un RegistroEnMemoria."""
     servicio = servicio_niebla(descripcion, sala_inicial=sala_inicial,
                                sala_salida=sala_salida, vida_jugador=vida_jugador)
-    vista = VistaNiebla()
+    if vista is None:
+        vista = VistaNiebla()
     if registro is None:
         registro = RegistroEnMemoria()
     carpeta = Path(tempfile.mkdtemp(prefix="apoyo_niebla_ctrl_"))

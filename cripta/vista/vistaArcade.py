@@ -65,6 +65,10 @@ class VistaArcade(VistaJuego):
         # 002-niebla-guerra (FR-035): id de la sala bajo el cursor de «ir a» en
         # el panel del mapa, o None (= la primera explorada). Presentación pura.
         self._cursor_mapa = None
+        # 002-niebla-guerra (FR-037): selección de objetivo pedida con el mapa
+        # abierto ("soltar", "usar"...). Se abre en la pantalla siguiente, la
+        # que llega con el mapa ya cerrado. Presentación pura.
+        self._objetivo_pendiente = None
 
     @property
     def ventana(self) -> arcade.Window:
@@ -108,6 +112,7 @@ class VistaArcade(VistaJuego):
         self._desplazamiento_resolubilidad = 0
         self._desplazamiento_mapa = 0
         self._cursor_mapa = None
+        self._objetivo_pendiente = None
         self._mostrar(PantallaMenu(self, criptas, self._nombre_jugador))
 
     def mostrar_titulo(self) -> None:
@@ -160,6 +165,16 @@ class VistaArcade(VistaJuego):
 
     def poner_cursor_mapa(self, id_sala) -> None:
         self._cursor_mapa = id_sala
+
+    def pedir_objetivo(self, verbo: str) -> None:
+        """FR-037: abrir la selección `verbo` cuando el mapa ya esté cerrado."""
+        self._objetivo_pendiente = verbo
+
+    def tomar_objetivo_pendiente(self):
+        """La selección pendiente (y la olvida), o None."""
+        verbo = self._objetivo_pendiente
+        self._objetivo_pendiente = None
+        return verbo
 
     def cambiar_skin(self, id_skin: str) -> None:
         """Lo llama el menú (presentación pura, no pasa por la Cola)."""
