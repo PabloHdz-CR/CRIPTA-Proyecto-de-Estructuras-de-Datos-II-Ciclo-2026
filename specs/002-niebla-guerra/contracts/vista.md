@@ -5,6 +5,10 @@ La Vista sigue sin conocer el Modelo (principio III): recibe solo los DTOs de
 
 ## Teclas de la partida
 
+**Revisión (T005, 15/11/2026):** en `cripta/vista`, M, I y H no se usan en ninguna
+pantalla (la partida usa A, C, G, L, O, P, Q, R, S, U y V; el menú, B, N y X).
+Falta la confirmación de Diego (autor de 001 y 003) de que no planea usarlas.
+
 | Tecla | Contexto | Comando | Notas |
 |---|---|---|---|
 | **M** | partida | `alternar_mapa` (sesión) | abre o cierra el panel del mapa conocido; no consume tiempo ni va al log (FR-016, FR-017) |
