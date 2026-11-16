@@ -125,8 +125,8 @@ salas de 001.
 ### Controlador
 
 - `controladorJuego.py`: verbos `alternar_mapa`, `ir_a`, `interrumpir`;
-  viaje en curso con un paso por `procesar(None)`; cualquier otro comando
-  detiene el viaje antes de procesarse; comentario en el log; motivo con
+  viaje en curso con un paso por `procesar(None)`; los comandos que cambian
+  la partida (acciones, guardar, cargar, salir) detienen el viaje antes de procesarse y los de presentación (M, Tab, O, V) no; comentario en el log; motivo con
   `mostrar_mensajes`.
 - `controladorMenu.py`: entrega `None` a la partida cuando hay un viaje en
   curso.
@@ -234,7 +234,7 @@ actores, combate y fin de partida.
 | Guardados existentes de la versión 2 | Se reportan incompatibles (FR-013); el README lo dice |
 | 002 y 004 toman el mismo `FORMATO_VERSION` | Las dos son del mismo integrante: 002 usa el 3 y 004 el 4, sobre el formato 3 (contracts/partida-binaria.md) |
 | Las letras de esta feature o la de 004 chocan con las de 001 y 003 | M e I asignadas aquí y H reservada para 004; T005 lo confirma con el autor de 001 y 003 y queda en el README |
-| Viaje en curso al guardar o cargar | Cualquier comando detiene el viaje antes de procesarse; el viaje no se guarda |
+| Viaje en curso al guardar o cargar | `guardar`, `cargar` y `salir`, como las acciones, detienen el viaje antes de procesarse; el viaje no se guarda |
 | La prueba de 5 ms es sensible a la carga de la máquina | Mínimo de varias repeticiones, como `Medidor`, y la cifra medida en el mensaje al fallar |
 | `ControladorMenu` descarta los `None` | Se cambia para entregarlos a la partida solo con viaje en curso; lo cubre `prueba_vista_mapa` con una vista registradora |
 

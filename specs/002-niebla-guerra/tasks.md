@@ -34,12 +34,13 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 **Purpose**: línea base verde, el fixture del formato anterior (antes de cambiar el formato) y las ayudas que usan las pruebas de todas las historias.
 
 - [ ] T001 Confirmar la línea base en la rama `002-niebla-guerra` antes de cambiar código: `git pull` de `main` si hay cambios, `py pruebas/ejecutar_pruebas.py` completa y en verde, y anotar el total (hoy 55) en esta tarea. Si falla algo, se investiga antes de seguir. Cubre: base de SC-001 (sin regresiones).
-- [ ] T002 Con el código **actual** (`FORMATO_VERSION = 2`), antes de T041, ampliar `pruebas/generar_guardado_formato_anterior.py` para que también genere `pruebas/datos/niebla/guardado_formato_2.bin`: inicia una partida sin conexión sobre `datos_offline/` (cripta elegida por cantidad de salas, la más chica, sin ids en el código), da dos movimientos y la guarda con `PartidaBinaria.guardar`. Confirmar en git el `.bin` y el script. Cubre: FR-013 (fixture de US5 escenario 4).
+- [ ] T002 Con el código **actual** (`FORMATO_VERSION = 2`), antes de T041, agregar a `pruebas/generar_guardado_formato_anterior.py` un **modo propio** para el guardado de la versión 2 (por ejemplo, el argumento `--formato-2` o una función `generar_formato_2()`) que genere `pruebas/datos/niebla/guardado_formato_2.bin`: inicia una partida sin conexión sobre `datos_offline/` (cripta elegida por cantidad de salas, la más chica, sin ids en el código), da dos movimientos y la guarda con `PartidaBinaria.guardar`. Ese modo tiene **su propia comprobación** (`FORMATO_VERSION == 2`; si no, sale con un mensaje y no regenera el `.bin` confirmado). El camino de la versión 1 (`FORMATO_ANTERIOR = 1`, su comprobación y su fixture de `terreno_cazador`) **no se toca**. Confirmar en git el `.bin` y el script. Cubre: FR-013 (fixture de US5 escenario 4).
 - [ ] T003 [P] Crear `pruebas/apoyo_niebla.py` sobre `pruebas/apoyo_terreno.py`:
   - constructores de criptas sintéticas con ids enteros, costos, puertas cerradas con llave, cierre automático, salidas de un solo sentido, enemigos dormidos, trampas y una antorcha en el inventario;
   - `partida_sobre(descripcion, semilla)` con Diario conectado, y `aplicar(partida, *acciones)`;
   - `huella_conocimiento(partida)`: tupla de `(id, conocimiento)` por sala y `(id, dirección, recordada)` por salida, ordenada por id, armada recorriendo el mundo desde la prueba;
-  - `VistaRegistradora` y `RegistroEnMemoria` (implementa `RegistroAcciones` y guarda las líneas, comentarios incluidos) para las pruebas del Controlador.
+  - `VistaRegistradora` y `RegistroEnMemoria` (implementa `RegistroAcciones` y guarda las líneas, comentarios incluidos) para las pruebas del Controlador;
+  - `secuencias_sc003(semilla, cantidad)`: el generador de secuencias de 1 a 5 acciones (movimientos con y sin antorcha, abrir puertas, esperar cierres) que comparten T038 y T039.
 
   Cubre: soporte de las pruebas de FR-001 a FR-035, SC-002, SC-003 y SC-007.
 - [ ] T004 [P] Crear `pruebas/oraculo_ir_a.py`: Bellman-Ford **hacia adelante** desde la sala del jugador, sin heap, sin sellos y sin caché, sobre el subgrafo conocido (cara `u → v` usable si `u` y `v` están exploradas y la cara está recordada abierta), con costo 100 para salidas sin costo declarado y desempate por (costo total, id numérico de la vecina del primer paso, dirección N, S, E, O). Devuelve la dirección del primer paso o `None`. Con autopruebas: rutas de igual costo hacia 9 y 10 dan 9; una cara "no observada" no se usa. Cubre: base de SC-006 (FR-019, FR-020, FR-021).
@@ -69,7 +70,7 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 
 - [ ] T007 [P] Crear `cripta/modelo/mundo/conocimiento.py` con las constantes `DESCONOCIDA = 0`, `AVISTADA = 1`, `EXPLORADA = 2`, `NO_OBSERVADA = 0`, `ABIERTA = 1`, `CERRADA = 2` y la clase `RegistroConocidas` sobre una `ListaDoble`: `agregar(sala)` O(1), `quitar_ultima(sala)` O(1) que verifica que la última sea `sala` (si no, `ErrorCripta`), `__iter__`, `__len__`, `ordenadas_por_id()` (copia a una `ListaEnlazada` de claves comparables por `sala.id` y usa `ordenamiento.mezcla`, O(k log k)) y `vaciar()`. Docstrings con la justificación de research R4. Cubre: FR-016, FR-033. Depende de: T006.
 - [ ] T008 [P] En `cripta/modelo/mundo/sala.py` agregar `conocimiento` (por omisión `DESCONOCIDA`) y en `cripta/modelo/mundo/salida.py` agregar `recordada` (por omisión `NO_OBSERVADA`), ambos atributos simples que el Diario puede restaurar con `setattr`. Documentar que `cerrada` sigue siendo el estado real (infraestructura, FR-015). Cubre: FR-001, FR-006, FR-007. Depende de: T006.
-- [ ] T009 En `cripta/modelo/mundo/mundo.py` agregar `conocidas` (un `RegistroConocidas`, también como valor por omisión de clase para los `Mundo` que crea la carga con `__new__`) y `_sello_ruta` con `nuevo_sello_ruta()`, como `_sello_mapa` de 001. Cubre: FR-016, FR-033. Depende de: T007.
+- [ ] T009 En `cripta/modelo/mundo/mundo.py` agregar `conocidas`: en `__init__`, un `RegistroConocidas()` nuevo por instancia; como valor por omisión **de clase**, `None` (nunca un objeto mutable compartido entre instancias), para los `Mundo` que crea la carga con `__new__`, que reciben el suyo en T042 y `_sello_ruta` con `nuevo_sello_ruta()`, como `_sello_mapa` de 001. Cubre: FR-016, FR-033. Depende de: T007.
 - [ ] T010 En `cripta/modelo/nucleo/mutador.py` agregar el tipo `CONOCIDA_AGREGAR` y el método `conocida_agregar(registro, sala)`; en `cripta/modelo/nucleo/diario.py`, su inverso `objetivo.quitar_ultima(nuevo)`. Cubre: FR-011, FR-034. Depende de: T007. T006 pasa.
 
 **Checkpoint**: `prueba_niebla_registro` en verde; la suite sigue en verde.
@@ -94,7 +95,8 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 - [ ] T012 [P] [US1] Crear `pruebas/prueba_vista_mapa.py` (primera parte; T034 la amplía):
   - US1 escenario 4 (FR-002, FR-014, FR-015, SC-002): con salas desconocidas y avistadas cuyo nombre es una marca única (`"MARCA-<id>"`), y su contenido ya precargado, ningún texto del `EstadoVista` ni del `MapaConocidoVisible` contiene una marca de una sala no explorada; las avistadas aparecen con `nombre is None` y sin salidas;
   - US1 escenario 5 (FR-016, FR-017): el verbo `alternar_mapa` abre y cierra el panel, no cambia `reloj`, no llama a `registrar_accion` del `RegistroEnMemoria` y no agrega intervalos al Diario;
-  - el mapa lista las salas por id numérico y las salidas en N, S, E, O (FR-016).
+  - el mapa lista las salas por id numérico y las salidas en N, S, E, O (FR-016);
+  - FR-017: en `PantallaJuego`, la tecla M solo encola `Comando("alternar_mapa")` y ninguna otra tecla de la partida lo encola.
 
   Registrar en `pruebas/ejecutar_pruebas.py`. Depende de: T003, T010.
 
@@ -126,6 +128,7 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
   - FR-005: estando en A se observan también las caras de un solo sentido que entran a A (`A.entrantes`);
   - FR-007: una salida de una sala explorada cuya puerta nunca se observó vale `NO_OBSERVADA`;
   - caso borde de caras con estados distintos (FR-005, FR-021): cada cara guarda su propio recuerdo;
+  - FR-014 (sala actual): si se fuerza `cerrada` de una salida de la sala actual sin pasar por `cambiar_puerta` (de modo que difiera de `recordada`), `SalidaVisible.estado` del `EstadoVista` sigue al recuerdo y no al estado real;
   - revisión del AST de `cripta/`: `cerrada` solo se asigna en `Partida.cambiar_puerta`, en el constructor de `Salida`, en `Diario._revertir` (vía `setattr`) y en la carga de `partidaBinaria` (plan.md, "Riesgos").
 
   Registrar en `pruebas/ejecutar_pruebas.py`. Depende de: T003, T014.
@@ -152,17 +155,21 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
   - **Apéndice B 1** / US3 escenario 1 (FR-018): «ir a» hacia una avistada, una desconocida y un id inexistente se rechaza con el mismo mensaje, sin mover, sin cambiar `reloj` y sin líneas en el registro;
   - **Apéndice B 2** / US3 escenario 2 (FR-005, FR-021, FR-024, FR-025): una cara recordada abierta y cerrada en realidad en la ruta; al llegar a su sala el recuerdo se actualiza y la ruta se recalcula: con otra ruta conocida sigue; sin otra, se detiene con "sin ruta conocida" y `reloj` no avanza después del último paso;
   - **Apéndice B 3** / US3 escenario 3 (FR-024, FR-025): la ruta entra a una sala con enemigos dormidos; se activan (P1 §2.4) y el viaje se detiene con "enemigos en la sala";
-  - US3 escenario 4 (FR-020, FR-030): dos rutas de igual costo; el primer paso va a la vecina de menor id y se repite igual en dos ejecuciones;
+  - US3 escenarios 4 y 11 (FR-020, FR-030), **con un mismo armado**: dos rutas de igual costo cuyos primeros pasos van a las vecinas 9 y 10; el primer paso va a la 9 (menor id, comparado como número y no como texto) y la elección se repite igual en dos ejecuciones;
   - US3 escenario 5 (FR-019): una salida sin costo declarado cuenta 100 frente a otra de 30;
   - US3 escenario 6 (FR-018, FR-022): la única ruta pasa por una puerta recordada cerrada con la llave en el inventario: rechazo "sin ruta conocida" sin abrir nada;
   - US3 escenario 7 (FR-023): cada paso consume el mismo tiempo y procesa los mismos eventos que el `MOVER` a mano (se compara contra una partida gemela movida a mano);
   - US3 escenario 8 (FR-024, FR-025): trampa, veneno activo y ataque en el camino detienen con "daño recibido" (clarificación 2);
   - US3 escenario 9 (FR-024, FR-025): llegada;
-  - US3 escenario 11 (FR-020): vecinas 9 y 10 con igual costo → el primer paso va a la 9;
-  - casos borde (FR-018, FR-024): «ir a» a la sala actual; enemigo errante que llega sin dañar no detiene (clarificación 3); salida con llave_salida termina la partida con "partida terminada"; muerte durante el viaje.
+  - casos borde (FR-018, FR-024): «ir a» a la sala actual; enemigo errante que llega sin dañar no detiene (clarificación 3); salida con llave_salida termina la partida con "partida terminada"; muerte durante el viaje;
+  - **Controlador** (con `VistaRegistradora` y `RegistroEnMemoria`; escritas antes de T031 y en rojo):
+    - FR-025: un viaje completo termina con el mensaje "Viaje detenido: llegada." y `EstadoVista.viaje` es `None` al final;
+    - FR-028: `interrumpir` detiene el viaje con "interrumpido";
+    - FR-028 (research R6): un comando que cambia la partida (una acción, `guardar`, `cargar` o `salir`) detiene el viaje con "interrumpido" y después se procesa; un comando de presentación (`alternar_mapa`, `inventario_siguiente`, `inventario_anterior`, `ordenar_inventario`) no lo detiene y el viaje sigue en la vuelta siguiente;
+    - FR-023: `ControladorMenu` entrega `None` a la partida con un viaje en curso y el viaje avanza un paso por vuelta.
 
   Registrar en `pruebas/ejecutar_pruebas.py`. Depende de: T003, T021.
-- [ ] T024 [P] [US3] Crear `pruebas/prueba_ir_a_equivalencia.py` (SC-006; FR-019, FR-020, FR-021): ≥ 1000 pares con `random.Random` de semilla fija sobre criptas sintéticas con recuerdos al azar (abiertos, cerrados, no observados), salas exploradas y avistadas al azar y empates forzados; el primer paso de `BuscadorRuta` coincide con el de `pruebas/oraculo_ir_a.py` en todos. Registrar en `pruebas/ejecutar_pruebas.py`. Depende de: T004, T020.
+- [ ] T024 [P] [US3] Crear `pruebas/prueba_ir_a_equivalencia.py` (SC-006; FR-019, FR-020, FR-021): ≥ 1000 pares con `random.Random` de semilla fija sobre criptas sintéticas con recuerdos al azar (abiertos, cerrados, no observados), salas exploradas y avistadas al azar y empates forzados; el primer paso de `BuscadorRuta` coincide con el de `pruebas/oraculo_ir_a.py` en todos. Además (SC-002, FR-015, FR-021; research R10), en esos mismos pares la búsqueda se corre **instrumentada**: la prueba reemplaza por envoltorios que anotan cada lectura los accesos que usa el buscador (`conocimiento` de cada sala que toca, `recordada` de cada cara que recorre) y hace que leer `cerrada` o llamar a `Mundo.sala` falle; comprueba que toda sala leída como transitable estaba `EXPLORADA` y toda cara recorrida estaba recordada `ABIERTA`. Registrar en `pruebas/ejecutar_pruebas.py`. Depende de: T004, T020.
 - [ ] T025 [P] [US3] Crear `pruebas/prueba_replay_ir_a.py`:
   - US3 escenario 10 (FR-026): una orden de tres pasos deja `# IR_A <id>` y luego tres `MOVER` en `partida.log` (con `RegistroArchivo` en una carpeta temporal); una orden rechazada no escribe nada;
   - FR-027: `RegistroArchivo.leer()` salta las líneas `#`; un log sin comentarios se lee igual que antes;
@@ -180,19 +187,18 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 - [ ] T031 [US3] En `cripta/controlador/controladorJuego.py`:
   - verbo `ir_a <id>`: valida con `partida.validar_ir_a`; si rechaza, `mostrar_error` y nada más; si acepta, crea el `ViajeIrA`, escribe `IR_A <id>` con `registrar_comentario`, cierra el panel y da el primer paso;
   - `procesar(None)` con viaje en curso da **un** paso: `primer_paso_ir_a`; sin paso → motivo `SIN_RUTA` sin aplicar nada; con paso → `aplicar_accion(Mover(dir))`, `registrar_accion`, `evaluar`;
-  - verbo `interrumpir` (motivo `INTERRUMPIDO`); cualquier otro comando con viaje en curso detiene el viaje con `INTERRUMPIDO` y luego se procesa (research R6);
+  - verbo `interrumpir` (motivo `INTERRUMPIDO`); con viaje en curso, solo los comandos que **cambian la partida** (las acciones que traduce `TraductorComandos`, `guardar`, `cargar` y `salir`) detienen el viaje con `INTERRUMPIDO` y luego se procesan; los de **presentación** (`alternar_mapa`, `inventario_siguiente`, `inventario_anterior`, `ordenar_inventario`, `ver_resolubilidad`) se procesan sin detenerlo (research R6; L es local de la Vista y no llega al Controlador);
   - al detenerse, `mostrar_mensajes("Viaje detenido: <motivo>.")`.
 
   Cubre: FR-018, FR-023 a FR-026, FR-028. Depende de: T029, T030.
 - [ ] T032 [US3] En `cripta/controlador/controladorMenu.py`, `procesar` entrega `None` a la partida cuando `self._juego` tiene un viaje en curso (hoy los descarta antes). Cubre: FR-023. Depende de: T031. T023 y T025 pasan.
 - [ ] T033 [P] [US3] En `cripta/vista/estadoVista.py` agregar `ViajeVisible(destino_id, destino_nombre, pasos)` y `EstadoVista.viaje: Optional[ViajeVisible] = None`; en `cripta/controlador/constructorEstadoVista.py`, armarlo desde el viaje en curso. Cubre: FR-025. Depende de: T031.
-- [ ] T034 [US3] Prueba de interfaz, escrita antes de T035 y en rojo: ampliar `pruebas/prueba_vista_mapa.py` con
-  - FR-035: el cursor solo se detiene en exploradas; Enter sobre la sala actual o sobre una sin ruta produce el rechazo de FR-018;
-  - FR-025: con `VistaRegistradora`, un viaje completo termina con el mensaje "Viaje detenido: llegada." y `EstadoVista.viaje` es `None` al final;
-  - FR-028: `interrumpir` detiene con "interrumpido"; otra tecla de acción también lo detiene y luego se procesa;
-  - FR-023: `ControladorMenu` entrega `None` y el viaje avanza un paso por vuelta.
+- [ ] T034 [US3] Prueba de la Vista, escrita antes de T035 y en rojo: ampliar `pruebas/prueba_vista_mapa.py` con (FR-035)
+  - con el panel M abierto, ↑/↓ mueven el cursor solo entre las salas exploradas y saltan las avistadas;
+  - con el panel abierto, las flechas no encolan `mover`;
+  - Enter encola `Comando("ir_a", (id,))` con el id de la sala bajo el cursor; sobre la sala actual o sobre una sin ruta, el Controlador responde con el rechazo de FR-018.
 
-  Depende de: T012, T032.
+  Las pruebas del Controlador (mensaje de detención, `interrumpir`, comandos que detienen o no el viaje, `None` hacia la partida) están en T023. Depende de: T012, T032.
 - [ ] T035 [US3] En `cripta/vista/pantallaJuego.py`, con el panel M abierto: ↑/↓ mueven un cursor que salta las avistadas, Enter encola `Comando("ir_a", (id,))`, y las flechas no mueven al jugador; **I** encola `Comando("interrumpir")`. En `cripta/vista/hudJuego.py`, la línea "Viajando a <id> <nombre> — paso <n> (I para detener)" y la marca del cursor en el panel. Cubre: FR-028, FR-035. Depende de: T018, T033, T034. T034 pasa.
 
 **Checkpoint**: US1, US2 y US3 en verde: MVP de la Parte II para esta feature (niebla + «ir a»).
@@ -237,11 +243,13 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
   - **Apéndice B 6** / US5 escenario 2 (FR-011, FR-024, FR-029): con un viaje en curso, el comando `pergamino` detiene el viaje al terminar el paso en curso con el motivo "pergamino de retroceso", revierte solo ese paso (sala, `reloj` y conocimiento del paso) y no hay más pasos con `procesar(None)`;
   - casos borde (FR-011): revertir la primera entrada a una sala la devuelve a avistada y sus destinos nuevos a desconocidos; revertir un movimiento a una sala ya explorada restaura solo los recuerdos de puertas; varios pergaminos seguidos revierten de a un paso;
   - SC-003 (FR-011): 1000 secuencias de 1 a 5 acciones con semilla fija (movimientos con y sin antorcha, abrir puertas, esperar cierres): aplicar y revertir con pergaminos devuelve la huella inicial;
-  - FR-034: con un Diario conectado, cada cambio de `conocimiento`, `recordada` o del registro durante una acción queda registrado (se cuenta comparando la huella antes y después con los registros del intervalo).
+  - FR-034: con un Diario conectado, cada cambio de `conocimiento`, `recordada` o del registro durante una acción queda registrado (se cuenta comparando la huella antes y después con los registros del intervalo);
+  - FR-010 (la parte de "solo"): un cierre automático con el jugador lejos no cambia la huella del conocimiento ni agrega registros de conocimiento al intervalo, y revertir ese intervalo con el pergamino tampoco la cambia.
 
   Registrar en `pruebas/ejecutar_pruebas.py`. Depende de: T003, T031, T037.
 - [ ] T039 [P] [US5] Crear `pruebas/prueba_persistencia_niebla.py`:
-  - US5 escenario 3 (FR-012): una partida con exploradas, avistadas y recuerdos desactualizados se guarda y se carga con `huella_conocimiento` idéntica, registro de conocidas con las mismas salas y `cargar_sala` con los mismos campos; también en cada punto de 50 secuencias de SC-003;
+  - US5 escenario 3 (FR-012): una partida con exploradas, avistadas y recuerdos desactualizados se guarda y se carga con `huella_conocimiento` idéntica, registro de conocidas con las mismas salas y `cargar_sala` con los mismos campos;
+  - SC-003 (FR-012), segunda mitad: las **mismas 1000 secuencias** de T038 (misma semilla y mismo generador, compartido en `pruebas/apoyo_niebla.py`); en cada una se guarda y se carga en **un punto elegido con la semilla** (entre 0 y la cantidad de acciones de la secuencia) y la `huella_conocimiento` cargada es idéntica a la guardada;
   - **US5 escenario 4** (FR-013; clarificación 4): cargar `pruebas/datos/niebla/guardado_formato_2.bin` lanza `VersionIncompatible` con "se esperaba 3 y se encontró 2" y no crea partida; el Controlador lo muestra con `mostrar_error`;
   - un valor fuera de rango en `conocimiento` o `recordada` lanza `ErrorCripta`.
 
@@ -251,7 +259,7 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 
 - [ ] T040 [US5] En `cripta/controlador/controladorJuego.py`, con un viaje en curso el comando `pergamino` detiene el viaje con el motivo `PERGAMINO` (no `INTERRUMPIDO`) y luego aplica `UsarPergamino` como siempre, que deshace solo el intervalo del último paso (research R6). Cubre: FR-029. Depende de: T031. T038 (escenario Apéndice B 6) pasa.
 - [ ] T041 [US5] En `cripta/adaptadores/partidaBinaria.py`: `FORMATO_VERSION = 3`; escribir `uentero32` con `conocimiento` por sala y `uentero32` con `recordada` por salida; leerlos en la carga completa y en `cargar_sala`, con `ErrorCripta` si están fuera de rango; actualizar el docstring del formato (contracts/partida-binaria.md). Depende de: T002 (el fixture ya existe), T008. Cubre: FR-012, FR-013.
-- [ ] T042 [US5] En `cripta/modelo/nucleo/partida.py`, `reconstruir_tras_cargar()` vacía `mundo.conocidas` y lo reconstruye con una pasada O(salas) agregando las salas con `conocimiento != DESCONOCIDA` (sin pasar por el Mutador), y crea `self.conocimiento`. Cubre: FR-012, FR-016. Depende de: T041. T039 pasa.
+- [ ] T042 [US5] En `cripta/modelo/nucleo/partida.py`, `reconstruir_tras_cargar()` asigna a `mundo.conocidas` un `RegistroConocidas()` **nuevo** (no vacía uno existente, que podría ser de otro `Mundo`) y lo reconstruye con una pasada O(salas) agregando las salas con `conocimiento != DESCONOCIDA` (sin pasar por el Mutador), y crea `self.conocimiento`. Cubre: FR-012, FR-016. Depende de: T041. T039 pasa.
 
 **Checkpoint**: US5 en verde; el pergamino, el guardado y el replay respetan el conocimiento.
 
@@ -267,7 +275,7 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 
 - [ ] T043 [P] [US6] Crear `pruebas/prueba_rendimiento_ir_a.py` (FR-031, SC-004; US6 escenario 1): con la cripta de referencia de `datos_offline/` (la de más salas, elegida en ejecución) totalmente explorada y con recuerdos iguales al estado real, el peor paso de `BuscadorRuta.primer_paso` sobre ≥ 200 pares con semilla fija, tomando el mínimo de 5 repeticiones por par, es < 5 ms; al fallar, el mensaje dice la cifra medida. Registrar en `pruebas/ejecutar_pruebas.py`. Depende de: T027.
 - [ ] T044 [P] [US6] Crear `pruebas/prueba_conteo_niebla.py` (FR-032, FR-033, SC-005; US6 escenario 2), con conteos y no tiempos:
-  - consultar `estado` y `recuerdo` no recorre ninguna colección (se verifica con mapas de 25 y 1200 conocidas que el número de nodos visitados es 0);
+  - consultar `estado` y `recuerdo` no busca ni recorre nada: con mapas de 25 y 1200 conocidas, la prueba reemplaza `Mundo.sala` y el iterador de `RegistroConocidas` (`__iter__`) por versiones que lanzan `AssertionError` si se llaman, y después consulta `estado` de cada sala y `recuerdo` de cada salida sin que fallen;
   - una entrada con antorcha que revela 4 salas registra la misma cantidad de entradas en el Diario con mapas conocidos de 25, 100, 300 y 1200 salas;
   - deshacer esa entrada procesa exactamente esos registros.
 
@@ -302,7 +310,7 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 | US1 1–3 | `prueba_niebla_conocimiento` | T011 |
 | US1 4–5 | `prueba_vista_mapa` | T012 |
 | US2 1–3 | `prueba_niebla_puertas` | T019 |
-| US3 1 (**Apéndice B 1**), 2 (**Apéndice B 2**), 3 (**Apéndice B 3**), 4–9, 11 | `prueba_ir_a` | T023 |
+| US3 1 (**Apéndice B 1**), 2 (**Apéndice B 2**), 3 (**Apéndice B 3**), 4 y 11 (mismo armado), 5–9 | `prueba_ir_a` | T023 |
 | US3 10 | `prueba_replay_ir_a` | T025 |
 | US4 1 (**Apéndice B 4**), 2–4 | `prueba_niebla_antorcha` | T036 |
 | US5 1 (**Apéndice B 5**), 2 (**Apéndice B 6**) | `prueba_niebla_retroceso` | T038 |
@@ -320,17 +328,17 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 | FR-001 a FR-004 | T011 | T013, T014 |
 | FR-005 a FR-007 | T019 | T020, T021 |
 | FR-008, FR-009 | T036 | T037 |
-| FR-010, FR-011 | T006, T038 | T010, T014 |
+| FR-010, FR-011 | T006, T038 | T010, T014, T021 |
 | FR-012 | T039 | T041, T042 |
 | FR-013 | T039 | T002, T041 |
-| FR-014, FR-015 | T012 | T016, T022 |
+| FR-014, FR-015 | T012, T019, T024 | T016, T022 |
 | FR-016, FR-017 | T012 | T017, T018 |
 | FR-018 | T023, T034 | T029, T031 |
 | FR-019 a FR-022 | T023, T024 | T027 |
-| FR-023 | T023, T034 | T031, T032 |
-| FR-024, FR-025 | T023, T034 | T028, T029, T031, T033 |
+| FR-023 | T023 | T031, T032 |
+| FR-024, FR-025 | T023 | T028, T029, T031, T033 |
 | FR-026, FR-027 | T025 | T030, T031 |
-| FR-028 | T034 | T031, T035 |
+| FR-028 | T023 | T031, T035 |
 | FR-029 | T038 | T040 |
 | FR-030 | T023, T024 | T027 |
 | FR-031 | T043 | T026, T027, T046 |
@@ -338,7 +346,7 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 | FR-034 | T038 | T010 |
 | FR-035 | T034 | T035 |
 | SC-001 | T052 | — |
-| SC-002 | T012 | T016 |
+| SC-002 | T012, T024 | T016, T027 |
 | SC-003 | T038, T039 | T010, T037 |
 | SC-004 | T043 | T046, T047 |
 | SC-005 | T044 | T046, T047 |

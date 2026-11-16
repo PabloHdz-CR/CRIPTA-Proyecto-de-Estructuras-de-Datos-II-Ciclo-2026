@@ -16,8 +16,10 @@ La Vista sigue sin conocer el Modelo (principio III): recibe solo los DTOs de
 | **H** | — | — | reservada para la feature 004 (historia) |
 
 Con el panel abierto, las flechas no mueven al jugador. Con un viaje en curso,
-cualquier otra tecla de acción detiene el viaje (motivo "interrumpido") y
-luego se procesa (research R6).
+solo los comandos que **cambian la partida** (las teclas de acción, **G**
+guardar, **C** cargar y ESC salir) detienen el viaje con el motivo
+"interrumpido" y luego se procesan; los de **presentación** (**M**, Tab, **O**,
+**V** y **L**) no lo detienen (research R6).
 
 ## Panel del mapa conocido
 

@@ -306,8 +306,15 @@ observadas) y empates forzados (costos iguales, vecinas 9 y 10).
     reciente, es decir, solo el último paso;
   - `interrumpir` (tecla **I**): el viaje se detiene con el motivo
     "interrumpido";
-  - cualquier otro comando: el viaje se detiene ("interrumpido") y el comando
-    se procesa normalmente. Así ninguna tecla compite con un viaje en curso.
+  - un comando que **cambia la partida** (una acción del jugador, `guardar`,
+    `cargar` o `salir`): el viaje se detiene ("interrumpido") y el comando se
+    procesa normalmente, así ninguna acción compite con un viaje en curso y el
+    viaje nunca queda a medias dentro de un guardado o una carga;
+  - un comando de **presentación** (`alternar_mapa` con M, el cursor del
+    inventario con Tab, `ordenar_inventario` con O, `ver_resolubilidad` con V;
+    L ni siquiera llega al Controlador): se procesa sin detener el viaje, que
+    sigue en la vuelta siguiente. No cambian la partida, así que no hay nada
+    que proteger.
 - **Destino**: el comando `ir_a <id>` lo resuelve con `Mundo.sala(id)` una
   sola vez; una sala inexistente da el mismo rechazo que una desconocida
   (FR-018). El viaje guarda la referencia a la sala destino.
