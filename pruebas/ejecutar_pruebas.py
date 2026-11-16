@@ -85,6 +85,8 @@ PRUEBAS = (
     "prueba_niebla_antorcha",        # FR-007 a FR-009, FR-021 (Ap. B 4, US4 1 a 4, T036)
     "prueba_niebla_retroceso",       # FR-010, FR-011, FR-029, FR-034, SC-003 (Ap. B 5 y 6, T038)
     "prueba_persistencia_niebla",    # FR-012, FR-013, SC-003 (US5 3 y 4, T039)
+    "prueba_rendimiento_ir_a",       # FR-031, SC-004: paso de «ir a» < 5 ms (US6 1, T043)
+    "prueba_conteo_niebla",          # FR-032, FR-033, SC-005: conteos (US6 2, T044)
 
 )
 

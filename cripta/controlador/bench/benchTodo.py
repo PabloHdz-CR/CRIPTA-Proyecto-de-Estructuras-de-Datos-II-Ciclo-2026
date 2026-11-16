@@ -10,8 +10,8 @@ import sys
 
 from . import (
     benchAgenda, benchBitacora, benchCache, benchCazador, benchDatos, benchEtiquetas,
-    benchGuardado, benchHistorial, benchListaDoble, benchOrdenamiento, benchPrecarga,
-    benchRastro, benchResolubilidad)
+    benchGuardado, benchHistorial, benchListaDoble, benchNiebla, benchOrdenamiento,
+    benchPrecarga, benchRastro, benchResolubilidad)
 from .reporte import Reporte
 
 
@@ -32,6 +32,7 @@ def ejecutar_todo(reporte=None, rapido=False):
     benchDatos.ejecutar(reporte, rapido)
     benchCazador.ejecutar(reporte, rapido)     # 001-terreno-cazador (FR-025, FR-026)
     benchResolubilidad.ejecutar(reporte, rapido)   # 003-resolubilidad (FR-032 a FR-035)
+    benchNiebla.ejecutar(reporte, rapido)          # 002-niebla-guerra (FR-031 a FR-033)
     return reporte
 
 
