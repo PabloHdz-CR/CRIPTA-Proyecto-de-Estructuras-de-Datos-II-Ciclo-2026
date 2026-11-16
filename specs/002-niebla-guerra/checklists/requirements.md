@@ -32,7 +32,8 @@
 ## Notes
 
 - La spec no nombra estructuras, clases ni módulos (constitución, principio VII). Las menciones a partida.log, --replay, --bench y al archivo de partida son parte del contrato del juego definido por el enunciado, no detalles de implementación.
-- Los 6 escenarios obligatorios del Apéndice B están en US3 (1, 2, 3), US4 (1) y US5 (1, 2). SC-001 cuenta 31 escenarios (5 + 3 + 12 + 4 + 5 + 2), con el escenario 11 de US3 (vecinas 9 y 10, ids comparados como números).
+- Los 6 escenarios obligatorios del Apéndice B están en US3 (1, 2, 3), US4 (1) y US5 (1, 2). SC-001 cuenta 32 escenarios (6 + 3 + 12 + 4 + 5 + 2), con el escenario 11 de US3 (vecinas 9 y 10, ids comparados como números).
 - Clarify del 2026-11-15 (5 preguntas): puertas de vecinas exploradas con la antorcha "no observada"; el veneno detiene el viaje; un enemigo errante que llega solo lo detiene si causa daño; archivo de formato anterior incompatible, sin migración (FR-013); destino de «ir a» elegido en el panel del mapa conocido con flechas y Enter (FR-035). Todos los ítems siguen cumpliéndose (16/16).
 - Corrección del 2026-11-15 (fase specify): ids de sala comparados como números (FR-020), referencias §3.3, §3.4, §5.3, §6.1, §6.3 y §7.3, y pergamino durante un viaje en curso sin interrumpirlo antes (FR-024, FR-029); la interrupción manual (FR-028) queda como opción adicional. Todos los ítems siguen cumpliéndose.
 - Enmienda del 2026-11-15 (implementación): FR-036 (pausa de presentación de alrededor de 0,15 s entre pasos de «ir a» en la ventana, sin efecto en el tiempo del juego ni fuera de la ventana) y escenario 12 de US3. Todos los ítems siguen cumpliéndose.
+- Enmienda del 2026-11-16 (prueba en la ventana): FR-037 (con el mapa abierto, R, A, U, Q y S cierran el mapa antes de abrir su selección; ESC no lo reabre) y escenario 6 de US1. Todos los ítems siguen cumpliéndose.

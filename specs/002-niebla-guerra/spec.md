@@ -46,6 +46,7 @@ conocido y todo lo que recibe la vista contienen solo esa información.
 3. **Given** una sala explorada a la que el jugador vuelve, **When** entra otra vez, **Then** sigue explorada y no cambia ninguna otra sala por ese motivo (FR-004).
 4. **Given** una partida en curso, **When** la vista dibuja la cripta o el jugador abre el mapa conocido, **Then** no aparece ningún dato de salas desconocidas ni el nombre, las salidas o el contenido de salas avistadas, aunque el programa ya los haya descargado (FR-002, FR-014, FR-015).
 5. **Given** el mapa conocido abierto, **When** el jugador lo consulta, **Then** no se consume tiempo de juego ni se registra una acción en partida.log (FR-016, FR-017).
+6. **Given** el panel del mapa conocido abierto y objetos en el inventario, **When** el jugador aprieta una tecla que abre una selección de objetivo (por ejemplo S, soltar), **Then** el panel del mapa se cierra y se abre solo la selección de soltar, con un único cursor; si el jugador la cancela con ESC, el mapa sigue cerrado (FR-037).
 
 ---
 
@@ -241,6 +242,7 @@ tiempos con los límites.
 - **FR-014**: Todo lo que la vista muestra sobre la cripta (mapa, salas, salidas, puertas) MUST salir solo del conocimiento del jugador; MUST NOT mostrar datos de salas desconocidas ni nombre, salidas o contenido de salas avistadas.
 - **FR-015**: El esqueleto completo de la cripta y la precarga de salas MUST seguir disponibles para el programa como infraestructura (verificación de resolubilidad, enemigos, movimientos), pero MUST NOT llegar a la vista ni a «ir a».
 - **FR-016**: La interfaz MUST ofrecer un comando para ver el mapa conocido, que liste las salas exploradas (id y nombre) con cada salida (dirección, sala de destino, costo y estado recordado: abierta, cerrada o no observada) y las salas avistadas (solo su id). Las salas MUST listarse ordenadas por id y las salidas en el orden N, S, E, O.
+- **FR-037**: Con el panel del mapa conocido abierto, las teclas que abren una selección de objetivo (R recoger, A atacar, U usar, Q equipar, S soltar) MUST cerrar primero el panel del mapa y después abrir su selección, igual que sin el mapa. En ningún momento MUST haber dos selecciones visibles a la vez, y cancelar la selección (ESC) MUST NOT volver a abrir el mapa.
 - **FR-017**: Ver el mapa conocido MUST NOT consumir tiempo de juego ni registrarse como acción en partida.log, y su tecla MUST NOT estar asignada a otra acción en la partida (incluida V, de la feature 003); su uso MUST documentarse en la tabla de teclas del README.
 
 **«ir a»: orden y ruta**
@@ -283,7 +285,7 @@ tiempos con los límites.
 
 ### Measurable Outcomes
 
-- **SC-001**: Los 31 escenarios de aceptación de esta especificación (5 + 3 + 12 + 4 + 5 + 2), incluidos los 6 obligatorios del Apéndice B, tienen al menos una prueba automatizada o un partida.log que los ejerce y todas pasan.
+- **SC-001**: Los 32 escenarios de aceptación de esta especificación (6 + 3 + 12 + 4 + 5 + 2), incluidos los 6 obligatorios del Apéndice B, tienen al menos una prueba automatizada o un partida.log que los ejerce y todas pasan.
 - **SC-002**: En el 100 % de las partidas de prueba, ningún dato que recibe la vista ni ningún paso de «ir a» proviene de una sala desconocida, del nombre o salidas de una sala avistada, o de una puerta en un estado distinto del recordado.
 - **SC-003**: Para 1000 secuencias de acciones aleatorias con semilla fija sobre criptas sintéticas, aplicar las acciones y luego revertirlas con el pergamino devuelve el conocimiento del jugador idéntico al inicial; y guardar y cargar en cualquier punto devuelve un conocimiento idéntico.
 - **SC-004**: Con el mapa conocido completo de la cripta de referencia, el cálculo de cada paso de «ir a» tarda menos de 5 ms en todos los pares de salas medidos con --bench.
