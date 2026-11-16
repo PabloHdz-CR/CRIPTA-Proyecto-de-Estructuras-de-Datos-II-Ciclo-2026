@@ -120,7 +120,8 @@ class HudJuego:
     def __init__(self, estado, anterior, geometria: Geometria, modo: str = "normal",
                  verbo_objetivo=None, lista_objetivo=None, cursor_objetivo: int = 0,
                  aviso=None, bitacora_completa: bool = False,
-                 panel_resolubilidad: bool = False, desplazamiento_resolubilidad: int = 0):
+                 panel_resolubilidad: bool = False, desplazamiento_resolubilidad: int = 0,
+                 desplazamiento_mapa: int = 0):
         self._estado = estado
         self._anterior = anterior
         self._g = geometria
@@ -136,6 +137,10 @@ class HudJuego:
         self._filas_resolubilidad = ListaEnlazada()
         self._maximo_resolubilidad = 0
         self._visibles_resolubilidad = 0
+        # 002-niebla-guerra: panel del mapa conocido (M).
+        self._desplazamiento_mapa_pedido = max(0, desplazamiento_mapa)
+        self._filas_mapa = ListaEnlazada()
+        self._visibles_mapa = 0
         self._superpuestos = ListaEnlazada()  # (izq, der, abajo, arriba): panel sobre el mapa
         self._textos_superpuestos = ListaEnlazada()
         self._paneles = ListaEnlazada()     # (izq, der, abajo, arriba, resaltado)
@@ -180,7 +185,9 @@ class HudJuego:
             y = self._armar_en_la_sala(izq, der, y)
             self._armar_inventario(izq, der, abajo, y)
         self._armar_bitacora_y_controles()
-        if self._panel_resolubilidad and self._estado.resolubilidad is not None:
+        if getattr(self._estado, "mapa", None) is not None:
+            self._armar_panel_mapa()
+        elif self._panel_resolubilidad and self._estado.resolubilidad is not None:
             self._armar_panel_resolubilidad()
         elif self._bitacora_completa:
             self._armar_bitacora_completa()
@@ -570,6 +577,64 @@ class HudJuego:
                 f"Flechas arriba/abajo, RePág/AvPág: desplazar   (filas {desde}-{hasta} de {total})",
                 izq + 22, abajo + 12, 10, estilo.TEXTO_SUAVE, anchor_y="center"))
 
+    def _armar_panel_mapa(self) -> None:
+        """M (002-niebla-guerra, FR-016): el mapa conocido en un panel sobre el
+        mapa de la sala, con el formato de contracts/vista.md. Las filas se
+        parten para que quepan (partir_lineas, sin perder texto) y el panel se
+        desplaza con RePág/AvPág. Solo muestra lo que trae MapaConocidoVisible:
+        la Vista no conoce nada más de la cripta (FR-014)."""
+        izq = self._g.mapa_izq
+        der = izq + self._g.lado_mapa
+        abajo, arriba = self._g.mapa_abajo + 8, self._g.mapa_arriba - 8
+        if not _cabe(izq, der, abajo, arriba):
+            return
+        mapa = self._estado.mapa
+        self._superpuestos.agregar_al_final((izq + 8, der - 8, abajo, arriba))
+        textos = self._textos_superpuestos
+        textos.agregar_al_final(estilo.texto(
+            f"Mapa conocido: {mapa.cantidad_exploradas} exploradas, "
+            f"{mapa.cantidad_avistadas} avistadas", izq + 22, arriba - 18, 12, estilo.DORADO,
+            anchor_y="center", bold=True))
+        textos.agregar_al_final(estilo.texto(
+            "M para cerrar", der - 22, arriba - 18, 10, estilo.TEXTO_SUAVE, anchor_x="right",
+            anchor_y="center"))
+        ancho_caracter = estilo.ancho_caracter_mono(_TAMANO_REPORTE)
+        maximo = max(1, int((der - izq - 44) / ancho_caracter))
+        filas = partir_lineas(lineas_mapa(mapa), maximo)
+        self._filas_mapa = filas
+        primera_y = arriba - 42
+        ultima_y = abajo + 30
+        visibles = int((primera_y - ultima_y) // _ALTO_FILA_REPORTE) + 1
+        if visibles < 1:
+            self._visibles_mapa = 0
+            return
+        total = len(filas)
+        self._visibles_mapa = min(visibles, total)
+        desplazamiento = min(self._desplazamiento_mapa_pedido, max(0, total - visibles))
+        y = primera_y
+        for indice, fila in enumerate(filas):
+            if indice < desplazamiento:
+                continue
+            if indice >= desplazamiento + visibles:
+                break
+            textos.agregar_al_final(estilo.texto_mono(fila, izq + 22, y, _TAMANO_REPORTE))
+            y -= _ALTO_FILA_REPORTE
+        if total > visibles:
+            textos.agregar_al_final(estilo.texto(
+                f"RePág/AvPág: desplazar   (filas {desplazamiento + 1}-"
+                f"{desplazamiento + visibles} de {total})",
+                izq + 22, abajo + 12, 10, estilo.TEXTO_SUAVE, anchor_y="center"))
+
+    @property
+    def filas_mapa(self) -> ListaEnlazada:
+        """Todas las filas del panel del mapa conocido (pruebas y desplazamiento)."""
+        return self._filas_mapa
+
+    @property
+    def visibles_mapa(self) -> int:
+        """Cuántas filas del panel del mapa se ven a la vez (0 si no hay panel)."""
+        return self._visibles_mapa
+
     @property
     def filas_resolubilidad(self) -> ListaEnlazada:
         """Todas las filas del panel de V (para las pruebas y el desplazamiento)."""
@@ -601,7 +666,8 @@ class HudJuego:
                 ("Espacio", "Esperar"), ("R", "Recoger"), ("A", "Atacar"),
                 ("U / Q / S", "Usar/equipar/soltar"), ("Tab / Shift+Tab", "Bajar / subir inventario"),
                 ("O", "Ordenar inventario"), ("P", "Pergamino"), ("G / C", "Guardar/Cargar"),
-                ("L", "Bitácora (20)"), ("V", "Resolubilidad"), ("ESC", "Volver al menú"))
+                ("L", "Bitácora (20)"), ("V", "Resolubilidad"), ("M", "Mapa conocido"),
+                ("ESC", "Volver al menú"))
 
     def _armar_controles(self, izq, der, abajo, arriba) -> None:
         controles = self._controles()
@@ -733,3 +799,24 @@ class HudJuego:
                                            (240, 150, 60, int(255 * alfa)), 2)
         texto.color = (236, 228, 214, int(255 * alfa))
         texto.draw()
+
+
+def lineas_mapa(mapa, cursor_id=None) -> ListaEnlazada:
+    """Las líneas de texto del panel del mapa conocido (contracts/vista.md),
+    una por sala y una por salida de cada sala explorada. Función pura: no
+    dibuja nada. `cursor_id` marca con ">" la sala bajo el cursor de «ir a».
+    Una avistada muestra solo su id (FR-002)."""
+    lineas = ListaEnlazada()
+    for sala in mapa.salas:
+        marca = ">" if cursor_id is not None and sala.id == cursor_id else " "
+        if not sala.explorada:
+            lineas.agregar_al_final(f"{marca} {sala.id:>4}  ?  (avistada)")
+            continue
+        actual = "  (actual)" if sala.actual else ""
+        lineas.agregar_al_final(f"{marca} {sala.id:>4}  {sala.nombre}{actual}")
+        for salida in sala.salidas:
+            if salida is not None:
+                lineas.agregar_al_final(
+                    f"        {salida.direccion} -> {salida.destino:<5} costo {salida.costo:<4}"
+                    f" {salida.estado}")
+    return lineas

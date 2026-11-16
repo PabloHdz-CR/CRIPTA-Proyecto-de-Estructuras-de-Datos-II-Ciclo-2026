@@ -194,6 +194,19 @@ class PantallaJuego(_PantallaCripta):
         self._armar_textos()
         return True
 
+    def _desplazar_mapa(self, symbol) -> bool:
+        """Con el panel del mapa conocido abierto, RePág/AvPág lo desplazan
+        (presentación pura, no es un Comando). True si la tecla fue para el panel."""
+        if symbol not in (arcade.key.PAGEUP, arcade.key.PAGEDOWN):
+            return False
+        hud = self._hud
+        visibles = max(1, hud.visibles_mapa)
+        maximo = max(0, len(hud.filas_mapa) - visibles)
+        delta = -visibles if symbol == arcade.key.PAGEUP else visibles
+        self._vista_arcade.desplazar_mapa(delta, maximo)
+        self._armar_textos()
+        return True
+
     def _tecla_en_replay(self, symbol) -> None:
         if symbol == arcade.key.L:
             self._alternar_bitacora()
@@ -211,6 +224,8 @@ class PantallaJuego(_PantallaCripta):
     def _tecla_en_modo_normal(self, symbol, modifiers) -> None:
         if self._estado.replay is not None:
             self._tecla_en_replay(symbol)
+            return
+        if self._estado.mapa is not None and self._desplazar_mapa(symbol):
             return
         if (self._panel_resolubilidad_abierto() and not modifiers & arcade.key.MOD_SHIFT
                 and self._desplazar_resolubilidad(symbol)):
@@ -234,6 +249,10 @@ class PantallaJuego(_PantallaCripta):
             self._alternar_bitacora()
         elif symbol == arcade.key.V:
             self._tecla_resolubilidad()
+        elif symbol == arcade.key.M:
+            # 002-niebla-guerra (FR-016, FR-017): abre o cierra el mapa conocido.
+            # Es un verbo de sesión: el Controlador arma el mapa solo si está abierto.
+            self._vista_arcade._encolar(Comando("alternar_mapa"))
         elif symbol == arcade.key.SPACE:
             self._vista_arcade._encolar(Comando("esperar"))
         elif symbol == arcade.key.R:
@@ -317,7 +336,8 @@ class PantallaJuego(_PantallaCripta):
                              self._verbo_objetivo, self._lista_objetivo, self._cursor_objetivo,
                              self._aviso, self._vista_arcade.bitacora_completa,
                              self._vista_arcade.panel_resolubilidad,
-                             self._vista_arcade.desplazamiento_resolubilidad)
+                             self._vista_arcade.desplazamiento_resolubilidad,
+                             self._vista_arcade.desplazamiento_mapa)
 
     # -- textos de una línea (los usan las pruebas de vista) --
 

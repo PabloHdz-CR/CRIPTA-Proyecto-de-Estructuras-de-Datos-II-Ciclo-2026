@@ -117,6 +117,44 @@ class ReporteResolubilidadVisible:
     puede_continuar: bool = False
 
 
+# 002-niebla-guerra: estado recordado de una salida en el mapa conocido
+# (FR-016). Es el RECORDADO, nunca el real.
+RECUERDO_ABIERTA = "abierta"
+RECUERDO_CERRADA = "cerrada"
+RECUERDO_NO_OBSERVADA = "no observada"
+
+
+@dataclass(frozen=True)
+class SalidaConocidaVisible:
+    """Una salida de una sala explorada en el mapa conocido (FR-016): a qué
+    sala lleva (id), su costo y su estado recordado (RECUERDO_*)."""
+    direccion: str
+    destino: int
+    costo: int
+    estado: str
+
+
+@dataclass(frozen=True)
+class SalaConocidaVisible:
+    """Una sala del mapa conocido. Explorada: id, nombre y sus salidas (tupla
+    de 4 en N, S, E, O, con None donde no hay salida). Avistada: solo el id;
+    nombre None y salidas vacías (FR-002)."""
+    id: int
+    nombre: Optional[str]
+    explorada: bool
+    actual: bool
+    salidas: tuple
+
+
+@dataclass(frozen=True)
+class MapaConocidoVisible:
+    """El panel del mapa conocido (tecla M, FR-016): salas ordenadas por id
+    numérico. Lo arma el Controlador solo mientras el panel está abierto."""
+    salas: ListaEnlazada            # de SalaConocidaVisible, por id
+    cantidad_exploradas: int
+    cantidad_avistadas: int
+
+
 @dataclass(frozen=True)
 class EstadoVista:
     """Lo que necesita UNA pantalla de juego para dibujarse completa."""
@@ -138,6 +176,9 @@ class EstadoVista:
     # None en el replay y en una partida cargada (FR-021). Va al final, con
     # nombre y valor por omisión (plan.md, "Posibles choques").
     resolubilidad: Optional[ReporteResolubilidadVisible] = None
+    # 002-niebla-guerra: el mapa conocido, solo con el panel M abierto (FR-016);
+    # None con el panel cerrado, en el replay y en las pruebas viejas.
+    mapa: Optional[MapaConocidoVisible] = None
 
 
 @dataclass(frozen=True)

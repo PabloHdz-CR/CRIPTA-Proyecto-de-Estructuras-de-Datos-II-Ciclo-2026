@@ -7,6 +7,7 @@ from ..actores.comportamientos import Cazador
 from ..actores.jugador import Jugador
 from ..estructuras.colaAcotada import ColaAcotada
 from ..estructuras.listaEnlazada import ListaEnlazada
+from ..mundo.conocimiento import DESCONOCIDA, ConocimientoJugador, RegistroConocidas
 from ..mundo.mapaDistancias import MapaDistancias
 from ..mundo.mundo import Mundo
 from ..reloj.agenda import Agenda
@@ -56,6 +57,8 @@ class Partida:
         self.fin = None                        # None, "victoria" o "derrota"
         self._fabrica = FabricaEntidades(servicio)
         self._mapa_distancias = None           # lo crea iniciar(), tras enlazar()
+        # 002-niebla-guerra: cambia el conocimiento del jugador por el Mutador.
+        self.conocimiento = None               # lo crea iniciar(), tras enlazar()
         # Cazadores que alguna vez se activaron, para R_activos (P3). Se filtran
         # por activo y vivo al consultar, así deshacer o morir no lo desfasan.
         self._cazadores = ListaEnlazada()
@@ -89,6 +92,7 @@ class Partida:
         self.mundo.enlazar()
         self._cazadores = ListaEnlazada()
         self._mapa_distancias = MapaDistancias(self.mundo, self.mayor_rango_activo)
+        self.conocimiento = ConocimientoJugador(self.mundo, self.mutador)
         self.jugador = Jugador(self.datos.jugador, self.mundo.sala_inicial,
                                self.mundo.inventario_max)
 
@@ -96,6 +100,9 @@ class Partida:
         self._asegurar_contenido(inicial)
         sala = self.mundo.sala(inicial)
         sala.rastro = 0
+        # 002-niebla-guerra (FR-001, FR-003): la inicial explorada desde el
+        # instante 0. El Mutador está en pausa: no es un cambio reversible.
+        self.conocimiento.iniciar(sala)
         # DECISIÓN: el turno del jugador se programa ANTES de activar enemigos: es el
         # evento más antiguo (secuencia 0) y gana cualquier empate de tiempo.
         primer_turno = EventoAccionActor(0, self.jugador)    # primero: secuencia 0
@@ -125,6 +132,16 @@ class Partida:
                     if isinstance(enemigo.comportamiento, Cazador):
                         self._cazadores.agregar_al_final(enemigo)
         self._mapa_distancias = MapaDistancias(self.mundo, self.mayor_rango_activo)
+        # 002-niebla-guerra (T042, FR-012, FR-016): el registro de conocidas no
+        # se guarda; se reconstruye con una pasada O(salas) desde el
+        # conocimiento cargado de cada sala, en un RegistroConocidas NUEVO
+        # (nunca uno compartido) y sin pasar por el Mutador: el Diario de una
+        # partida cargada empieza vacío.
+        self.mundo.conocidas = RegistroConocidas()
+        for sala in self.mundo:
+            if sala.conocimiento != DESCONOCIDA:
+                self.mundo.conocidas.agregar(sala)
+        self.conocimiento = ConocimientoJugador(self.mundo, self.mutador)
 
     def registrar_activacion(self, enemigo) -> None:
         """Lo llama Enemigo.activar(): recuerda a los cazadores (una vez cada
@@ -248,6 +265,9 @@ class Partida:
         origen = self._sala_actual()
         destino = self.mundo.sala(origen.salida(accion.direccion).destino)
         self.mutador.asignar(self.jugador, "sala", destino.id)
+        # 002-niebla-guerra (FR-004, research R3): el conocimiento cambia al
+        # entrar, antes de trampas y enemigos, dentro del intervalo de la acción.
+        self.conocimiento.entrar(destino)
         self.mutador.asignar(destino, "rastro", self.reloj)
         self.avisar(f"Entras a {destino.nombre}.")
         # DECISIÓN (SUPUESTO): primero las trampas y luego la activación de enemigos;

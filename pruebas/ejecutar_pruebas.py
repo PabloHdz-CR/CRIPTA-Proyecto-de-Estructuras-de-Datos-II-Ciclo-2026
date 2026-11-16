@@ -76,6 +76,8 @@ PRUEBAS = (
     "prueba_rendimiento_resolubilidad",  # FR-032 a FR-035, SC-002, SC-003 (H5.E1 a H5.E3)
     # 002-niebla-guerra (specs/002-niebla-guerra/tasks.md)
     "prueba_niebla_registro",        # FR-011, FR-016, FR-033: registro de conocidas y Diario (T006)
+    "prueba_niebla_conocimiento",    # FR-001 a FR-004, FR-016 (US1 1 a 3, T011)
+    "prueba_vista_mapa",             # FR-002, FR-014 a FR-017, SC-002 (US1 4 y 5, T012); FR-035 (T034)
 
 )
 

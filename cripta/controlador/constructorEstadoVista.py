@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING, Optional
 
 from ..modelo.actores.comportamientos import Cazador
 from ..modelo.estructuras.listaEnlazada import ListaEnlazada
+from ..modelo.mundo.conocimiento import ABIERTA, CERRADA, EXPLORADA
 from ..modelo.nucleo.constantes import COSTO_MOVER
 from ..modelo.objetos.inventario import CRITERIOS_ORDEN
 from ..modelo.puertos.dto import DIRECCIONES
@@ -32,9 +33,10 @@ from ..modelo.reloj.efecto import (
     EfectoAntorcha, EfectoRegeneracion, EfectoVelocidad, EfectoVeneno)
 from ..vista.estadoVista import (
     ActorVisible, CriptaVisible, EfectoVisible, EstadoVista, InfoReplay,
-    InventarioVisible, JugadorVisible, ObjetoVisible, PuntajeVisible,
-    ReporteResolubilidadVisible, SalaVisible, SalidaVisible, SALIDA_ABIERTA, SALIDA_CERRADA_CON_LLAVE,
-    SALIDA_SIN_SALIDA)
+    InventarioVisible, JugadorVisible, MapaConocidoVisible, ObjetoVisible, PuntajeVisible,
+    RECUERDO_ABIERTA, RECUERDO_CERRADA, RECUERDO_NO_OBSERVADA,
+    ReporteResolubilidadVisible, SalaConocidaVisible, SalaVisible, SalidaConocidaVisible,
+    SalidaVisible, SALIDA_ABIERTA, SALIDA_CERRADA_CON_LLAVE, SALIDA_SIN_SALIDA)
 from .mapaEtiquetas import MapaEtiquetas
 
 if TYPE_CHECKING:
@@ -63,7 +65,8 @@ class ConstructorEstadoVista:
                   criterio_orden: Optional[str] = None,
                   nombre_jugador: Optional[str] = None,
                   replay: Optional[InfoReplay] = None,
-                  resolubilidad: Optional[ReporteResolubilidadVisible] = None) -> EstadoVista:
+                  resolubilidad: Optional[ReporteResolubilidadVisible] = None,
+                  mapa_abierto: bool = False) -> EstadoVista:
         """criterio_orden: None (solo orden real) o uno de CRITERIOS_ORDEN.
         nombre_jugador, replay y resolubilidad pasan tal cual: son de la
         sesión, no del modelo (la Partida no sabe cómo se llama el jugador ni
@@ -84,7 +87,52 @@ class ConstructorEstadoVista:
             nombre_jugador=nombre_jugador,
             replay=replay,
             resolubilidad=resolubilidad,
+            mapa=self._mapa_conocido(partida, sala) if mapa_abierto else None,
         )
+
+    # ------------------------------------------------------------------
+    # Mapa conocido (002-niebla-guerra, FR-002, FR-014 a FR-016)
+    # ------------------------------------------------------------------
+
+    def _mapa_conocido(self, partida: "Partida", actual: "Sala") -> MapaConocidoVisible:
+        """El panel del mapa conocido, armado SOLO desde el conocimiento del
+        jugador: de cada sala lo que su estado permite (explorada: nombre y
+        salidas; avistada: solo el id) y de cada salida su destino, su costo y
+        su estado RECORDADO, nunca `cerrada` ni el contenido (FR-014, FR-015).
+
+        DECISIÓN (research R4): solo se arma con el panel abierto. Recorre el
+        registro de conocidas y lo ordena por id con la mezcla propia: O(k log
+        k + 4k), k = conocidas; nunca recorre la cripta entera."""
+        salas = ListaEnlazada()
+        exploradas = 0
+        avistadas = 0
+        for sala in partida.mundo.conocidas.ordenadas_por_id():
+            if sala.conocimiento == EXPLORADA:
+                exploradas += 1
+                salas.agregar_al_final(SalaConocidaVisible(
+                    id=sala.id, nombre=sala.nombre, explorada=True, actual=sala is actual,
+                    salidas=(self._salida_conocida(sala, 0), self._salida_conocida(sala, 1),
+                             self._salida_conocida(sala, 2), self._salida_conocida(sala, 3))))
+            else:
+                avistadas += 1
+                salas.agregar_al_final(SalaConocidaVisible(
+                    id=sala.id, nombre=None, explorada=False, actual=False, salidas=()))
+        return MapaConocidoVisible(salas=salas, cantidad_exploradas=exploradas,
+                                   cantidad_avistadas=avistadas)
+
+    @staticmethod
+    def _salida_conocida(sala: "Sala", indice: int) -> Optional[SalidaConocidaVisible]:
+        salida = sala.salidas[indice]
+        if salida is None:
+            return None
+        if salida.recordada == ABIERTA:
+            estado = RECUERDO_ABIERTA
+        elif salida.recordada == CERRADA:
+            estado = RECUERDO_CERRADA
+        else:
+            estado = RECUERDO_NO_OBSERVADA
+        return SalidaConocidaVisible(direccion=DIRECCIONES[indice], destino=salida.destino,
+                                     costo=salida.costo, estado=estado)
 
     def _jugador_visible(self, jugador: "Jugador") -> JugadorVisible:
         """O(1): ataque y defensa efectivos solo miran el arma y la armadura

@@ -82,3 +82,68 @@ class RegistroConocidas:
         for clave in mezcla(claves):
             ordenadas.agregar_al_final(clave.valor)
         return ordenadas
+
+
+class ConocimientoJugador:
+    """Servicio del Modelo que cambia el conocimiento del jugador. Uno por
+    Partida. No guarda estado propio: lee y escribe `Sala.conocimiento`,
+    `Salida.recordada` y `Mundo.conocidas`, siempre por el Mutador y solo si
+    el valor cambia (research R2).
+
+    Llega a las salas por referencia (`Salida.sala_destino`, del enlace de
+    001): nunca busca una sala por id (FR-032).
+    """
+
+    def __init__(self, mundo, mutador) -> None:
+        self._mundo = mundo
+        self._mutador = mutador
+
+    # ------------------------------------------------------------------
+    # Consultas, O(1) (FR-032)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def estado(sala) -> int:
+        """DESCONOCIDA, AVISTADA o EXPLORADA."""
+        return sala.conocimiento
+
+    @staticmethod
+    def recuerdo(salida) -> int:
+        """NO_OBSERVADA, ABIERTA o CERRADA."""
+        return salida.recordada
+
+    # ------------------------------------------------------------------
+    # Cambios
+    # ------------------------------------------------------------------
+
+    def iniciar(self, sala_inicial) -> None:
+        """Instante 0 (FR-001, FR-003): la inicial explorada y sus destinos
+        avistados. La Partida lo llama con el Mutador en pausa: es el punto
+        de partida, no un cambio reversible."""
+        self.entrar(sala_inicial)
+
+    def entrar(self, sala) -> None:
+        """El jugador entra a `sala` (FR-004): queda explorada y los destinos
+        desconocidos de sus salidas quedan avistados. O(salidas de la sala)."""
+        self._subir(sala, EXPLORADA)
+        self._avistar_destinos(sala)
+
+    # ------------------------------------------------------------------
+    # Internos
+    # ------------------------------------------------------------------
+
+    def _avistar_destinos(self, sala) -> None:
+        for salida in sala.salidas:
+            if salida is not None and salida.sala_destino is not None:
+                self._subir(salida.sala_destino, AVISTADA)
+
+    def _subir(self, sala, nuevo: int) -> None:
+        """Sube el estado de la sala a `nuevo` si estaba por debajo; nunca lo
+        baja (solo el Diario baja estados al revertir). Si la sala deja de ser
+        desconocida, la agrega al registro en el mismo cambio."""
+        anterior = sala.conocimiento
+        if anterior >= nuevo:
+            return
+        if anterior == DESCONOCIDA:
+            self._mutador.conocida_agregar(self._mundo.conocidas, sala)
+        self._mutador.asignar(sala, "conocimiento", nuevo)

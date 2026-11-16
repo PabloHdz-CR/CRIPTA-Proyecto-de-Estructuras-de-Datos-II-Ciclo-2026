@@ -22,7 +22,9 @@ AlmacenPuntajes) y GestorGuardado; nunca rutas, open() ni print (guía §4).
 Verbos de SESIÓN (no consumen reloj virtual ni son acciones del jugador):
     "guardar", "cargar", "salir", "inventario_siguiente",
     "inventario_anterior", "ordenar_inventario" (peso/valor/nombre/real),
-    "ver_resolubilidad" (V en una partida sin reporte, 003-resolubilidad).
+    "ver_resolubilidad" (V en una partida sin reporte, 003-resolubilidad),
+    "alternar_mapa" (M: abre o cierra el panel del mapa conocido,
+    002-niebla-guerra, FR-016, FR-017).
 """
 from __future__ import annotations
 
@@ -92,6 +94,10 @@ class ControladorJuego:
         self._datos_preparados = None
         self._resultado: Optional[ResultadoResolubilidad] = None
         self._reporte_visible: Optional[ReporteResolubilidadVisible] = None
+        # 002-niebla-guerra (FR-016, FR-017): el panel del mapa conocido está
+        # abierto. Es estado de PRESENTACIÓN del Controlador, no del Modelo:
+        # no se guarda, no se revierte y no va al log.
+        self._mapa_abierto = False
 
     # ------------------------------------------------------------------
     # Arranque
@@ -198,6 +204,10 @@ class ControladorJuego:
             self._ordenar_inventario(comando.argumentos)
         elif verbo == "ver_resolubilidad":
             self._ver_resolubilidad()
+        elif verbo == "alternar_mapa":
+            # 002-niebla-guerra (FR-017): no es acción del jugador, no gasta reloj.
+            self._mapa_abierto = not self._mapa_abierto
+            self._mostrar_estado_actual()
         else:
             self._procesar_accion(comando)
 
@@ -321,7 +331,7 @@ class ControladorJuego:
     def _mostrar_estado_actual(self) -> None:
         self._vista.mostrar_estado(self._constructor.construir(
             self.partida, self._criterio_orden, nombre_jugador=self._nombre_jugador,
-            resolubilidad=self._reporte_visible))
+            resolubilidad=self._reporte_visible, mapa_abierto=self._mapa_abierto))
 
     def _finalizar(self) -> None:
         """Victoria o derrota (§2.12): puntaje, pantalla de fin y reporte de
