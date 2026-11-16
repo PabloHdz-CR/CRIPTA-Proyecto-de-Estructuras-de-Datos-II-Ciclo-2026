@@ -19,7 +19,10 @@ Falta la confirmación de Diego (autor de 001 y 003) de que no planea usarlas.
 | **P** | viaje en curso | `pergamino` | detiene el viaje y revierte solo el último paso (FR-029) |
 | **H** | — | — | reservada para la feature 004 (historia) |
 
-Con el panel abierto, las flechas no mueven al jugador. Con un viaje en curso,
+Con el panel abierto, las flechas no mueven al jugador, y R, A, U, Q y S
+cierran primero el panel (encolan `alternar_mapa`) y su selección se abre en
+la pantalla siguiente, ya sin mapa: nunca hay dos selecciones visibles, y ESC
+cancela la selección sin reabrir el mapa (FR-037). Con un viaje en curso,
 solo los comandos que **cambian la partida** (las teclas de acción, **G**
 guardar, **C** cargar y ESC salir) detienen el viaje con el motivo
 "interrumpido" y luego se procesan; los de **presentación** (**M**, Tab, **O**,
