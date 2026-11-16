@@ -375,8 +375,8 @@ guarda el registro de conocidas: se reconstruye al cargar (R4). Un archivo de
 versión 1 o 2 lanza `VersionIncompatible("formato de archivo de partida", 3,
 version_leida)`, cuyo mensaje ya dice la versión encontrada y la esperada
 (FR-013, clarificación 4). `cargar_sala` (carga parcial por índice) lee los
-mismos campos nuevos. El número 3 se coordina con la feature 004, que también
-cambiará el formato: la que llegue segunda a `main` toma el 4.
+mismos campos nuevos. El número 3 lo fija el autor de 002 y 004 (las dos son del mismo integrante):
+004 usará el 4, sobre el formato 3.
 
 ---
 

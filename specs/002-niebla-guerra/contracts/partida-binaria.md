@@ -4,8 +4,8 @@ Cambio respecto del formato de la feature 001 (`FORMATO_VERSION = 2` en
 `cripta/adaptadores/partidaBinaria.py`).
 
 **Número de versión**: esta feature usa `FORMATO_VERSION = 3`. La feature 004
-(línea de tiempo) también cambiará el formato: la que llegue segunda a `main`
-toma el 4 y actualiza su contrato (mismo acuerdo que T048 de 001).
+(línea de tiempo), del mismo integrante, usará el 4 y partirá del formato 3;
+no hace falta acordarlo con otro integrante.
 
 ```text
 SALA:

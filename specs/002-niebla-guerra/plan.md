@@ -232,8 +232,8 @@ actores, combate y fin de partida.
 | El Diario revierte el registro de conocidas fuera de orden | El inverso verifica que la última sea la sala esperada y lanza error si no; la prueba de 1000 secuencias lo ejercita (SC-003) |
 | Pruebas existentes que arman `Sala`, `Salida`, `ResultadoAccion` o DTOs a mano | Campos nuevos con valores por omisión |
 | Guardados existentes de la versión 2 | Se reportan incompatibles (FR-013); el README lo dice |
-| 002 y 004 toman el mismo `FORMATO_VERSION` | Acuerdo en contracts/partida-binaria.md: la segunda en llegar a `main` toma el 4 |
-| La letra de 004 choca con las de esta feature | M e I asignadas aquí; H reservada para 004 y anotada en el README |
+| 002 y 004 toman el mismo `FORMATO_VERSION` | Las dos son del mismo integrante: 002 usa el 3 y 004 el 4, sobre el formato 3 (contracts/partida-binaria.md) |
+| Las letras de esta feature o la de 004 chocan con las de 001 y 003 | M e I asignadas aquí y H reservada para 004; T005 lo confirma con el autor de 001 y 003 y queda en el README |
 | Viaje en curso al guardar o cargar | Cualquier comando detiene el viaje antes de procesarse; el viaje no se guarda |
 | La prueba de 5 ms es sensible a la carga de la máquina | Mínimo de varias repeticiones, como `Medidor`, y la cifra medida en el mensaje al fallar |
 | `ControladorMenu` descarta los `None` | Se cambia para entregarlos a la partida solo con viaje en curso; lo cubre `prueba_vista_mapa` con una vista registradora |
