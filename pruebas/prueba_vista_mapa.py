@@ -101,6 +101,7 @@ def caso_tecla_m():
     try:
         for codigo in range(arcade.key.A, arcade.key.Z + 1):
             vista.mostrar_estado(estado)
+            _comandos(vista)        # lo que dejaron los eventos reales de la ventana
             vista._pantalla_actual.on_key_press(codigo, 0)
             encolados = []
             while True:
@@ -133,13 +134,18 @@ def caso_panel_se_dibuja():
         assert "MARCA-10" in texto and "(actual)" in texto, f"FR-016: {texto}"
         assert "(avistada)" in texto and "MARCA-9" not in texto, f"FR-002: {texto}"
         assert len(filas) >= 5 + 4, f"FR-016: una fila por sala y por salida: {filas}"
+        _comandos(vista)            # actualizar() pudo dejar comandos de la ventana real
         pantalla.on_key_press(arcade.key.PAGEDOWN, 0)
-        assert vista.pedir_comando() is None, "RePág/AvPág no son comandos"
+        assert _comandos(vista) == [], "RePág/AvPág no son comandos"
     finally:
         vista.cerrar()
 
 
 def _comandos(vista):
+    """Saca y devuelve todo lo que hay en la cola de comandos. Se llama justo
+    antes de cada tecla para que la prueba mire solo lo que ella encola, como
+    vaciar() en prueba_vista_10 (los eventos reales de la ventana pueden dejar
+    comandos)."""
     salida = []
     while True:
         comando = vista.pedir_comando()
@@ -161,6 +167,7 @@ def caso_t034_cursor_y_enter():
     try:
         def tecla(codigo):
             vista.mostrar_estado(estado)
+            _comandos(vista)        # solo cuenta lo que encola esta tecla
             vista._pantalla_actual.on_key_press(codigo, 0)
             return _comandos(vista)
 
