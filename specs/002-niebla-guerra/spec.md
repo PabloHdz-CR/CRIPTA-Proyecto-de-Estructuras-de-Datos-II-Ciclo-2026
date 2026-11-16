@@ -8,6 +8,16 @@
 
 **Input**: User description: "Niebla de guerra y viaje automático «ir a» de la Parte II de Cripta: §3.3 niebla de guerra, §3.4 «ir a», §5.3 el mapa conocido, §6.1 límite de 5 ms por paso, §6.3 mediciones con --bench y §7.3 interfaz mínima" (descripción completa con reglas del juego, 6 escenarios obligatorios del Apéndice B y requisitos de rendimiento en el comando `/speckit-specify` del 2026-11-15, registrado en PROMPTS_LLM.md).
 
+## Clarifications
+
+### Session 2026-11-15
+
+- Q: Cuando la antorcha explora una sala vecina en la que el jugador nunca estuvo, ¿qué estado deben tener en el mapa las puertas de esa vecina (salvo la que comparte con la sala del jugador)? → A: "No observada": se conoce la salida y su costo, pero «ir a» no la usa hasta que el jugador esté en una de sus dos salas (FR-007, FR-009, FR-021).
+- Q: Durante un viaje «ir a» con un veneno activo que quita vida en cada paso, ¿debe esa pérdida de vida detener el viaje? → A: Sí: cualquier pérdida de vida, incluido el veneno, detiene el viaje con el motivo "daño recibido" (FR-024).
+- Q: Si un enemigo errante entra a la sala del jugador entre dos pasos de un viaje y todavía no le hizo daño, ¿debe detenerse el viaje? → A: No: solo lo detiene si le causa daño; su sola presencia no detiene el viaje. Detienen el viaje entrar a una sala con enemigos activos o dormidos y recibir daño (FR-024).
+- Q: Al cargar un archivo de partida de un formato anterior, sin el conocimiento del jugador (de la primera parte o del formato actual de la feature 001), ¿debe reportarse incompatible o migrarse? → A: Reportar incompatible: un mensaje con la versión del archivo y la esperada, y la partida no se carga; no hay migración (FR-013).
+- Q: En la ventana del juego, ¿cómo elige el jugador la sala destino de «ir a»? → A: Desde el panel del mapa conocido: el jugador se mueve con las flechas por la lista de salas exploradas y confirma con Enter para viajar a la elegida (FR-016, FR-018, FR-035).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Ver solo lo que el jugador conoce (Priority: P1)
@@ -148,7 +158,7 @@ un formato anterior.
 1. **Given** el jugador entró con la antorcha encendida a una sala y eso exploró varias vecinas, **When** usa el pergamino de retroceso sobre esa entrada, **Then** la sala y todas las vecinas exploradas por ella vuelven a su estado anterior (explorada, avistada o desconocida), y los recuerdos de puertas vuelven a los de antes (FR-010, FR-011; Apéndice B).
 2. **Given** un viaje «ir a» en curso que ya dio varios pasos, **When** el jugador usa el pergamino de retroceso sin haber interrumpido antes el viaje, **Then** el viaje se detiene al terminar el paso en curso, el pergamino revierte solo ese último paso (posición, tiempo y conocimiento de ese paso) y el viaje no continúa (FR-011, FR-024, FR-029; Apéndice B).
 3. **Given** una partida con salas exploradas, avistadas y puertas recordadas con estados distintos del real, **When** se guarda y se carga, **Then** el mapa conocido cargado es idéntico al guardado, incluidos los recuerdos desactualizados (FR-012).
-4. **Given** un archivo de partida de un formato anterior que no incluye el conocimiento del jugador (por ejemplo, de la primera parte), **When** se intenta cargar, **Then** se reporta incompatible con un mensaje que indica la versión del archivo y la esperada, o se migra de forma explícita y avisada; nunca se carga en silencio con un mapa inventado (FR-013).
+4. **Given** un archivo de partida de un formato anterior que no incluye el conocimiento del jugador (por ejemplo, de la primera parte), **When** se intenta cargar, **Then** se reporta incompatible con un mensaje que indica la versión del archivo y la esperada, la partida no se carga y no se migra ni se inventa un mapa (FR-013).
 5. **Given** un partida.log con viajes «ir a», **When** se reproduce con --replay, **Then** las líneas de comentario no se ejecutan como acciones y el conocimiento del jugador al final es idéntico al de la partida original (FR-027).
 
 ---
@@ -222,7 +232,7 @@ tiempos con los límites.
 - **FR-010**: El conocimiento del jugador (estado de cada sala y recuerdo de cada cara de puerta) MUST ser parte del estado del juego y MUST cambiar solo por acciones del jugador o por eventos que el jugador observa.
 - **FR-011**: El pergamino de retroceso MUST devolver el conocimiento del jugador exactamente al que tenía antes de las acciones revertidas: estados de salas (incluidas las exploradas o avistadas por la antorcha) y recuerdos de puertas. Para hacerlo MUST registrarse solo lo necesario para invertir cada cambio, sin copias completas del mapa (constitución, principio V).
 - **FR-012**: Guardar una partida MUST conservar el conocimiento completo del jugador, y cargarla MUST restaurarlo idéntico, incluidos los recuerdos de puertas que ya no coinciden con su estado real.
-- **FR-013**: El archivo de partida MUST cambiar de versión de formato. Un archivo de una versión anterior que no incluye el conocimiento del jugador MUST reportarse incompatible, indicando la versión encontrada y la esperada, o migrarse de forma explícita, con un aviso al jugador que diga qué conocimiento se reconstruyó; MUST NOT cargarse en silencio.
+- **FR-013**: El archivo de partida MUST cambiar de versión de formato. Un archivo de una versión anterior que no incluye el conocimiento del jugador MUST reportarse incompatible, con un mensaje que indique la versión encontrada y la esperada, y MUST NOT cargarse; no se migra, porque no puede reconstruirse con fidelidad lo que el jugador vio (constitución, principio V).
 - **FR-034**: El conocimiento del jugador en cada instante MUST poder consultarse a partir de los cambios registrados, para que la línea de tiempo (feature 004) pueda mostrar el mapa conocido de un instante pasado.
 
 **Vista y mapa conocido**
@@ -235,6 +245,7 @@ tiempos con los límites.
 **«ir a»: orden y ruta**
 
 - **FR-018**: La orden «ir a <sala>» MUST aceptarse solo si la sala está explorada, no es la sala actual y existe una ruta conocida según FR-021. Si no, MUST rechazarse con un mensaje que diga el motivo (sala no explorada, ya estás en esa sala o sin ruta conocida), sin mover al jugador, sin consumir tiempo y sin registrar movimientos. El mensaje para una sala desconocida o inexistente MUST ser el mismo.
+- **FR-035**: En la ventana del juego, el destino de «ir a» MUST elegirse desde el panel del mapa conocido: mientras el panel está abierto, el jugador recorre con las flechas la lista de salas exploradas (en el orden de FR-016) y confirma con Enter para viajar a la sala elegida. Las salas avistadas MUST NOT poder elegirse. Confirmar sobre la sala actual o sobre una sala sin ruta conocida MUST producir el rechazo de FR-018.
 - **FR-019**: El costo de una ruta MUST ser la suma de los costos de sus salidas; una salida sin costo declarado MUST valer 100.
 - **FR-020**: La ruta MUST minimizar el costo total. Entre rutas de igual costo MUST elegirse la que da el primer paso hacia la sala vecina de menor id (los ids de sala son enteros y se comparan como números, igual que el cazador de la feature 001, FR-014 de 001); si hay varias salidas hacia esa vecina con el mismo costo mínimo, la primera en el orden N, S, E, O.
 - **FR-021**: La ruta MUST usar solo salas exploradas y salidas cuya cara, en el sentido en que se recorre, el mapa recuerda abierta. MUST NOT usar salidas recordadas cerradas o no observadas, ni información que no esté en el conocimiento del jugador.
@@ -281,14 +292,14 @@ tiempos con los límites.
 ## Assumptions
 
 - **Fuente de las reglas**: Cripta Parte II §3.3 (niebla de guerra), §3.4 («ir a»), §5.3 (el mapa conocido como problema de estructuras de datos), §6.1 (límite de 5 ms por paso de «ir a»), §6.3 (mediciones con --bench), §7.3 (interfaz mínima: ver el mapa conocido, ejecutar «ir a» y ver por qué se detuvo) y Apéndice B (6 escenarios obligatorios), y las reglas de la primera parte para movimiento, antorcha, pergamino y activación de enemigos (P1 §2.4).
-- **Salidas de vecinas exploradas con la antorcha**: como el jugador no está en la vecina, sus puertas (salvo la que comparte con la sala actual) no se observan y figuran "no observada"; «ir a» no las usa hasta que el jugador entre a esa vecina o a la sala del otro lado. Es la lectura literal de "observa una puerta cuando está en cualquiera de las dos salas"; es candidata a confirmarse en /speckit-clarify.
-- **Identificación de salas avistadas**: el mapa conocido muestra el id de una sala avistada (lo que dice la salida que lleva a ella) pero no su nombre. El destino de «ir a» se indica por el id de una sala explorada, tal como aparece en el mapa conocido.
-- **Daño durante el viaje**: "recibir daño" incluye cualquier pérdida de vida (ataque, trampa, veneno), en el paso o en los eventos que lo siguen. Un veneno activo detiene el viaje en el primer paso con pérdida de vida.
-- **Enemigos y viaje**: detiene el viaje entrar a una sala con enemigos activos o dormidos; un enemigo que llega a la sala del jugador entre pasos solo lo detiene si le causa daño. Se puede ordenar «ir a» desde una sala con enemigos.
+- **Salidas de vecinas exploradas con la antorcha**: como el jugador no está en la vecina, sus puertas (salvo la que comparte con la sala actual) no se observan y figuran "no observada"; «ir a» no las usa hasta que el jugador entre a esa vecina o a la sala del otro lado. Es la lectura literal de "observa una puerta cuando está en cualquiera de las dos salas" (confirmada en Clarifications).
+- **Identificación de salas avistadas**: el mapa conocido muestra el id de una sala avistada (lo que dice la salida que lleva a ella) pero no su nombre. El destino de «ir a» se elige en el panel del mapa conocido (FR-035, confirmado en Clarifications); la orden por id de FR-018 sigue existiendo para las pruebas sin interfaz.
+- **Daño durante el viaje**: "recibir daño" incluye cualquier pérdida de vida (ataque, trampa, veneno), en el paso o en los eventos que lo siguen. Un veneno activo detiene el viaje en el primer paso con pérdida de vida (confirmado en Clarifications).
+- **Enemigos y viaje**: detiene el viaje entrar a una sala con enemigos activos o dormidos; un enemigo que llega a la sala del jugador entre pasos solo lo detiene si le causa daño (confirmado en Clarifications). Se puede ordenar «ir a» desde una sala con enemigos.
 - **Pergamino e interrupción**: en el escenario obligatorio "un pergamino durante un viaje", el jugador usa el pergamino con el viaje en curso, sin interrumpirlo antes: el viaje se detiene al terminar el paso en curso y el pergamino revierte ese paso (FR-029); el pergamino nunca se aplica en medio de un paso. La interrupción manual sin pergamino (FR-028) es una opción adicional.
-- **Archivo de la primera parte**: la opción por defecto es reportarlo incompatible (FR-013), porque no puede reconstruirse fielmente lo que el jugador vio. Si el plan elige migrar, la migración debe avisar qué reconstruyó y no inventar recuerdos de puertas. Lo mismo vale para el formato actual de la feature 001, que tampoco tiene el conocimiento del jugador.
+- **Archivo de formato anterior** (confirmado en Clarifications): un archivo de la primera parte o del formato actual de la feature 001, que no tiene el conocimiento del jugador, se reporta incompatible y no se carga (FR-013). No se migra porque no puede reconstruirse con fidelidad lo que el jugador vio ni cómo recordaba cada puerta.
 - **Línea de tiempo**: esta capacidad solo deja el conocimiento registrado de forma reversible y consultable por instante (FR-034); la vista de línea de tiempo es la feature 004.
 - **Costos de salida**: los da la feature 001 (terreno), incluida la regla de que un costo nulo equivale a no declarado; aquí sin costo declarado vale 100 (FR-019).
-- **Teclas**: las letras en uso en la partida son A, B, C, G, L, N, O, P, Q, R, S, U, V y X; el plan elige las del mapa conocido y de «ir a» sin repetirlas y las coordina con la feature 004.
+- **Teclas**: las letras en uso en la partida son A, B, C, G, L, N, O, P, Q, R, S, U, V y X; el plan elige la letra que abre el panel del mapa conocido, desde el que también se ordena «ir a» con flechas y Enter (FR-035), sin repetir esas letras, y la coordina con la feature 004.
 - **Cripta de referencia**: la publicada más grande entre las disponibles al medir (hoy cripta-06), sin escribir su id ni su tamaño en el código (constitución, principio IV).
 - **Orden de comparación de ids**: los ids de sala son enteros y se comparan como números (9 va antes que 10), igual que el cazador de la feature 001 (FR-014 de 001). La comparación como texto, carácter por carácter, es solo para los ids de llaves de la feature 003.
