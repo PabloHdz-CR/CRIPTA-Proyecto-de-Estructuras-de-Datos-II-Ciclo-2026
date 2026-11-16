@@ -78,6 +78,7 @@ PRUEBAS = (
     "prueba_niebla_registro",        # FR-011, FR-016, FR-033: registro de conocidas y Diario (T006)
     "prueba_niebla_conocimiento",    # FR-001 a FR-004, FR-016 (US1 1 a 3, T011)
     "prueba_vista_mapa",             # FR-002, FR-014 a FR-017, SC-002 (US1 4 y 5, T012); FR-035 (T034)
+    "prueba_niebla_puertas",         # FR-005 a FR-007, FR-014 (US2 1 a 3, T019)
 
 )
 

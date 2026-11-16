@@ -102,6 +102,8 @@ class EventoCierrePuerta(Evento):
 
     def ejecutar(self, partida) -> None:
         salida = self.duenio
-        partida.mutador.asignar(salida, "cerrada", True)
+        # 002-niebla-guerra (FR-005): por cambiar_puerta, que la observa si el
+        # jugador está en una de las dos salas.
+        partida.cambiar_puerta(salida, True)
         partida.mutador.asignar(salida, "evento_cierre", None)
         partida.avisar(f"La puerta hacia el {salida.direccion} se cierra sola.")

@@ -124,7 +124,7 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 
 ### Tests for User Story 2 (escribir primero; deben fallar)
 
-- [ ] T019 [P] [US2] Crear `pruebas/prueba_niebla_puertas.py`:
+- [X] T019 [P] [US2] Crear `pruebas/prueba_niebla_puertas.py`:
   - US2 escenario 1 (FR-005, FR-006): abrir con llave y un cierre automático con el jugador en una de las dos salas actualizan `recordada` de las dos caras;
   - US2 escenario 2 (FR-006): el cierre automático con el jugador lejos deja la cara recordada abierta;
   - US2 escenario 3 (FR-005, FR-006): al entrar a cualquiera de las dos salas, el recuerdo pasa a cerrada;
@@ -138,9 +138,9 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 
 ### Implementation for User Story 2
 
-- [ ] T020 [US2] En `cripta/modelo/mundo/conocimiento.py` agregar `observar_cara(salida)` (copia `ABIERTA` o `CERRADA` según `cerrada`, por el Mutador, solo si cambia) y `observar_sala(sala)` (todas las caras de `sala.salidas` y de `sala.entrantes`), y llamarla desde `iniciar` y `entrar` (research R3). Cubre: FR-002, FR-005, FR-006. Depende de: T013.
-- [ ] T021 [US2] En `cripta/modelo/nucleo/partida.py` agregar `cambiar_puerta(salida, cerrada)`: asigna por el Mutador y, si `salida.origen` o `salida.sala_destino` es la sala del jugador (comparando `id` con `jugador.sala`), llama a `conocimiento.observar_cara(salida)`; `_abrir_puerta` la usa. En `cripta/modelo/reloj/eventos.py`, `EventoCierrePuerta.ejecutar` la usa en vez de `mutador.asignar(salida, "cerrada", True)`. Cubre: FR-005, FR-006. Depende de: T020. T019 pasa.
-- [ ] T022 [US2] En `cripta/controlador/constructorEstadoVista.py`, `_salida_visible` de la sala actual arma el estado desde `recordada` (igual al real porque la sala del jugador está observada) en vez de `cerrada` (contracts/vista.md, "Sala actual"). Ajustar `prueba_vista_costos` si compara con `cerrada`. Cubre: FR-014. Depende de: T021.
+- [X] T020 [US2] En `cripta/modelo/mundo/conocimiento.py` agregar `observar_cara(salida)` (copia `ABIERTA` o `CERRADA` según `cerrada`, por el Mutador, solo si cambia) y `observar_sala(sala)` (todas las caras de `sala.salidas` y de `sala.entrantes`), y llamarla desde `iniciar` y `entrar` (research R3). Cubre: FR-002, FR-005, FR-006. Depende de: T013.
+- [X] T021 [US2] En `cripta/modelo/nucleo/partida.py` agregar `cambiar_puerta(salida, cerrada)`: asigna por el Mutador y, si `salida.origen` o `salida.sala_destino` es la sala del jugador (comparando `id` con `jugador.sala`), llama a `conocimiento.observar_cara(salida)`; `_abrir_puerta` la usa. En `cripta/modelo/reloj/eventos.py`, `EventoCierrePuerta.ejecutar` la usa en vez de `mutador.asignar(salida, "cerrada", True)`. Cubre: FR-005, FR-006. Depende de: T020. T019 pasa.
+- [X] T022 [US2] En `cripta/controlador/constructorEstadoVista.py`, `_salida_visible` de la sala actual arma el estado desde `recordada` (igual al real porque la sala del jugador está observada) en vez de `cerrada` (contracts/vista.md, "Sala actual"). Ajustar `prueba_vista_costos` si compara con `cerrada`. Cubre: FR-014. Depende de: T021.
 
 **Checkpoint**: US1 y US2 en verde; la suite completa sigue en verde.
 

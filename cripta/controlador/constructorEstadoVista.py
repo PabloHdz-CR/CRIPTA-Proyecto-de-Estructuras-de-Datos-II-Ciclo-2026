@@ -179,7 +179,10 @@ class ConstructorEstadoVista:
         salida = sala.salidas[indice]
         if salida is None:
             return SalidaVisible(direccion=DIRECCIONES[indice], estado=SALIDA_SIN_SALIDA)
-        estado = SALIDA_CERRADA_CON_LLAVE if salida.cerrada else SALIDA_ABIERTA
+        # 002-niebla-guerra (FR-014): desde el RECUERDO, no desde `cerrada`. En
+        # la sala del jugador coinciden (siempre está observada, research R3),
+        # pero así todo lo que se dibuja sale del conocimiento.
+        estado = SALIDA_CERRADA_CON_LLAVE if salida.recordada == CERRADA else SALIDA_ABIERTA
         # FR-023: el costo efectivo, abierta o cerrada (100 si no se declaró).
         return SalidaVisible(direccion=DIRECCIONES[indice], estado=estado,
                              costo=salida.costo)

@@ -123,10 +123,29 @@ class ConocimientoJugador:
         self.entrar(sala_inicial)
 
     def entrar(self, sala) -> None:
-        """El jugador entra a `sala` (FR-004): queda explorada y los destinos
-        desconocidos de sus salidas quedan avistados. O(salidas de la sala)."""
+        """El jugador entra a `sala` (FR-004): queda explorada, los destinos
+        desconocidos de sus salidas quedan avistados y observa sus puertas
+        (FR-005). O(salidas y entrantes de la sala)."""
         self._subir(sala, EXPLORADA)
         self._avistar_destinos(sala)
+        self.observar_sala(sala)
+
+    def observar_sala(self, sala) -> None:
+        """El jugador observa todas las puertas de la sala donde está (FR-005,
+        research R3): las caras que salen de ella y las que entran a ella
+        (contrapartes y caras de un solo sentido, por `Sala.entrantes`)."""
+        for salida in sala.salidas:
+            if salida is not None:
+                self.observar_cara(salida)
+        for salida in sala.entrantes:
+            self.observar_cara(salida)
+
+    def observar_cara(self, salida) -> None:
+        """Copia el estado REAL de la cara a su recuerdo (FR-005, FR-006), por
+        el Mutador y solo si cambia (FR-033). O(1)."""
+        visto = CERRADA if salida.cerrada else ABIERTA
+        if salida.recordada != visto:
+            self._mutador.asignar(salida, "recordada", visto)
 
     # ------------------------------------------------------------------
     # Internos

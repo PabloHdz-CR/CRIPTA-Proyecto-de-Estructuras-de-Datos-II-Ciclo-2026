@@ -285,12 +285,30 @@ class Partida:
         salida = self._sala_actual().salida(accion.direccion)
         # DECISIÓN: el cierre automático es un EVENTO (§2.5) contado desde el instante
         # en que se abre; la llave no se consume.
-        self.mutador.asignar(salida, "cerrada", False)
+        self.cambiar_puerta(salida, False)
         if salida.cierre_automatico is not None:
             cierre = EventoCierrePuerta(self.reloj + salida.cierre_automatico, salida)
             self.mutador.agenda_programar(cierre)
             self.mutador.asignar(salida, "evento_cierre", cierre)
         self.avisar(f"Abres la puerta hacia el {accion.direccion}.")
+
+    def cambiar_puerta(self, salida, cerrada: bool) -> None:
+        """ÚNICO lugar del juego que cambia el estado real de una cara de
+        puerta (002-niebla-guerra, FR-005, research R3). Asigna por el Mutador
+        y, si el jugador está en una de las dos salas que conecta, la observa
+        en el acto: así la sala del jugador tiene siempre sus caras observadas.
+        O(1): compara ids, sin buscar salas.
+
+        DECISIÓN: la observación vive aquí y no en el setter de `cerrada`,
+        porque el setter también lo disparan el Diario al deshacer y la carga;
+        deshacer restaura `cerrada` y `recordada` cada uno con su registro."""
+        self.mutador.asignar(salida, "cerrada", cerrada)
+        sala_jugador = self.jugador.sala
+        origen = salida.origen
+        destino = salida.sala_destino
+        if ((origen is not None and origen.id == sala_jugador)
+                or (destino is not None and destino.id == sala_jugador)):
+            self.conocimiento.observar_cara(salida)
 
     def _usar_pergamino(self) -> None:
         """No consume tiempo ni cuenta como acción. El pergamino se gasta DESPUÉS

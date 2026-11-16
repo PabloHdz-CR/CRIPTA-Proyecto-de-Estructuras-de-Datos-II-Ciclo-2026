@@ -1270,3 +1270,9 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 - **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-implement`
 - **Prompt:** "/speckit-implement Implementa la spec 002 siguiendo tasks.md en orden, fase por fase. Reglas: (1) T005: anota que revisé el código y M, I y H están libres, y que falta solo la confirmación de Diego; no te detengas por eso. (2) En cada historia, primero las pruebas, que deben fallar, y después el código. (3) Al terminar cada fase o historia, corre py pruebas/ejecutar_pruebas.py y py pruebas/prueba_reglas.py, marca las tareas hechas en tasks.md y haz un commit con el nombre de la historia y las tareas, por ejemplo "Niebla US1: estados de sala y panel M (T011 a T018)". (4) Si descubres que la spec estaba mal, detente y dímelo: se corrige primero la spec en su propio commit. (5) Nada de dict, set, list, heapq ni collections en cripta/. (6) Sin push. Registra este prompt en PROMPTS_LLM.md. Avísame al terminar US1 para probarlo en la ventana antes de seguir."
 - **Uso:** implementación de 002 por fases hasta US1 (fases 1 y 2 y T011 a T018), con un commit por fase; se detiene al terminar US1 para la prueba en la ventana.
+
+## Entrada 163
+- **Fecha:** 15/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-implement` (continuación)
+- **Prompt:** "Ya lo probé, funciona. Sigue con US2 y US3 seguidas, con un commit por historia y las pruebas y reglas en cada una. Detente al terminar US3 para probar «ir a» en la ventana. Registra este prompt en PROMPTS_LLM.md."
+- **Uso:** US1 probada a mano por Pablo en la ventana. Implementación de US2 (T019 a T022) y US3 (T023 a T035), con pruebas primero, suite y prueba_reglas al cierre de cada historia y un commit por historia; se detiene al terminar US3.
