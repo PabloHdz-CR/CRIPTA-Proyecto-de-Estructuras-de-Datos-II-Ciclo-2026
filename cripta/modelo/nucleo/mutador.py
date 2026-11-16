@@ -28,6 +28,7 @@ ENEMIGO_MOVER = "enemigo_mover"             # objetivo = enemigo, anterior = sal
 ENEMIGO_QUITAR = "enemigo_quitar"           # objetivo = sala, anterior = enemigo
 EFECTO_AGREGAR = "efecto_agregar"           # objetivo = actor, nuevo = efecto
 EFECTO_QUITAR = "efecto_quitar"             # objetivo = actor, anterior = efecto
+CONOCIDA_AGREGAR = "conocida_agregar"       # objetivo = RegistroConocidas, nuevo = sala (002)
 
 
 class Mutador:
@@ -142,3 +143,14 @@ class Mutador:
     def efecto_quitar(self, actor, efecto) -> None:
         actor.efectos.eliminar_nodo(actor.efectos.buscar(efecto))
         self._avisar(EFECTO_QUITAR, actor, None, efecto, None)
+
+    # ------------------------------------------------------------------
+    # Conocimiento del jugador (002-niebla-guerra, FR-011, FR-034)
+    # ------------------------------------------------------------------
+
+    def conocida_agregar(self, registro, sala) -> None:
+        """Agrega una sala al registro de conocidas (al final, O(1)). Su
+        inverso en el Diario la quita del final. Los cambios de
+        `Sala.conocimiento` y `Salida.recordada` usan asignar()."""
+        registro.agregar(sala)
+        self._avisar(CONOCIDA_AGREGAR, registro, None, None, sala)

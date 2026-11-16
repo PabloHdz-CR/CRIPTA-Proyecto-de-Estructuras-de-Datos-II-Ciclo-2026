@@ -4,6 +4,7 @@ from __future__ import annotations
 from ..estructuras.listaEnlazada import ListaEnlazada
 from ..puertos.dto import DIRECCIONES
 from ..puertos.errores import DatosInvalidos, ErrorCripta
+from .conocimiento import RegistroConocidas
 from .registroPuertas import RegistroPuertas
 from .sala import Sala
 from .salida import Salida
@@ -20,6 +21,12 @@ class Mundo:
     # asignarlos, cada instancia recibe el suyo.
     _ultima_sala = None
     _sello_mapa = 0
+    # 002-niebla-guerra: None a nivel de clase y nunca un objeto mutable
+    # compartido entre instancias. Cada Mundo del constructor recibe el suyo;
+    # los que crea la carga con __new__ lo reciben en
+    # Partida.reconstruir_tras_cargar() (T042).
+    conocidas = None
+    _sello_ruta = 0
 
     def __init__(self, datos) -> None:
         self.sala_inicial = datos.sala_inicial
@@ -44,6 +51,18 @@ class Mundo:
         # mundo (el bench compara políticas), cada uno detecta que otro
         # sobrescribió los campos de las salas y recalcula.
         self._sello_mapa = 0
+        # 002-niebla-guerra (FR-016, FR-033, research R4): salas que el jugador
+        # dejó de desconocer, en orden de descubrimiento. Cambia solo por el
+        # Mutador (conocida_agregar), así el Diario lo revierte.
+        self.conocidas = RegistroConocidas()
+        # Último sello de una búsqueda de «ir a» (research R5). Separado del
+        # sello del mapa del cazador: una búsqueda nunca invalida la otra.
+        self._sello_ruta = 0
+
+    def nuevo_sello_ruta(self) -> int:
+        """Reserva un sello nuevo para una búsqueda de «ir a». O(1)."""
+        self._sello_ruta += 1
+        return self._sello_ruta
 
     @property
     def sello_mapa(self) -> int:

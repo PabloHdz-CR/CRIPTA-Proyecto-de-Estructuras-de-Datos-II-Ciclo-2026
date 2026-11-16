@@ -74,6 +74,8 @@ PRUEBAS = (
     "prueba_vista_resolubilidad",    # FR-019, FR-020, FR-037 (H2.E3): pantalla de reporte y tecla V
     "prueba_verificar",              # FR-022 a FR-024, SC-006 (H3.E1 a H3.E3): --verificar
     "prueba_rendimiento_resolubilidad",  # FR-032 a FR-035, SC-002, SC-003 (H5.E1 a H5.E3)
+    # 002-niebla-guerra (specs/002-niebla-guerra/tasks.md)
+    "prueba_niebla_registro",        # FR-011, FR-016, FR-033: registro de conocidas y Diario (T006)
 
 )
 

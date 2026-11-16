@@ -61,7 +61,7 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 
 ### Tests (escribir primero; deben fallar)
 
-- [ ] T006 Crear `pruebas/prueba_niebla_registro.py` (citando FR-011, FR-016, FR-033):
+- [X] T006 Crear `pruebas/prueba_niebla_registro.py` (citando FR-011, FR-016, FR-033):
   - una `Sala` y una `Salida` nuevas tienen `conocimiento == DESCONOCIDA` (0) y `recordada == NO_OBSERVADA` (0);
   - `RegistroConocidas.agregar` agrega al final y `quitar_ultima(sala)` quita la última; `quitar_ultima` con otra sala lanza `ErrorCripta`;
   - `ordenadas_por_id()` con ids 10, 9, 2, 100 devuelve 2, 9, 10, 100 (comparación numérica) y no cambia el orden del registro;
@@ -71,10 +71,10 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 
 ### Implementation
 
-- [ ] T007 [P] Crear `cripta/modelo/mundo/conocimiento.py` con las constantes `DESCONOCIDA = 0`, `AVISTADA = 1`, `EXPLORADA = 2`, `NO_OBSERVADA = 0`, `ABIERTA = 1`, `CERRADA = 2` y la clase `RegistroConocidas` sobre una `ListaDoble`: `agregar(sala)` O(1), `quitar_ultima(sala)` O(1) que verifica que la última sea `sala` (si no, `ErrorCripta`), `__iter__`, `__len__`, `ordenadas_por_id()` (copia a una `ListaEnlazada` de claves comparables por `sala.id` y usa `ordenamiento.mezcla`, O(k log k)) y `vaciar()`. Docstrings con la justificación de research R4. Cubre: FR-016, FR-033. Depende de: T006.
-- [ ] T008 [P] En `cripta/modelo/mundo/sala.py` agregar `conocimiento` (por omisión `DESCONOCIDA`) y en `cripta/modelo/mundo/salida.py` agregar `recordada` (por omisión `NO_OBSERVADA`), ambos atributos simples que el Diario puede restaurar con `setattr`. Documentar que `cerrada` sigue siendo el estado real (infraestructura, FR-015). Cubre: FR-001, FR-006, FR-007. Depende de: T006.
-- [ ] T009 En `cripta/modelo/mundo/mundo.py` agregar `conocidas`: en `__init__`, un `RegistroConocidas()` nuevo por instancia; como valor por omisión **de clase**, `None` (nunca un objeto mutable compartido entre instancias), para los `Mundo` que crea la carga con `__new__`, que reciben el suyo en T042 y `_sello_ruta` con `nuevo_sello_ruta()`, como `_sello_mapa` de 001. Cubre: FR-016, FR-033. Depende de: T007.
-- [ ] T010 En `cripta/modelo/nucleo/mutador.py` agregar el tipo `CONOCIDA_AGREGAR` y el método `conocida_agregar(registro, sala)`; en `cripta/modelo/nucleo/diario.py`, su inverso `objetivo.quitar_ultima(nuevo)`. Cubre: FR-011, FR-034. Depende de: T007. T006 pasa.
+- [X] T007 [P] Crear `cripta/modelo/mundo/conocimiento.py` con las constantes `DESCONOCIDA = 0`, `AVISTADA = 1`, `EXPLORADA = 2`, `NO_OBSERVADA = 0`, `ABIERTA = 1`, `CERRADA = 2` y la clase `RegistroConocidas` sobre una `ListaDoble`: `agregar(sala)` O(1), `quitar_ultima(sala)` O(1) que verifica que la última sea `sala` (si no, `ErrorCripta`), `__iter__`, `__len__`, `ordenadas_por_id()` (copia a una `ListaEnlazada` de claves comparables por `sala.id` y usa `ordenamiento.mezcla`, O(k log k)) y `vaciar()`. Docstrings con la justificación de research R4. Cubre: FR-016, FR-033. Depende de: T006.
+- [X] T008 [P] En `cripta/modelo/mundo/sala.py` agregar `conocimiento` (por omisión `DESCONOCIDA`) y en `cripta/modelo/mundo/salida.py` agregar `recordada` (por omisión `NO_OBSERVADA`), ambos atributos simples que el Diario puede restaurar con `setattr`. Documentar que `cerrada` sigue siendo el estado real (infraestructura, FR-015). Cubre: FR-001, FR-006, FR-007. Depende de: T006.
+- [X] T009 En `cripta/modelo/mundo/mundo.py` agregar `conocidas`: en `__init__`, un `RegistroConocidas()` nuevo por instancia; como valor por omisión **de clase**, `None` (nunca un objeto mutable compartido entre instancias), para los `Mundo` que crea la carga con `__new__`, que reciben el suyo en T042 y `_sello_ruta` con `nuevo_sello_ruta()`, como `_sello_mapa` de 001. Cubre: FR-016, FR-033. Depende de: T007.
+- [X] T010 En `cripta/modelo/nucleo/mutador.py` agregar el tipo `CONOCIDA_AGREGAR` y el método `conocida_agregar(registro, sala)`; en `cripta/modelo/nucleo/diario.py`, su inverso `objetivo.quitar_ultima(nuevo)`. Cubre: FR-011, FR-034. Depende de: T007. T006 pasa.
 
 **Checkpoint**: `prueba_niebla_registro` en verde; la suite sigue en verde.
 

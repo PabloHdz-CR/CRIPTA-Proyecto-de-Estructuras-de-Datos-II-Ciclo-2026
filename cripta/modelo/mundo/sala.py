@@ -6,6 +6,7 @@ from ..estructuras.listaDoble import ListaDoble
 from ..estructuras.listaEnlazada import ListaEnlazada
 from ..nucleo.constantes import VIGENCIA_RASTRO
 from ..puertos.dto import DIRECCIONES
+from .conocimiento import DESCONOCIDA
 
 
 class Sala:
@@ -33,6 +34,12 @@ class Sala:
         # para decidir en O(salidas) y ocupa memoria constante por sala (§4.7).
         self.rastro = None                        # instante de la última presencia
         self.contenido_cargado = False
+        # 002-niebla-guerra (FR-001, research R1): estado de la sala PARA EL
+        # JUGADOR (DESCONOCIDA, AVISTADA o EXPLORADA). Atributo simple: lo
+        # cambia el Mutador con asignar() y el Diario lo restaura con setattr.
+        # El esqueleto y el contenido siguen aquí como infraestructura (FR-015):
+        # lo que el jugador "sabe" de la sala lo decide este campo.
+        self.conocimiento = DESCONOCIDA
         # Salidas de otras salas (o de esta) cuyo destino es esta sala. Las
         # llena Mundo.enlazar(), en el orden en que se construyó el esqueleto
         # (determinista). Permiten recorrer el grafo hacia atrás sin buscar

@@ -157,6 +157,11 @@ class Diario:
         elif tipo == m.EFECTO_QUITAR:
             objetivo.efectos.agregar_al_final(anterior)
 
+        elif tipo == m.CONOCIDA_AGREGAR:
+            # 002-niebla-guerra: el Diario revierte en orden inverso, así que la
+            # sala agregada es siempre la última del registro (O(1)).
+            objetivo.quitar_ultima(nuevo)
+
         else:
             raise ValueError(f"Tipo de mutación desconocido en el diario: {tipo!r}")
 

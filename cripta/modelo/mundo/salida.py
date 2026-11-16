@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Optional
 
+from .conocimiento import NO_OBSERVADA
 from .registroPuertas import RegistroPuertas
 
 COSTO_POR_OMISION = 100     # FR-001: una salida sin costo declarado cuesta 100
@@ -42,6 +43,13 @@ class Salida:
         self._costo: Optional[int] = None          # efectivo; lo fija enlazar()
         self._origen = None                        # Sala; lo fija enlazar()
         self._sala_destino = None                  # Sala; lo fija enlazar()
+        # 002-niebla-guerra (FR-005 a FR-007, research R1): estado de ESTA cara
+        # en la última observación del jugador (NO_OBSERVADA, ABIERTA o
+        # CERRADA). Puede diferir de `cerrada`, que es el estado real y sigue
+        # siendo infraestructura (FR-015): las reglas del juego leen `cerrada`;
+        # la vista y «ir a» leen solo `recordada`. Atributo simple, cambiado por
+        # el Mutador y restaurado por el Diario con setattr.
+        self.recordada = NO_OBSERVADA
 
     # ------------------------------------------------------------------
     # Estado de la puerta
