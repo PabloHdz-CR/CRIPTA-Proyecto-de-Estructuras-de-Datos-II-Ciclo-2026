@@ -63,6 +63,8 @@ PINCHOS = "pinchos"           # trampa de 5 de daño
 ANTORCHA = "antorcha"
 LLAVE = "llave_roja"
 PERGAMINO = "pergamino"
+CAZADOR = "cazador"           # persigue y ataca (rango enorme, rápido)
+CAZADOR_MANSO = "cazador_manso"  # persigue al paso del jugador: llega cuando ya se fue
 
 
 def fichas_base() -> tuple:
@@ -75,6 +77,12 @@ def fichas_base() -> tuple:
         FichaAntorchaDTO(id=ANTORCHA, nombre="Antorcha", peso=1, valor=1, duracion=100000),
         FichaLlaveDTO(id=LLAVE, nombre="Llave roja", peso=1, valor=1, abre=LLAVE),
         FichaPergaminoRetrocesoDTO(id=PERGAMINO, nombre="Pergamino", peso=1, valor=1),
+        FichaEnemigoDTO(id=CAZADOR, nombre="Cazador", vida_max=50, ataque=3, defensa=0,
+                        velocidad=300, comportamiento="cazador", suelta=ListaEnlazada(),
+                        rango=10 ** 6),
+        FichaEnemigoDTO(id=CAZADOR_MANSO, nombre="Manso", vida_max=50, ataque=0, defensa=0,
+                        velocidad=100, comportamiento="cazador", suelta=ListaEnlazada(),
+                        rango=10 ** 6),
     )
 
 
@@ -315,6 +323,30 @@ def sala(partida: Partida, id_sala: int):
     return partida.mundo.sala(id_sala)
 
 
+def conocer(partida: Partida, *ids) -> None:
+    """Preparación de la prueba (no es una acción del juego): deja cada sala
+    explorada y sus caras observadas con su estado real, como si el jugador
+    ya las hubiera visto, sin entrar ni activar nada. Corre con el Mutador en
+    pausa: no queda en el Diario."""
+    from cripta.modelo.mundo.conocimiento import ABIERTA, CERRADA, DESCONOCIDA, EXPLORADA
+    partida.mutador.pausar()
+    try:
+        for id_sala in ids:
+            s = partida.mundo.sala(id_sala)
+            if s.conocimiento == DESCONOCIDA:
+                partida.mundo.conocidas.agregar(s)
+            s.conocimiento = EXPLORADA
+            for salida in s.salidas:
+                if salida is not None:
+                    salida.recordada = CERRADA if salida.cerrada else ABIERTA
+                    destino = salida.sala_destino
+                    if destino.conocimiento == DESCONOCIDA:
+                        partida.mundo.conocidas.agregar(destino)
+                        destino.conocimiento = 1
+    finally:
+        partida.mutador.reanudar()
+
+
 # ---------------------------------------------------------------------------
 # Huella del conocimiento
 # ---------------------------------------------------------------------------
@@ -391,14 +423,30 @@ class VistaNiebla(VistaRegistradora):
             self.mensajes.append(texto)
 
 
+def viajar(controlador, id_sala: int, maximo: int = 60) -> list:
+    """Ordena «ir a id_sala» y da vueltas con None hasta que el viaje
+    termine. Devuelve los mensajes de "Viaje detenido" que mostró la vista."""
+    from cripta.vista.comando import Comando
+    vista = controlador._vista
+    antes = len(vista.mensajes)
+    controlador.procesar(Comando("ir_a", (id_sala,)))
+    for _ in range(maximo):
+        if controlador.viaje is None:
+            break
+        controlador.procesar(None)
+    assert controlador.viaje is None, "el viaje no terminó"
+    return [m for m in vista.mensajes[antes:] if m.startswith("Viaje detenido")]
+
+
 def controlador_sobre(descripcion, semilla: int = 1, sala_inicial: int = 1,
-                      sala_salida=None, vida_jugador: int = 100):
-    """(ControladorJuego, VistaNiebla, RegistroEnMemoria) con una partida
-    nueva iniciada sobre la descripción."""
+                      sala_salida=None, vida_jugador: int = 100, registro=None):
+    """(ControladorJuego, VistaNiebla, registro) con una partida nueva iniciada
+    sobre la descripción. Por omisión el registro es un RegistroEnMemoria."""
     servicio = servicio_niebla(descripcion, sala_inicial=sala_inicial,
                                sala_salida=sala_salida, vida_jugador=vida_jugador)
     vista = VistaNiebla()
-    registro = RegistroEnMemoria()
+    if registro is None:
+        registro = RegistroEnMemoria()
     carpeta = Path(tempfile.mkdtemp(prefix="apoyo_niebla_ctrl_"))
     controlador = ControladorJuego(
         servicio, vista, registro, GestorGuardado(AlmacenPartidaDisco(carpeta / "guardados")),

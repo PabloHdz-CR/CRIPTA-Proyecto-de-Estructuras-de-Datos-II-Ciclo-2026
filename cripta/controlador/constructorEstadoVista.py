@@ -66,7 +66,8 @@ class ConstructorEstadoVista:
                   nombre_jugador: Optional[str] = None,
                   replay: Optional[InfoReplay] = None,
                   resolubilidad: Optional[ReporteResolubilidadVisible] = None,
-                  mapa_abierto: bool = False) -> EstadoVista:
+                  mapa_abierto: bool = False,
+                  viaje=None) -> EstadoVista:
         """criterio_orden: None (solo orden real) o uno de CRITERIOS_ORDEN.
         nombre_jugador, replay y resolubilidad pasan tal cual: son de la
         sesión, no del modelo (la Partida no sabe cómo se llama el jugador ni
@@ -88,6 +89,7 @@ class ConstructorEstadoVista:
             replay=replay,
             resolubilidad=resolubilidad,
             mapa=self._mapa_conocido(partida, sala) if mapa_abierto else None,
+            viaje=viaje,
         )
 
     # ------------------------------------------------------------------

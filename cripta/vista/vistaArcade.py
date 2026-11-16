@@ -62,6 +62,9 @@ class VistaArcade(VistaJuego):
         # el panel está abierto lo decide el Controlador (EstadoVista.mapa); el
         # desplazamiento es presentación pura y se mantiene entre turnos.
         self._desplazamiento_mapa = 0
+        # 002-niebla-guerra (FR-035): id de la sala bajo el cursor de «ir a» en
+        # el panel del mapa, o None (= la primera explorada). Presentación pura.
+        self._cursor_mapa = None
 
     @property
     def ventana(self) -> arcade.Window:
@@ -104,6 +107,7 @@ class VistaArcade(VistaJuego):
         self._panel_resolubilidad = False
         self._desplazamiento_resolubilidad = 0
         self._desplazamiento_mapa = 0
+        self._cursor_mapa = None
         self._mostrar(PantallaMenu(self, criptas, self._nombre_jugador))
 
     def mostrar_titulo(self) -> None:
@@ -148,6 +152,14 @@ class VistaArcade(VistaJuego):
     def desplazar_mapa(self, delta: int, maximo: int) -> None:
         """Mueve la ventana del panel del mapa entre 0 y 'maximo' (presentación)."""
         self._desplazamiento_mapa = max(0, min(maximo, self._desplazamiento_mapa + delta))
+
+    @property
+    def cursor_mapa(self):
+        """Id de la sala bajo el cursor de «ir a» (None = la primera explorada)."""
+        return self._cursor_mapa
+
+    def poner_cursor_mapa(self, id_sala) -> None:
+        self._cursor_mapa = id_sala
 
     def cambiar_skin(self, id_skin: str) -> None:
         """Lo llama el menú (presentación pura, no pasa por la Cola)."""

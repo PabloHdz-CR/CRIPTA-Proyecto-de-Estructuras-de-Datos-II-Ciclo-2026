@@ -121,7 +121,7 @@ class HudJuego:
                  verbo_objetivo=None, lista_objetivo=None, cursor_objetivo: int = 0,
                  aviso=None, bitacora_completa: bool = False,
                  panel_resolubilidad: bool = False, desplazamiento_resolubilidad: int = 0,
-                 desplazamiento_mapa: int = 0):
+                 desplazamiento_mapa: int = 0, cursor_mapa=None):
         self._estado = estado
         self._anterior = anterior
         self._g = geometria
@@ -139,6 +139,7 @@ class HudJuego:
         self._visibles_resolubilidad = 0
         # 002-niebla-guerra: panel del mapa conocido (M).
         self._desplazamiento_mapa_pedido = max(0, desplazamiento_mapa)
+        self._cursor_mapa = cursor_mapa
         self._filas_mapa = ListaEnlazada()
         self._visibles_mapa = 0
         self._superpuestos = ListaEnlazada()  # (izq, der, abajo, arriba): panel sobre el mapa
@@ -201,8 +202,15 @@ class HudJuego:
         medio = (abajo + arriba) / 2
         self._texto(_recortar(estado.sala.nombre, 30), izq + 16, medio + 10, 19,
                     estilo.DORADO, bold=True)
-        self._texto(f"{estado.id_cripta}   ·   tiempo {estado.reloj}", izq + 16, medio - 16, 11,
-                    estilo.TEXTO_SUAVE)
+        viaje = getattr(estado, "viaje", None)
+        if viaje is not None:
+            # 002-niebla-guerra (FR-025): el viaje en curso y cómo detenerlo.
+            self._texto(_recortar(f"Viajando a {viaje.destino_id} {viaje.destino_nombre} - "
+                                  f"paso {viaje.pasos} (I para detener)", 48),
+                        izq + 16, medio - 16, 11, estilo.DORADO, bold=True)
+        else:
+            self._texto(f"{estado.id_cripta}   ·   tiempo {estado.reloj}", izq + 16, medio - 16,
+                        11, estilo.TEXTO_SUAVE)
 
         # Vida: corazón + barra animada con el número adentro.
         jugador = estado.jugador
@@ -596,11 +604,11 @@ class HudJuego:
             f"{mapa.cantidad_avistadas} avistadas", izq + 22, arriba - 18, 12, estilo.DORADO,
             anchor_y="center", bold=True))
         textos.agregar_al_final(estilo.texto(
-            "M para cerrar", der - 22, arriba - 18, 10, estilo.TEXTO_SUAVE, anchor_x="right",
-            anchor_y="center"))
+            "Enter: ir a   M: cerrar", der - 22, arriba - 18, 10, estilo.TEXTO_SUAVE,
+            anchor_x="right", anchor_y="center"))
         ancho_caracter = estilo.ancho_caracter_mono(_TAMANO_REPORTE)
         maximo = max(1, int((der - izq - 44) / ancho_caracter))
-        filas = partir_lineas(lineas_mapa(mapa), maximo)
+        filas = partir_lineas(lineas_mapa(mapa, self._cursor_mapa), maximo)
         self._filas_mapa = filas
         primera_y = arriba - 42
         ultima_y = abajo + 30
@@ -666,7 +674,8 @@ class HudJuego:
                 ("Espacio", "Esperar"), ("R", "Recoger"), ("A", "Atacar"),
                 ("U / Q / S", "Usar/equipar/soltar"), ("Tab / Shift+Tab", "Bajar / subir inventario"),
                 ("O", "Ordenar inventario"), ("P", "Pergamino"), ("G / C", "Guardar/Cargar"),
-                ("L", "Bitácora (20)"), ("V", "Resolubilidad"), ("M", "Mapa conocido"),
+                ("L", "Bitácora (20)"), ("V", "Resolubilidad"), ("M", "Mapa e «ir a»"),
+                ("I", "Detener viaje"),
                 ("ESC", "Volver al menú"))
 
     def _armar_controles(self, izq, der, abajo, arriba) -> None:

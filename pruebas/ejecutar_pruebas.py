@@ -79,6 +79,9 @@ PRUEBAS = (
     "prueba_niebla_conocimiento",    # FR-001 a FR-004, FR-016 (US1 1 a 3, T011)
     "prueba_vista_mapa",             # FR-002, FR-014 a FR-017, SC-002 (US1 4 y 5, T012); FR-035 (T034)
     "prueba_niebla_puertas",         # FR-005 a FR-007, FR-014 (US2 1 a 3, T019)
+    "prueba_ir_a",                   # FR-018 a FR-025, FR-028, FR-030 (Ap. B 1-3, US3 1-9 y 11, T023)
+    "prueba_ir_a_equivalencia",      # SC-006, SC-002: 1000 pares contra el oráculo, instrumentada (T024)
+    "prueba_replay_ir_a",            # FR-026, FR-027, SC-007 (US3 10, US5 5, T025)
 
 )
 

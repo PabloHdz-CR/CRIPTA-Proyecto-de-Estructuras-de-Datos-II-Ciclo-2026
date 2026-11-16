@@ -25,6 +25,13 @@ Verbos de SESIÓN (no consumen reloj virtual ni son acciones del jugador):
     "ver_resolubilidad" (V en una partida sin reporte, 003-resolubilidad),
     "alternar_mapa" (M: abre o cierra el panel del mapa conocido,
     002-niebla-guerra, FR-016, FR-017).
+
+«ir a» (002-niebla-guerra, FR-018, FR-023 a FR-026, FR-028; research R6):
+    "ir_a" <id> valida la orden y empieza un viaje; "interrumpir" (I) lo
+    detiene. Con un viaje en curso, procesar(None) da UN paso por vuelta del
+    bucle externo, como un movimiento a mano. Los comandos que cambian la
+    partida (acciones, guardar, cargar, salir) detienen el viaje antes de
+    procesarse; los de presentación (VERBOS_PRESENTACION) no.
 """
 from __future__ import annotations
 
@@ -32,6 +39,9 @@ from dataclasses import replace
 from typing import TYPE_CHECKING, Optional
 
 from ..modelo.estructuras.listaEnlazada import ListaEnlazada
+from ..modelo.nucleo.accion import Mover
+from ..modelo.nucleo.viajeIrA import (
+    INTERRUMPIDO, SIN_RUTA, ViajeIrA)
 from ..modelo.nucleo.diario import Diario
 from ..modelo.nucleo.partida import Partida
 from ..modelo.objetos.inventario import CRITERIOS_ORDEN
@@ -39,7 +49,7 @@ from ..modelo.puertos.errores import ErrorCripta
 from ..modelo.puertos.registroAcciones import EncabezadoPartida
 from ..modelo.resolubilidad.resultadoResolubilidad import ResultadoResolubilidad
 from ..modelo.resolubilidad.verificacion import verificar_cripta
-from ..vista.estadoVista import ReporteResolubilidadVisible, ResultadoFinVisible
+from ..vista.estadoVista import ReporteResolubilidadVisible, ResultadoFinVisible, ViajeVisible
 from .constructorEstadoVista import ConstructorEstadoVista
 from .mapaEtiquetas import MapaEtiquetas
 from .textoResolubilidad import AVISO_RESOLUBLE, AVISO_SIN_REPORTE, lineas_reporte
@@ -56,6 +66,10 @@ if TYPE_CHECKING:
     from .reporteFinal import ReporteFinal
 
 ORDEN_REAL = "real"
+# 002-niebla-guerra (research R6): verbos que no cambian la partida y por eso
+# no detienen un viaje en curso. Tupla de 5: el `in` es O(1) en la práctica.
+VERBOS_PRESENTACION = ("alternar_mapa", "inventario_siguiente", "inventario_anterior",
+                       "ordenar_inventario", "ver_resolubilidad")
 
 
 class ControladorJuego:
@@ -98,6 +112,9 @@ class ControladorJuego:
         # abierto. Es estado de PRESENTACIÓN del Controlador, no del Modelo:
         # no se guarda, no se revierte y no va al log.
         self._mapa_abierto = False
+        # 002-niebla-guerra: el viaje «ir a» en curso, o None. No es estado del
+        # juego: no se guarda ni se revierte (el log tiene los movimientos).
+        self._viaje: Optional[ViajeIrA] = None
 
     # ------------------------------------------------------------------
     # Arranque
@@ -174,6 +191,11 @@ class ControladorJuego:
     def terminado(self) -> bool:
         return self._terminado
 
+    @property
+    def viaje(self) -> Optional[ViajeIrA]:
+        """El viaje «ir a» en curso, o None."""
+        return self._viaje
+
     def quiere_salir(self) -> bool:
         return self._quiere_salir
 
@@ -184,9 +206,25 @@ class ControladorJuego:
     def procesar(self, comando: Optional["Comando"]) -> None:
         # DECISIÓN: cadena de if por verbo de sesión (no dict, §7); lo que no
         # es de sesión se le pasa al Traductor. O(1).
-        if comando is None or self._terminado:
+        if self._terminado:
+            return
+        if comando is None:
+            # 002-niebla-guerra (FR-023): un paso por vuelta del bucle externo.
+            if self._viaje is not None:
+                self._dar_paso()
             return
         verbo = comando.verbo
+        if self._viaje is not None and verbo not in VERBOS_PRESENTACION:
+            # FR-028 (research R6): lo que cambia la partida detiene el viaje
+            # antes de procesarse; "interrumpir" solo lo detiene.
+            self._detener_viaje(INTERRUMPIDO)
+            if verbo == "interrumpir":
+                return
+        if verbo == "interrumpir":
+            return                  # fuera de un viaje, I no hace nada
+        if verbo == "ir_a":
+            self._ir_a(comando.argumentos)
+            return
         if verbo == "salir":
             self._quiere_salir = True
         elif verbo == "guardar":
@@ -242,6 +280,74 @@ class ControladorJuego:
             self._finalizar()
         else:
             self._mostrar_estado_actual()
+
+    # ------------------------------------------------------------------
+    # «ir a» (002-niebla-guerra)
+    # ------------------------------------------------------------------
+
+    def _ir_a(self, argumentos: tuple) -> None:
+        """Valida la orden (FR-018) y, si se acepta, escribe el comentario en
+        el log (FR-026), cierra el panel y da el primer paso. Un rechazo no
+        mueve, no gasta tiempo y no escribe nada."""
+        try:
+            id_sala = int(argumentos[0])
+        except (IndexError, TypeError, ValueError):
+            self._vista.mostrar_error("Falta la sala de destino de «ir a».")
+            return
+        motivo = self.partida.validar_ir_a(id_sala)
+        if motivo is not None:
+            self._vista.mostrar_error(motivo)
+            return
+        self._viaje = ViajeIrA(self.partida.mundo.sala(id_sala))
+        self._mapa_abierto = False
+        self._registro.registrar_comentario(f"IR_A {id_sala}")
+        self._dar_paso()
+
+    def _dar_paso(self) -> None:
+        """UN paso del viaje (FR-023, FR-024): recalcula la ruta desde cero con
+        el conocimiento vigente; sin ruta se detiene sin aplicar nada (sin
+        tiempo); si no, aplica un Mover ordinario, lo anexa al log y evalúa
+        los motivos de detención."""
+        viaje = self._viaje
+        salida = self.partida.primer_paso_ir_a(viaje.destino)
+        if salida is None:
+            self._detener_viaje(SIN_RUTA)
+            return
+        accion = Mover(salida.direccion)
+        try:
+            resultado = self.partida.aplicar_accion(accion)
+        except ErrorCripta as error:
+            self._vista.mostrar_error(f"No se pudo completar el paso: {error}")
+            self._detener_viaje(INTERRUMPIDO)
+            return
+        if not resultado.aceptada:
+            self._detener_viaje(SIN_RUTA)
+            return
+        self._registro.registrar_accion(accion)
+        viaje.evaluar(resultado, self.partida)
+        if self.partida.terminada():
+            # FR-025: también el motivo "partida terminada", antes de la
+            # pantalla de fin.
+            texto = f"Viaje detenido: {viaje.motivo}."
+            self._viaje = None
+            self.partida.avisar(texto)
+            self._vista.mostrar_mensajes(_un_mensaje(texto))
+            self._finalizar()
+            return
+        if viaje.motivo is not None:
+            self._detener_viaje(viaje.motivo)
+            return
+        self._mostrar_estado_actual()
+
+    def _detener_viaje(self, motivo: str) -> None:
+        """Termina el viaje y muestra el motivo (FR-025): va a la bitácora
+        (presentación, no se revierte) y como mensaje."""
+        texto = f"Viaje detenido: {motivo}."
+        self._viaje.detener(motivo)
+        self._viaje = None
+        self.partida.avisar(texto)
+        self._mostrar_estado_actual()
+        self._vista.mostrar_mensajes(_un_mensaje(texto))
 
     # ------------------------------------------------------------------
     # Verbos de sesión
@@ -331,7 +437,16 @@ class ControladorJuego:
     def _mostrar_estado_actual(self) -> None:
         self._vista.mostrar_estado(self._constructor.construir(
             self.partida, self._criterio_orden, nombre_jugador=self._nombre_jugador,
-            resolubilidad=self._reporte_visible, mapa_abierto=self._mapa_abierto))
+            resolubilidad=self._reporte_visible, mapa_abierto=self._mapa_abierto,
+            viaje=self._viaje_visible()))
+
+    def _viaje_visible(self) -> Optional[ViajeVisible]:
+        """El viaje en curso para el HUD (FR-025), o None."""
+        if self._viaje is None:
+            return None
+        destino = self._viaje.destino
+        return ViajeVisible(destino_id=destino.id, destino_nombre=destino.nombre,
+                            pasos=self._viaje.pasos)
 
     def _finalizar(self) -> None:
         """Victoria o derrota (§2.12): puntaje, pantalla de fin y reporte de

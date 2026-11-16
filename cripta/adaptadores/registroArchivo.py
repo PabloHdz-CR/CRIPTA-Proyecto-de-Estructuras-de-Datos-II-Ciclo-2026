@@ -33,6 +33,9 @@ from ..modelo.puertos.registroAcciones import (
 from .nombresArchivo import nombre_seguro
 
 PREFIJO_ENCABEZADO = "CRIPTA "
+# 002-niebla-guerra (FR-026, FR-027, contracts/registro.md): una línea que
+# empieza así es un comentario (por ejemplo "# IR_A 17"), no una acción.
+PREFIJO_COMENTARIO = "# "
 # 003-resolubilidad (contracts/registro.md): palabras de marca opcionales
 # después de los 4 campos fijos. Son palabras, no posiciones: otra feature que
 # necesite una marca la agrega aquí sin chocar con estas.
@@ -143,6 +146,13 @@ class RegistroArchivo(RegistroAcciones):
             archivo.write(accion.texto())
             archivo.write("\n")
 
+    def registrar_comentario(self, texto: str) -> None:
+        """Anexa una línea de comentario (002-niebla-guerra, FR-026), también en
+        modo 'a'. leer() la salta: no es una acción y --replay no la ejecuta."""
+        with open(self._ruta, "a", encoding="utf-8") as archivo:
+            archivo.write(PREFIJO_COMENTARIO + texto)
+            archivo.write("\n")
+
     def leer(self):
         """Devuelve (EncabezadoPartida, ListaEnlazada de acciones), leyendo el
         archivo línea por línea (nunca se materializa en una lista de Python
@@ -154,7 +164,8 @@ class RegistroArchivo(RegistroAcciones):
                 linea = linea_cruda.rstrip("\n")
                 if numero == 0:
                     encabezado = _encabezado_desde_texto(linea)
-                elif linea:
+                elif linea and not linea.startswith("#"):
+                    # 002-niebla-guerra (FR-027): los comentarios no son acciones.
                     acciones.agregar_al_final(_accion_desde_texto(linea))
         if encabezado is None:
             raise ErrorCripta("El archivo de partida está vacío")

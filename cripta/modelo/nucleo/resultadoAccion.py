@@ -11,6 +11,10 @@ class ResultadoAccion:
         self.aceptada = aceptada
         self.motivo = motivo
         self.mensajes = mensajes if mensajes is not None else ListaEnlazada()
+        # 002-niebla-guerra (FR-024, research R6): lo que «ir a» necesita saber
+        # de la acción para detenerse. Transitorios: no son estado del juego.
+        self.entro_con_enemigos = False   # entró a una sala con enemigos (antes de activarlos)
+        self.dano_recibido = False        # el jugador perdió vida en la acción o sus eventos
 
     @classmethod
     def aceptada_con(cls, mensajes) -> "ResultadoAccion":

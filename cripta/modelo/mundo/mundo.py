@@ -59,6 +59,11 @@ class Mundo:
         # sello del mapa del cazador: una búsqueda nunca invalida la otra.
         self._sello_ruta = 0
 
+    @property
+    def sello_ruta(self) -> int:
+        """Sello de la última búsqueda de «ir a» sobre este mundo."""
+        return self._sello_ruta
+
     def nuevo_sello_ruta(self) -> int:
         """Reserva un sello nuevo para una búsqueda de «ir a». O(1)."""
         self._sello_ruta += 1

@@ -139,8 +139,51 @@ def caso_panel_se_dibuja():
         vista.cerrar()
 
 
+def _comandos(vista):
+    salida = []
+    while True:
+        comando = vista.pedir_comando()
+        if comando is None:
+            return salida
+        salida.append(comando)
+
+
+def caso_t034_cursor_y_enter():
+    """T034 (FR-035): con el panel abierto, el cursor recorre solo las salas
+    exploradas (salta las avistadas), las flechas no mueven al jugador y Enter
+    encola ir_a con la sala bajo el cursor; sobre la sala actual, el
+    Controlador responde con el rechazo de FR-018."""
+    controlador, vista_registro, _ = controlador_sobre(cripta(), sala_inicial=10)
+    controlador.procesar(Comando("mover", ("E",)))       # exploradas: 2 y 10
+    controlador.procesar(Comando("alternar_mapa"))       # lista: 2, 7, 9, 10, 55, 100
+    estado = vista_registro.ultimo_estado
+    vista = VistaArcade(ancho=1024, alto=720, titulo="prueba", visible=False)
+    try:
+        def tecla(codigo):
+            vista.mostrar_estado(estado)
+            vista._pantalla_actual.on_key_press(codigo, 0)
+            return _comandos(vista)
+
+        assert tecla(arcade.key.ENTER) == [Comando("ir_a", (2,))], "FR-035: cursor en la primera explorada"
+        assert tecla(arcade.key.DOWN) == [], "FR-035: las flechas no mueven al jugador"
+        assert vista.cursor_mapa == 10, f"FR-035: salta 7 y 9 (avistadas): {vista.cursor_mapa}"
+        assert tecla(arcade.key.DOWN) == [] and vista.cursor_mapa == 10, "FR-035: se queda en la última"
+        assert tecla(arcade.key.UP) == [] and vista.cursor_mapa == 2
+        assert tecla(arcade.key.LEFT) == [] and tecla(arcade.key.RIGHT) == [], (
+            "FR-035: con el panel abierto, ninguna flecha mueve al jugador")
+        comandos = tecla(arcade.key.ENTER)
+        assert comandos == [Comando("ir_a", (2,))], f"FR-035: {comandos}"
+        assert "> " in " ".join(vista._pantalla_actual._hud.filas_mapa), "FR-035: marca del cursor"
+        controlador.procesar(comandos[0])
+        assert vista_registro.ultimo_error == "Ya estás en esa sala.", (
+            f"FR-018: {vista_registro.ultimo_error}")
+        assert tecla(arcade.key.I) == [Comando("interrumpir")], "FR-028: I encola interrumpir"
+    finally:
+        vista.cerrar()
+
+
 CASOS = (caso_us1_e4_nada_desconocido, caso_us1_e5_mapa_sin_tiempo, caso_orden_por_id,
-         caso_tecla_m, caso_panel_se_dibuja)
+         caso_tecla_m, caso_panel_se_dibuja, caso_t034_cursor_y_enter)
 
 
 def main():

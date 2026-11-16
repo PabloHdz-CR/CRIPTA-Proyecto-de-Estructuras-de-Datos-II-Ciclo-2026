@@ -194,6 +194,46 @@ class PantallaJuego(_PantallaCripta):
         self._armar_textos()
         return True
 
+    def _tecla_en_mapa(self, symbol, modifiers) -> bool:
+        """Con el panel del mapa abierto (FR-035): ↑/↓ mueven el cursor entre
+        las salas EXPLORADAS (las avistadas no se pueden elegir), ←/→ no hacen
+        nada (las flechas no mueven al jugador), Enter encola ir_a con la sala
+        bajo el cursor y RePág/AvPág desplazan. True si la tecla fue para el panel."""
+        if symbol in (arcade.key.UP, arcade.key.DOWN):
+            self._mover_cursor_mapa(-1 if symbol == arcade.key.UP else 1)
+            return True
+        if symbol in (arcade.key.LEFT, arcade.key.RIGHT):
+            return True
+        if symbol in (arcade.key.ENTER, arcade.key.RETURN):
+            elegida = cursor_en(self._estado.mapa, self._vista_arcade.cursor_mapa)
+            if elegida is not None:
+                self._vista_arcade._encolar(Comando("ir_a", (elegida,)))
+            return True
+        return self._desplazar_mapa(symbol)
+
+    def _mover_cursor_mapa(self, paso: int) -> None:
+        """Lleva el cursor a la explorada anterior (-1) o siguiente (+1); en
+        los extremos se queda. O(salas del mapa)."""
+        mapa = self._estado.mapa
+        actual = cursor_en(mapa, self._vista_arcade.cursor_mapa)
+        anterior = None
+        encontrada = False
+        for sala in mapa.salas:
+            if not sala.explorada:
+                continue
+            if encontrada:
+                if paso > 0:
+                    self._vista_arcade.poner_cursor_mapa(sala.id)
+                    break
+            elif sala.id == actual:
+                encontrada = True
+                if paso < 0:
+                    if anterior is not None:
+                        self._vista_arcade.poner_cursor_mapa(anterior)
+                    break
+            anterior = sala.id
+        self._armar_textos()
+
     def _desplazar_mapa(self, symbol) -> bool:
         """Con el panel del mapa conocido abierto, RePág/AvPág lo desplazan
         (presentación pura, no es un Comando). True si la tecla fue para el panel."""
@@ -225,7 +265,7 @@ class PantallaJuego(_PantallaCripta):
         if self._estado.replay is not None:
             self._tecla_en_replay(symbol)
             return
-        if self._estado.mapa is not None and self._desplazar_mapa(symbol):
+        if self._estado.mapa is not None and self._tecla_en_mapa(symbol, modifiers):
             return
         if (self._panel_resolubilidad_abierto() and not modifiers & arcade.key.MOD_SHIFT
                 and self._desplazar_resolubilidad(symbol)):
@@ -249,6 +289,10 @@ class PantallaJuego(_PantallaCripta):
             self._alternar_bitacora()
         elif symbol == arcade.key.V:
             self._tecla_resolubilidad()
+        elif symbol == arcade.key.I:
+            # 002-niebla-guerra (FR-028): detiene el viaje en curso; fuera de un
+            # viaje el Controlador lo ignora.
+            self._vista_arcade._encolar(Comando("interrumpir"))
         elif symbol == arcade.key.M:
             # 002-niebla-guerra (FR-016, FR-017): abre o cierra el mapa conocido.
             # Es un verbo de sesión: el Controlador arma el mapa solo si está abierto.
@@ -337,7 +381,9 @@ class PantallaJuego(_PantallaCripta):
                              self._aviso, self._vista_arcade.bitacora_completa,
                              self._vista_arcade.panel_resolubilidad,
                              self._vista_arcade.desplazamiento_resolubilidad,
-                             self._vista_arcade.desplazamiento_mapa)
+                             self._vista_arcade.desplazamiento_mapa,
+                             cursor_en(self._estado.mapa, self._vista_arcade.cursor_mapa)
+                             if self._estado.mapa is not None else None)
 
     # -- textos de una línea (los usan las pruebas de vista) --
 
@@ -390,3 +436,17 @@ class PantallaJuego(_PantallaCripta):
         marca = ">" if indice == self._estado.inventario.indice_actual else " "
         equipado = " [equipado]" if objeto.equipado else ""
         return f"{marca}{objeto.nombre}{equipado}"
+
+
+def cursor_en(mapa, pedido):
+    """La sala bajo el cursor de «ir a» (FR-035): `pedido` si es una sala
+    explorada del mapa; si no, la primera explorada; None si no hay ninguna.
+    Las avistadas nunca se eligen."""
+    primera = None
+    for sala in mapa.salas:
+        if sala.explorada:
+            if sala.id == pedido:
+                return pedido
+            if primera is None:
+                primera = sala.id
+    return primera

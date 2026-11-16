@@ -7,7 +7,8 @@ from ..actores.comportamientos import Cazador
 from ..actores.jugador import Jugador
 from ..estructuras.colaAcotada import ColaAcotada
 from ..estructuras.listaEnlazada import ListaEnlazada
-from ..mundo.conocimiento import DESCONOCIDA, ConocimientoJugador, RegistroConocidas
+from ..mundo.buscadorRuta import BuscadorRuta
+from ..mundo.conocimiento import DESCONOCIDA, EXPLORADA, ConocimientoJugador, RegistroConocidas
 from ..mundo.mapaDistancias import MapaDistancias
 from ..mundo.mundo import Mundo
 from ..reloj.agenda import Agenda
@@ -25,6 +26,7 @@ from .mutador import Mutador
 from .puntajes import RegistroPuntaje
 from .resultadoAccion import ResultadoAccion
 from .validadorAcciones import ValidadorAcciones
+from .viajeIrA import RECHAZO_NO_EXPLORADA, RECHAZO_SALA_ACTUAL, RECHAZO_SIN_RUTA
 
 
 class Partida:
@@ -59,10 +61,16 @@ class Partida:
         self._mapa_distancias = None           # lo crea iniciar(), tras enlazar()
         # 002-niebla-guerra: cambia el conocimiento del jugador por el Mutador.
         self.conocimiento = None               # lo crea iniciar(), tras enlazar()
+        self._buscador_ruta = None             # BuscadorRuta, se crea al primer uso
         # Cazadores que alguna vez se activaron, para R_activos (P3). Se filtran
         # por activo y vivo al consultar, así deshacer o morir no lo desfasan.
         self._cazadores = ListaEnlazada()
         self._mensajes = ListaEnlazada()
+        # 002-niebla-guerra (FR-024): anotaciones TRANSITORIAS de la acción en
+        # curso, como _mensajes. Se limpian al empezar cada aplicar_accion y
+        # viajan en ResultadoAccion; no se guardan ni se revierten.
+        self._entro_con_enemigos = False
+        self._dano_recibido = False
 
     # ------------------------------------------------------------------
     # Inicio y consultas
@@ -93,6 +101,7 @@ class Partida:
         self._cazadores = ListaEnlazada()
         self._mapa_distancias = MapaDistancias(self.mundo, self.mayor_rango_activo)
         self.conocimiento = ConocimientoJugador(self.mundo, self.mutador)
+        self._buscador_ruta = BuscadorRuta(self.mundo)
         self.jugador = Jugador(self.datos.jugador, self.mundo.sala_inicial,
                                self.mundo.inventario_max)
 
@@ -142,6 +151,9 @@ class Partida:
             if sala.conocimiento != DESCONOCIDA:
                 self.mundo.conocidas.agregar(sala)
         self.conocimiento = ConocimientoJugador(self.mundo, self.mutador)
+        self._buscador_ruta = BuscadorRuta(self.mundo)
+        self._entro_con_enemigos = False
+        self._dano_recibido = False
 
     def registrar_activacion(self, enemigo) -> None:
         """Lo llama Enemigo.activar(): recuerda a los cazadores (una vez cada
@@ -198,6 +210,8 @@ class Partida:
         if motivo is not None:
             return ResultadoAccion.rechazada(motivo)
         self._mensajes = ListaEnlazada()
+        self._entro_con_enemigos = False
+        self._dano_recibido = False
         if isinstance(accion, UsarPergamino):
             self._usar_pergamino()
             return ResultadoAccion.aceptada_con(self._mensajes)
@@ -229,7 +243,10 @@ class Partida:
         self._procesar_eventos()
         if self.diario is not None:
             self.diario.cerrar_intervalo()
-        return ResultadoAccion.aceptada_con(self._mensajes)
+        resultado = ResultadoAccion.aceptada_con(self._mensajes)
+        resultado.entro_con_enemigos = self._entro_con_enemigos
+        resultado.dano_recibido = self._dano_recibido
+        return resultado
 
     def _ejecutar_accion_jugador(self, accion) -> None:
         if isinstance(accion, Mover):
@@ -270,6 +287,10 @@ class Partida:
         self.conocimiento.entrar(destino)
         self.mutador.asignar(destino, "rastro", self.reloj)
         self.avisar(f"Entras a {destino.nombre}.")
+        # 002-niebla-guerra (FR-024 (b)): ¿había enemigos, activos o dormidos, al
+        # entrar? Se anota ANTES de activarlos; un enemigo que llega después no cuenta.
+        if not destino.activos.esta_vacia() or not destino.dormidos.esta_vacia():
+            self._entro_con_enemigos = True
         # DECISIÓN (SUPUESTO): primero las trampas y luego la activación de enemigos;
         # el enunciado solo dice que la trampa va justo después del movimiento.
         destino.disparar_trampas(self)               # justo después del movimiento
@@ -343,6 +364,34 @@ class Partida:
                 self.mutador.asignar(self, "reloj", evento.tiempo)
             evento.ejecutar(self)
 
+    # ------------------------------------------------------------------
+    # «ir a» (002-niebla-guerra, FR-018 a FR-022)
+    # ------------------------------------------------------------------
+
+    def validar_ir_a(self, id_sala: int):
+        """None si la orden «ir a id_sala» se acepta; si no, el motivo del
+        rechazo (FR-018). Solo lee: un rechazo no cambia nada. La única
+        búsqueda por id de la orden; los pasos usan referencias."""
+        if self.fin is not None:
+            return "La partida ya terminó."
+        if not self.mundo.existe(id_sala):
+            return RECHAZO_NO_EXPLORADA
+        destino = self.mundo.sala(id_sala)
+        if destino.conocimiento != EXPLORADA:
+            return RECHAZO_NO_EXPLORADA
+        if destino.id == self.jugador.sala:
+            return RECHAZO_SALA_ACTUAL
+        if self.primer_paso_ir_a(destino) is None:
+            return RECHAZO_SIN_RUTA
+        return None
+
+    def primer_paso_ir_a(self, destino):
+        """La Salida del primer paso de la ruta conocida hasta destino, desde
+        la sala del jugador, o None (FR-019 a FR-021, research R5)."""
+        if self._buscador_ruta is None:
+            self._buscador_ruta = BuscadorRuta(self.mundo)
+        return self._buscador_ruta.primer_paso(self._sala_actual(), destino)
+
     def costo_de(self, actor, accion) -> int:
         """Costo base de una acción de cualquier actor (FR-004, FR-006).
 
@@ -387,6 +436,8 @@ class Partida:
         if not actor.vivo or cantidad <= 0:
             return
         nueva = actor.vida_tras_dano(cantidad)
+        if actor is self.jugador and nueva < actor.vida:
+            self._dano_recibido = True       # 002-niebla-guerra, FR-024 (c)
         self.mutador.asignar(actor, "vida", nueva)
         if nueva <= 0:
             self.matar(actor)

@@ -59,6 +59,11 @@ class RegistroAcciones(ABC):
     def registrar_accion(self, accion: "Accion") -> None:
         """Anexa una acción aceptada. O(1): nunca relee lo anterior."""
 
+    def registrar_comentario(self, texto: str) -> None:
+        """Anexa una línea de comentario que no es una acción (002-niebla-guerra,
+        FR-026: la orden «ir a» con su destino). leer() no la devuelve. No es
+        abstracto: un registro que no sepa escribir comentarios los ignora."""
+
     @abstractmethod
     def leer(self) -> "tuple[EncabezadoPartida, ListaEnlazada]":
         """(encabezado, ListaEnlazada de Accion) en el orden en que ocurrieron."""

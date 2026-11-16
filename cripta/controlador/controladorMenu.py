@@ -137,6 +137,10 @@ class ControladorMenu:
                     self._mostrar_menu()
             return
         if comando is None:
+            # 002-niebla-guerra (FR-023): con un viaje «ir a» en curso, la
+            # partida recibe los None para dar un paso por vuelta.
+            if self._juego is not None and self._juego.viaje is not None:
+                self._procesar_en_partida(None)
             return
         if self._juego is not None:
             self._procesar_en_partida(comando)

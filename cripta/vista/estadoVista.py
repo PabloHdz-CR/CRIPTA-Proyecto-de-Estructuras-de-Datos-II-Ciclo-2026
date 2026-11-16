@@ -156,6 +156,14 @@ class MapaConocidoVisible:
 
 
 @dataclass(frozen=True)
+class ViajeVisible:
+    """El viaje «ir a» en curso, para la línea del HUD (FR-025)."""
+    destino_id: int
+    destino_nombre: str
+    pasos: int
+
+
+@dataclass(frozen=True)
 class EstadoVista:
     """Lo que necesita UNA pantalla de juego para dibujarse completa."""
     id_cripta: str
@@ -179,6 +187,8 @@ class EstadoVista:
     # 002-niebla-guerra: el mapa conocido, solo con el panel M abierto (FR-016);
     # None con el panel cerrado, en el replay y en las pruebas viejas.
     mapa: Optional[MapaConocidoVisible] = None
+    # 002-niebla-guerra: el viaje «ir a» en curso (None si no hay).
+    viaje: Optional[ViajeVisible] = None
 
 
 @dataclass(frozen=True)
