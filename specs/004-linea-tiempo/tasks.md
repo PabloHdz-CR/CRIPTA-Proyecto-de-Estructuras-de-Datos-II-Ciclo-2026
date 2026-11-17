@@ -31,11 +31,11 @@ description: "Tareas de la feature 004: línea de tiempo"
 - [ ] T002 Con el código **actual** (`FORMATO_VERSION = 3`), antes de T026, agregar a `pruebas/generar_guardado_formato_anterior.py` un modo propio `--formato-3` con su propia comprobación (`FORMATO_VERSION == 3`), sin tocar los modos de las versiones 1 y 2, que genere `pruebas/datos/linea/guardado_formato_3.bin` desde una partida sin conexión con algunas acciones. Correrlo y versionar el archivo. Cubre: FR-010 (Apéndice B 6).
 - [ ] T003 [P] Crear `pruebas/apoyo_linea.py` sobre `pruebas/apoyo_niebla.py`:
   - `partida_con_linea(descripcion, k, semilla)`: Partida sintética con `LineaTiempo` conectada (cuando exista, T012).
-  - `OraculoVivo`: se engancha a la Partida real y captura en cada decisión del jugador la **huella del resumen** (reloj, número de acción, sala, vida, vida_max, ataque, defensa, velocidad, inventario como (id_objeto, id_ficha, equipado) en orden, efectos con tiempo restante, enemigos de la sala con vida, huella del mapa conocido de la 002); al usar un pergamino quita las capturas de las acciones revertidas y vuelve a capturar el estado actual.
+  - `OraculoVivo`: se engancha a la Partida real y captura en cada decisión del jugador la **huella del resumen** (reloj, número de acción, sala, vida, vida_max, ataque, defensa, velocidad, inventario como (id_objeto, id_ficha, equipado) en orden, efectos con tiempo restante, enemigos de la sala con vida, huella del mapa conocido de la 002); al usar un pergamino quita las capturas de las acciones revertidas y vuelve a capturar el estado actual. También captura la huella después de cada **instante de evento distinto** (enganchado al bucle de eventos de la partida real, solo en pruebas), para comparar instantes entre dos decisiones (FR-001, SC-002; análisis F2); las capturas de instantes revertidos se quitan igual.
   - `huella(resumen)`: la misma huella desde un `ResumenInstante`, para comparar.
   - `secuencia_al_azar(partida, azar, n, con_pergaminos, con_viajes)`: acciones deterministas por semilla (movimientos, esperas, recoger, viajes «ir a», pergaminos).
   - `partida_referencia_inmortal(semilla)`: la cripta de más salas de `datos_offline/` con el jugador sin daño letal (solo para medir), elegida por cantidad de salas sin ids en el código.
-  Cubre: SC-002, SC-005, SC-006.
+  Cubre: FR-001, SC-002, SC-004, SC-005, SC-006.
 
 **Checkpoint**: línea base en verde y fixture del formato 3 versionado.
 
@@ -106,7 +106,7 @@ description: "Tareas de la feature 004: línea de tiempo"
   - escenario 5 (FR-008, D50): un pergamino recogido en el tramo revertido no figura antes de R' y sí desde R';
   - casos borde: pergamino que revierte un paso de «ir a»; pergamino soltado en el tramo revertido que queda en el suelo; pergamino que soltó un enemigo muerto en el tramo revertido.
   Compara con `OraculoVivo`. Cubre: FR-002, FR-003, FR-007, FR-008.
-- [ ] T019 [P] [US2] En `pruebas/prueba_linea_pergamino.py`, caso SC-002 completo: 1000 consultas elegidas con semilla sobre partidas sintéticas de al menos 500 acciones con pergaminos y viajes, todas iguales al oráculo en vivo; y el recorte del pergamino toca un número constante de entradas sin importar el largo de la historia (contador instrumentado, FR-023). Cubre: SC-002, FR-023.
+- [ ] T019 [P] [US2] En `pruebas/prueba_linea_pergamino.py`, caso SC-002 completo: 1000 consultas elegidas con semilla sobre partidas sintéticas de al menos 500 acciones con pergaminos y viajes, todas iguales al oráculo en vivo; y el recorte del pergamino toca un número constante de entradas sin importar el largo de la historia (contador instrumentado, FR-023); y el caso **SC-004** (análisis G1): 1000 secuencias con semilla ejecutadas con y sin consultas intercaladas, comparando reloj, huella del estado, partida.log y lo que revierte el siguiente pergamino. Se mantienen las 1000 consultas de SC-002 y las 1000 secuencias de SC-004; si la prueba pasa de 120 s, se le da un tope propio más alto en `pruebas/ejecutar_pruebas.py` en vez de reducir el número (análisis G3). Cubre: SC-002, SC-004, FR-011, FR-023.
 
 ### Implementation for User Story 2
 
@@ -157,12 +157,13 @@ description: "Tareas de la feature 004: línea de tiempo"
   - escenario 2 (FR-010; **Apéndice B 6**): `pruebas/datos/linea/guardado_formato_3.bin` (T002) se reporta incompatible con "se esperaba 4 y se encontró 3" y no se carga;
   - escenario 3 (FR-009): seguir jugando después de cargar; la historia es continua (instantes antes y después de la carga);
   - SC-005: las 1000 secuencias de T019 con un guardar y cargar en un punto elegido con semilla; ninguna consulta cambia;
-  - `cargar_sala` (§4.10 de la primera parte) sigue funcionando con el formato 4.
+  - `cargar_sala` (§4.10 de la primera parte) sigue funcionando con el formato 4 y lee solo el encabezado, el índice y su sala: con una línea grande (cientos de puntos de control), la cantidad de bytes que lee (archivo instrumentado) es la misma que sin línea (análisis F1);
+  - caso borde (análisis G4): usar el pergamino justo después de cargar (el historial del pergamino no se guarda, primera parte) y consultar instantes anteriores a la carga: siguen dando lo mismo.
   Cubre: FR-009, FR-010, SC-005.
 
 ### Implementation for User Story 4
 
-- [ ] T026 [US4] En `cripta/adaptadores/partidaBinaria.py`: `FORMATO_VERSION = 4` y la sección de la línea según contracts/partida-binaria.md (K, acciones, contenidos iniciales, bloques con su punto de control y sus entradas "A"/"P"); las acciones se leen con `_accion_desde_texto` de `registroArchivo.py` (expuesto como función pública); los puntos de control dentro del archivo van sin la sección de la línea; la carga reconstruye la `LineaTiempo`. Actualizar el docstring del formato. Cubre: FR-009, FR-010. Depende de: T002, T021.
+- [ ] T026 [US4] En `cripta/adaptadores/partidaBinaria.py`: `FORMATO_VERSION = 4`, la bandera `con_linea` y la sección de la línea según contracts/partida-binaria.md (K, acciones, contenidos iniciales, bloques con su punto de control y sus entradas "A"/"P"), escrita **antes** del índice de salas para que el índice siga siendo lo último del archivo y `cargar_sala` lea solo el índice y su sala (análisis F1); las acciones se leen con `_accion_desde_texto` de `registroArchivo.py` (expuesto como función pública); los puntos de control van con `con_linea` en falso y sin la sección de la línea, y `desde_bytes` los distingue de un guardado por esa bandera (análisis F3); la carga reconstruye la `LineaTiempo`. Actualizar el docstring del formato. Cubre: FR-009, FR-010. Depende de: T002, T021.
 - [ ] T027 [US4] En `cripta/controlador/controladorJuego.py` y donde se carga una partida: conectar la línea cargada a la partida; en `pruebas/prueba_persistencia_niebla.py` y `pruebas/prueba_persistencia_cazador.py`, aceptar la versión actual (≥ 3 y ≥ 2) en vez de un número fijo. Cubre: FR-009. Depende de: T026. T025 pasa.
 
 **Checkpoint**: US4 en verde.
@@ -207,16 +208,17 @@ description: "Tareas de la feature 004: línea de tiempo"
 - [ ] T031 [P] [US6] Crear `pruebas/prueba_rendimiento_linea.py`:
   - escenario 1 (FR-019, SC-003): partida de 5000 acciones sobre la cripta de referencia (`partida_referencia_inmortal`, T003) con el K por defecto; la consulta peor (mínimo de varias repeticiones) < 50 ms en instantes repartidos, con la cifra en el mensaje;
   - FR-021: ninguna consulta aplica más de K acciones (contador instrumentado);
-  - escenario 2 (FR-020, SC-007): con `tracemalloc`, la memoria de la línea con el K por defecto es menos de la mitad que con K = 1, y crece con las acciones (no con acciones por tamaño del estado);
+  - escenario 2 (FR-020, SC-007): con `tracemalloc`, en una partida de 500 acciones, la memoria de la línea con K = 25 es menos de la mitad que con K = 1, y crece con las acciones (no con acciones por tamaño del estado); K = 1 con 5000 acciones queda solo para el bench (análisis G2);
   - escenario 3 (FR-023): el recorte del pergamino cuesta lo mismo con 100 y con 5000 acciones (contador).
   Cubre: FR-019 a FR-021, FR-023, SC-003, SC-007.
+  **Nota (análisis I1):** estas pruebas miden código de historias anteriores, así que pueden pasar apenas se escriben; confirman el diseño en vez de guiarlo, como T047 de la feature 002.
 
 ### Implementation for User Story 6
 
 - [ ] T032 [P] [US6] Crear `cripta/controlador/bench/alternativasLineaTiempo.py` (solo para medir): búsqueda lineal del bloque en una `ListaEnlazada` y reconstrucción sin puntos de control (re-simular desde el instante 0, con un tope de tiempo en el bench). Cubre: FR-023, FR-024.
 - [ ] T033 [US6] Crear `cripta/controlador/bench/benchLineaTiempo.py` con `ejecutar(reporte, rapido)`, determinista por semilla, sobre la cripta de referencia y 5000 acciones (menos en `--rapido`): (1) memoria y tiempo de consulta (peor y mediana) con K = 10, 25 y 50 y sin puntos de control; (2) adelante contra atrás: tomar y restaurar una copia y deshacer K acciones con el Diario, junto a la reconstrucción hacia adelante medida; (3) búsqueda del bloque, arreglo por árbol contra lineal, con 10² a 10⁵ bloques; (4) recorte del pergamino según el largo de la historia; (5) tamaño y tiempo de guardar y cargar el formato 4. Cubre: FR-019 a FR-024, SC-003, SC-007. Depende de: T026, T032.
 - [ ] T034 [US6] En `cripta/controlador/bench/benchHistorial.py`: tabla nueva que repite las mediciones de la primera parte con la carga nueva (cazadores, viajes «ir a» y la línea conectada) y las compara con las anteriores, con el veredicto "sigue siendo adecuado" o "se cambió" (§5.6). Cubre: FR-025.
-- [ ] T035 [US6] Registrar `benchLineaTiempo` en `cripta/controlador/bench/benchTodo.py` y actualizar el total de tablas en `pruebas/prueba_4_4.py`; correr `py main.py --bench --rapido`. Cubre: FR-024. Depende de: T033, T034. T031 pasa.
+- [ ] T035 [US6] Registrar `benchLineaTiempo` en `cripta/controlador/bench/benchTodo.py` y actualizar el total de tablas en `pruebas/prueba_4_4.py`; además, `prueba_4_4` comprueba que `benchHistorial` trae la tabla con la carga nueva y su veredicto ("sigue siendo adecuado" o "se cambió"), citando FR-025 (análisis C1); correr `py main.py --bench --rapido`. Cubre: FR-024, FR-025. Depende de: T033, T034. T031 pasa.
 
 **Checkpoint**: todas las historias en verde.
 
@@ -228,7 +230,7 @@ description: "Tareas de la feature 004: línea de tiempo"
 - [ ] T037 Agregar al Documento de Decisiones (`DECISIONES.md`) las secciones nuevas de la línea de tiempo con el siguiente número D libre (estructura de P1 §8): puntos de control con `PartidaBinaria` en memoria; reconstrucción hacia adelante (con la evidencia de adelante contra atrás); K por defecto con la tabla de los tres valores y sin puntos de control; arreglo por árbol contra búsqueda lineal; servicio de solo lectura; ajuste del pergamino; formato 4; y §5.6 con el antes y el después del historial del pergamino. Cada sección enlaza a `specs/004-linea-tiempo/spec.md` y `plan.md` y dice si la decisión final coincide con el plan y qué medición la cambió (§7.1). Usar las cifras de `benchLineaTiempo`, no las previas. Cubre: FR-024, FR-025.
 - [ ] T038 Poner al día `specs/004-linea-tiempo/contracts/` (cli.md, vista.md, partida-binaria.md) con lo que quedó en el código, en un commit propio. Cubre: FR-013 a FR-018, FR-009.
 - [ ] T039 [P] Correr `py pruebas/prueba_reglas.py` y `py pruebas/prueba_sin_datos_concretos.py` (si existe) sobre `cripta/`: sin dict, set, list, heapq, bisect, collections, pickle ni deepcopy, y sin datos de criptas concretas. Cubre: FR-026 (constitución I, II y IV).
-- [ ] T040 Registrar las pruebas nuevas en `pruebas/ejecutar_pruebas.py` y correr la suite completa tres veces seguidas, todas en verde, anotando el total. Cubre: SC-001.
+- [ ] T040 Registrar las pruebas nuevas en `pruebas/ejecutar_pruebas.py` (con un tope de tiempo propio más alto para las que lo necesiten, como las de SC-002 y SC-004, sin reducir su número; análisis G3) y correr la suite completa tres veces seguidas, todas en verde, anotando el total. Cubre: SC-001.
 - [ ] T041 Validación a mano según `quickstart.md` §2 y §3 a 1024×720 (H, `#k`, valor inválido, pergamino, H durante un viaje, guardar y cargar), anotando el resultado en esta tarea. Cubre: FR-017, FR-018, SC-001.
 
 ---
@@ -266,11 +268,12 @@ description: "Tareas de la feature 004: línea de tiempo"
 | FR-022 | T022 | T023 |
 | FR-023 | T004, T019, T031 | T005, T015, T020, T032 |
 | FR-024 | T031 | T033, T035, T037 |
-| FR-025 | — (medición) | T034, T037 |
+| FR-025 | T035 (`prueba_4_4`) | T034, T037 |
 | FR-026 | T014, T039 | T015 |
 | SC-001 | T040 | todas |
 | SC-002 | T014, T019 | T003, T015, T021 |
 | SC-003, SC-007 | T031 | T033 |
+| SC-004 | T019 | T015, T017 |
 | SC-005 | T025 | T026 |
 | SC-006 | T022 | T024 |
 

@@ -49,6 +49,11 @@ hay que mantener una segunda implementación de cada regla. Con K = 25 la
 consulta peor cuesta unos 24 ms (13 ms de restaurar + 25 acciones), la mitad
 del límite de 50 ms (§6.1). Es la opción con menos código nuevo.
 
+En este diseño, "lo necesario para reconstruir los cambios" fuera de los
+puntos de control (FR-020) son las **acciones** de la historia que quedó, con
+su instante de decisión, y los **ajustes del pergamino** (R6): con ellos y el
+punto de control, la re-simulación reconstruye todo lo demás (análisis T1).
+
 **Alternativas medidas o estimadas**:
 
 - (b) **Aplicar cambios registrados con su instante** (rehacer hacia adelante
@@ -175,8 +180,10 @@ commit, antes de `/speckit-tasks`** (principio VII).
 
 ## R7. Persistencia: formato 4
 
-**Decisión**: `FORMATO_VERSION = 4`. Después de lo que escribe el formato 3 se
-agrega la sección de la línea: K; los contenidos iniciales registrados (sala y
+**Decisión**: `FORMATO_VERSION = 4`, con una bandera `con_linea` y la sección
+de la línea escrita **antes** del índice de salas, para que el índice siga
+siendo lo último del archivo y `cargar_sala` lea solo el índice y su sala
+(análisis F1). La sección tiene: K; los contenidos iniciales registrados (sala y
 su DTO de contenido); y los bloques, cada uno con su punto de control (longitud
 y bytes), el número de su primera acción y sus entradas (acción como
 `Accion.texto()` con su instante de decisión, o ajuste del pergamino). Las

@@ -42,7 +42,7 @@ Sin estado propio fuera de lo descrito: consultar no modifica nada (FR-011).
 
 | Campo | Tipo | Descripción |
 |---|---|---|
-| `punto_control` | bytes | Estado completo justo antes de la primera acción del bloque. |
+| `punto_control` | bytes | Estado completo justo antes de la primera acción del bloque (formato 4 con `con_linea` falso). |
 | `primera_accion` | int | Número (desde 1) de la primera acción del bloque. |
 | `tiempo_inicio` | int | Instante de decisión de la primera acción (clave de la búsqueda binaria). |
 | `entradas` | `ListaDoble` de `EntradaAccion` o `AjustePergamino` | En orden; quitar la última es O(1). |
@@ -91,6 +91,9 @@ Lo que `Partida` le pide al servicio, sin red: `asegurar_contenido` desde
 
 `tomar(partida) -> bytes` y `restaurar(datos, servicio) -> Partida`.
 Adaptador: `PartidaBinaria.a_bytes` y `PartidaBinaria.desde_bytes` (R1).
+Los bytes de un punto de control llevan la bandera `con_linea` en falso y no
+tienen la sección de la línea; `desde_bytes` la usa para distinguirlos de un
+guardado del mismo formato 4 (contracts/partida-binaria.md, análisis F3).
 
 ## ResumenInstante (`vista/estadoVista.py`, DTO inmutable)
 
