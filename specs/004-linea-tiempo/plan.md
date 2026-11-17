@@ -78,13 +78,12 @@ código.
 | IV. Sin datos concretos y presupuesto | La copia usa `ServicioSoloLectura`: sin red ni presupuesto; el bench elige la cripta por cantidad de salas | ✅ |
 | V. Reversibilidad y persistencia | Copias completas solo como puntos de control, una cada K acciones (K por `--checkpoint-cada`, justificado con mediciones); fuera de ellos, acciones y ajustes; formato 4 y la versión 3 se reporta incompatible | ✅ |
 | VI. Medir antes de afirmar | Mediciones previas en research; `benchLineaTiempo` con K = 10, 25, 50, sin puntos de control, adelante contra atrás, búsqueda del bloque y §5.6 | ✅ |
-| VII. La spec precede al código | spec.md con aclaraciones confirmada (`07d142e`, `24f7602`). **Acción previa a tasks**: corregir en la spec la referencia de SC-002 y de las pruebas independientes de US1 y US3 (research R6), en su propio commit | ⚠️ pendiente de la corrección de la spec |
+| VII. La spec precede al código | spec.md con aclaraciones confirmada (`07d142e`, `24f7602`); la referencia de SC-002 y de las pruebas independientes de US1 y US3 se corrigió en su propio commit (`67c1a83`, research R6) antes de `/speckit-tasks` | ✅ |
 | Restricciones | Tipos, docstrings y `_` con propiedades; archivos en camelCase; errores con `ErrorCripta` | ✅ |
 
-**Resultado del gate**: pasa, con una corrección de la spec antes de
-`/speckit-tasks`: la referencia de las pruebas debe ser el estado real de la
-historia que quedó, no la reproducción de las acciones sin los ajustes del
-pergamino (R6). Después de esa corrección el gate queda en verde.
+**Resultado del gate**: pasa. La corrección de la spec que pedía el diseño
+(referencia de las pruebas = estado real de la historia que quedó, R6) quedó
+confirmada en `67c1a83` antes de `/speckit-tasks`.
 
 ## Cambios por capa
 
