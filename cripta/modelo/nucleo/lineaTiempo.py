@@ -12,6 +12,7 @@ from ..estructuras.listaEnlazada import ListaEnlazada
 from ..puertos.errores import ErrorCripta
 
 K_POR_OMISION = 25
+CLASE_PERGAMINO = "pergamino_retroceso"
 
 
 class EntradaAccion:
@@ -28,15 +29,26 @@ class EntradaAccion:
 class AjustePergamino:
     """Lo que un pergamino cambió fuera de la reversión (FR-008, regla D50):
     el inventario y los pergaminos en el suelo de la partida real justo
-    después de usarlo, en el instante al que volvió el reloj (research R6)."""
+    después de usarlo, en el instante al que volvió el reloj (research R6).
 
-    __slots__ = ("tiempo", "inventario", "pergaminos_suelo")
+    También lo que el Diario de la primera parte no revierte y del que depende
+    lo que pasa después: el estado del generador aleatorio (los sorteos de lo
+    revertido ya se consumieron), la próxima secuencia de la agenda y el
+    próximo id de objeto. Sin eso, re-simular lo que viene después del
+    pergamino daría sorteos e ids distintos de los de la partida real."""
+
+    __slots__ = ("tiempo", "inventario", "pergaminos_suelo", "estado_azar",
+                 "secuencia_agenda", "siguiente_id_objeto")
 
     def __init__(self, tiempo: int, inventario: ListaEnlazada,
-                 pergaminos_suelo: ListaEnlazada) -> None:
+                 pergaminos_suelo: ListaEnlazada, estado_azar: tuple,
+                 secuencia_agenda: int, siguiente_id_objeto: int) -> None:
         self.tiempo = tiempo
         self.inventario = inventario                  # de (id_objeto, id_ficha, equipado)
         self.pergaminos_suelo = pergaminos_suelo      # de (id_sala, id_objeto, id_ficha)
+        self.estado_azar = estado_azar                # random.Random.getstate()
+        self.secuencia_agenda = secuencia_agenda
+        self.siguiente_id_objeto = siguiente_id_objeto
 
 
 class Bloque:
@@ -73,6 +85,7 @@ class LineaTiempo:
         self._acciones = 0
         self._pendiente = None                        # (bytes, tiempo) del próximo bloque
         self.ultimas_aplicadas = 0                    # acciones re-simuladas en la última consulta (FR-021)
+        self.ultimo_recorte = 0                       # entradas y bloques que tocó el último pergamino (FR-023)
 
     # ------------------------------------------------------------------
     # Consultas simples
@@ -140,6 +153,52 @@ class LineaTiempo:
         bloque.entradas.agregar_al_final(EntradaAccion(accion, tiempo_decision))
         bloque.acciones += 1
         self._acciones += 1
+
+    def al_usar_pergamino(self, partida) -> None:
+        """El pergamino revirtió la última acción del jugador (FR-007): se quita
+        de la historia esa acción y lo que venía después de ella en el último
+        bloque; si el bloque se quedó sin acciones, se quita el bloque (su
+        punto de control era el estado antes de una acción que ya no existe).
+        Después se agrega el ajuste del pergamino con el inventario y los
+        pergaminos en el suelo de la partida real (FR-008, D50). Cuesta en
+        proporción a lo revertido, sin recorrer la historia (FR-023)."""
+        self._pendiente = None
+        self.ultimo_recorte = 0
+        if self._bloques.esta_vacio() or self._acciones == 0:
+            return
+        bloque = self._bloques.ultimo()
+        while not bloque.entradas.esta_vacia():
+            entrada = bloque.entradas.ver_ultimo()
+            bloque.entradas.eliminar_ultimo()
+            self.ultimo_recorte += 1
+            if isinstance(entrada, EntradaAccion):
+                break
+        bloque.acciones -= 1
+        self._acciones -= 1
+        if bloque.acciones == 0:
+            self._bloques.quitar_ultimo()
+            self.ultimo_recorte += 1
+        if self._bloques.esta_vacio():
+            return            # sin punto de control: la próxima acción toma uno en vivo
+        self._bloques.ultimo().entradas.agregar_al_final(self._ajuste_de(partida))
+
+    @staticmethod
+    def _ajuste_de(partida) -> AjustePergamino:
+        """El inventario (en orden) y los pergaminos en el suelo de la partida
+        real justo después del pergamino. O(inventario + salas)."""
+        jugador = partida.jugador
+        inventario = ListaEnlazada()
+        for objeto in jugador.inventario:
+            inventario.agregar_al_final((objeto.id_instancia, objeto.ficha.id,
+                                         jugador.equipo.esta_equipado(objeto)))
+        suelo = ListaEnlazada()
+        for sala in partida.mundo:
+            for objeto in sala.suelo:
+                if objeto.clase == CLASE_PERGAMINO:
+                    suelo.agregar_al_final((sala.id, objeto.id_instancia, objeto.ficha.id))
+        return AjustePergamino(jugador.evento_accion.tiempo, inventario, suelo,
+                               partida.azar.getstate(), partida.agenda.secuencia,
+                               partida.siguiente_id_objeto)
 
     def registrar_contenido(self, id_sala: int, contenido) -> None:
         """Contenido inicial de una sala, la primera vez que se carga (R5)."""

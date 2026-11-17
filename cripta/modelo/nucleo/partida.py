@@ -22,6 +22,7 @@ from .constantes import (
     ESTADO_DERROTA, ESTADO_VICTORIA, TAMANO_BITACORA, calcular_intervalo,
     reescalar_restante)
 from .fabricaEntidades import FabricaEntidades
+from ..objetos.objeto import crear_objeto
 from .mutador import Mutador
 from .puntajes import RegistroPuntaje
 from .resultadoAccion import ResultadoAccion
@@ -366,6 +367,71 @@ class Partida:
             self.mutador.inventario_quitar(self.jugador, pergamino)
         self.mutador.reanudar()
         self.avisar("El pergamino retrocede el tiempo.")
+        if self.linea is not None:
+            self.linea.al_usar_pergamino(self)      # 004-linea-tiempo, FR-007, FR-008
+
+    def aplicar_ajuste_pergamino(self, ajuste) -> None:
+        """Solo para copias de la línea de tiempo (004, research R6): deja el
+        inventario y los pergaminos del suelo iguales a los de la partida real
+        justo después de un pergamino. Re-simular las acciones que quedaron no
+        reproduce el pergamino gastado ni la regla D50, porque no son acciones.
+        Mueve objetos por id o los crea desde su ficha con el mismo id. Fuera
+        del Mutador: la copia no tiene diario."""
+        sueltos = ListaEnlazada()                 # objetos sacados de su lugar
+        inventario = self.jugador.inventario
+        objetivo = ListaEnlazada()
+        for id_objeto, _, _ in ajuste.inventario:
+            objetivo.agregar_al_final(id_objeto)
+        presentes = ListaEnlazada()
+        for objeto in inventario:
+            presentes.agregar_al_final(objeto)
+        for objeto in presentes:
+            if not objetivo.contiene(objeto.id_instancia):
+                self.jugador.equipo.desequipar(objeto)
+                inventario.quitar(objeto)
+                sueltos.agregar_al_final(objeto)
+        en_suelo = ListaEnlazada()
+        for id_sala, id_objeto, _ in ajuste.pergaminos_suelo:
+            en_suelo.agregar_al_final((id_sala, id_objeto))
+        for sala in self.mundo:
+            quitar = ListaEnlazada()
+            for objeto in sala.suelo:
+                if objeto.clase == "pergamino_retroceso" and \
+                        not en_suelo.contiene((sala.id, objeto.id_instancia)):
+                    quitar.agregar_al_final(objeto)
+            for objeto in quitar:
+                sala.suelo.eliminar_nodo(sala.suelo.buscar(objeto))
+                sueltos.agregar_al_final(objeto)
+        for id_sala, id_objeto, id_ficha in ajuste.pergaminos_suelo:
+            sala = self.mundo.sala(id_sala)
+            if sala.buscar_objeto(id_objeto) is None:
+                sala.suelo.agregar_al_final(self._objeto_de_ajuste(sueltos, id_objeto, id_ficha))
+        indice = 0
+        for id_objeto, id_ficha, _ in ajuste.inventario:
+            if inventario.buscar(id_objeto) is None:
+                inventario.insertar_en(indice, self._objeto_de_ajuste(sueltos, id_objeto, id_ficha))
+            indice += 1
+        # Lo que el Diario no revierte: así lo que viene después sortea, ordena
+        # y numera igual que la partida real.
+        self.azar.setstate(ajuste.estado_azar)
+        self.agenda.secuencia = ajuste.secuencia_agenda
+        self._fabrica._siguiente_id_objeto = ajuste.siguiente_id_objeto
+
+    @property
+    def siguiente_id_objeto(self) -> int:
+        """El próximo id de objeto de la fábrica (004, ajuste del pergamino)."""
+        return self._fabrica._siguiente_id_objeto
+
+    def _objeto_de_ajuste(self, sueltos, id_objeto: int, id_ficha: str):
+        """El objeto con ese id entre los sacados, o uno nuevo desde su ficha
+        con el mismo id (por ejemplo, uno que soltó un enemigo en el tramo
+        revertido)."""
+        for objeto in sueltos:
+            if objeto.id_instancia == id_objeto:
+                return objeto
+        ids = ListaEnlazada()
+        ids.agregar_al_final(id_ficha)
+        return crear_objeto(id_objeto, self.servicio.resolver_fichas(ids).ver_primero())
 
     # ------------------------------------------------------------------
     # Bucle de eventos

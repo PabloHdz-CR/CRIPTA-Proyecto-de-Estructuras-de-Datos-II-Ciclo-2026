@@ -97,8 +97,12 @@ def huella(estado) -> tuple:
          jugador.enemigos_derrotados),
         sala.nombre,
         tuple((s.direccion, s.estado, s.costo) for s in sala.salidas),
-        tuple((a.etiqueta, a.vida, a.vida_max) for a in sala.enemigos),
-        tuple((o.id_objeto, o.nombre) for o in sala.objetos),
+        # Enemigos y suelo como conjuntos: el ORDEN de esas listas no es estado
+        # del juego (los enemigos actúan por la agenda) y deshacer con el Diario
+        # de la primera parte reinserta al final; el número de la etiqueta
+        # depende de ese orden, así que se compara solo el nombre.
+        tuple(sorted((a.etiqueta.split(" #")[0], a.vida, a.vida_max) for a in sala.enemigos)),
+        tuple(sorted((o.id_objeto, o.nombre) for o in sala.objetos)),
         tuple((e.tipo, e.descripcion) for e in estado.efectos),
         tuple((o.id_objeto, o.nombre, o.equipado) for o in estado.inventario.objetos),
         estado.inventario.cantidad_pergaminos,

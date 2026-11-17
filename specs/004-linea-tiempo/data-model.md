@@ -64,9 +64,17 @@ con la posición; un bloque existe solo si su primera acción sigue existiendo.
 | `tiempo` | int | Instante al que volvió el reloj al usar el pergamino. |
 | `inventario` | `ListaEnlazada` de `(id_objeto, id_ficha, equipado)` | Inventario de la partida real después del pergamino, en orden. |
 | `pergaminos_suelo` | `ListaEnlazada` de `(id_sala, id_objeto, id_ficha)` | Pergaminos que quedaron en el suelo (D50). |
+| `estado_azar` | tupla de `random.Random.getstate()` | El generador después del pergamino (agregado al implementar, T021). |
+| `secuencia_agenda` | int | La próxima secuencia de la agenda (T021). |
+| `siguiente_id_objeto` | int | El próximo id de objeto de la fábrica (T021). |
 
 Al re-simular: la copia deja su inventario y sus pergaminos en el suelo iguales
-a estos, moviendo objetos por `id_objeto` o creándolos desde su ficha.
+a estos, moviendo objetos por `id_objeto` o creándolos desde su ficha, y
+restaura el generador y los dos contadores. Los tres últimos campos se
+agregaron al implementar: el Diario de la primera parte no los revierte, así
+que después de un pergamino la partida real sigue con el generador avanzado
+por los sorteos de lo revertido; sin guardarlos, lo que viene después del
+pergamino se re-simulaba con otros sorteos.
 
 ## ArregloArbol (`modelo/estructuras/arregloArbol.py`)
 
