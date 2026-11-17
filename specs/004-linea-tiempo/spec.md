@@ -8,6 +8,14 @@
 
 **Input**: User description: "Línea de tiempo de la Parte II de Cripta: §3.6 línea de tiempo, §5.5 línea de tiempo y puntos de control, §5.6 revisión del historial de retroceso, §6.1 límite de 50 ms por consulta, §6.3 mediciones con --bench y §7.3 interfaz mínima" (descripción completa con reglas del juego, 6 escenarios obligatorios del Apéndice B y requisitos de rendimiento en el comando `/speckit-specify` del 2026-11-17, registrado en PROMPTS_LLM.md).
 
+## Clarifications
+
+### Session 2026-11-17
+
+- Q: Cuando `--replay partida.log --hasta t` reproduce un log con pergaminos, ¿el resumen muestra la historia tal como quedó con esos pergaminos aplicados, o el estado por el que pasa la reproducción al llegar a t antes de un pergamino posterior? → A: La historia tal como quedó: se aplican todos los pergaminos del log y se muestra el instante t de esa historia; coincide con «historia <t>» al final de la partida original (FR-014).
+- Q: Si el jugador aprieta H mientras un viaje «ir a» está en curso, ¿el viaje se detiene para abrir la consulta? → A: Sí: H detiene el viaje con el motivo "interrumpido" y abre la consulta; es una excepción deliberada a la regla de la feature 002 de que las teclas de presentación no detienen un viaje (FR-017).
+- Q: Un pergamino recogido durante acciones que otro pergamino revirtió sigue en el inventario (D50), pero su recogida ya no existe en la historia: ¿desde qué instante figura en el inventario al consultar la línea de tiempo? → A: Desde el reloj actual (el instante al que volvió el reloj); no figura en los instantes anteriores (FR-008).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Consultar el estado de un instante pasado (Priority: P1)
@@ -60,6 +68,7 @@ durante y después del tramo revertido.
 2. **Given** el jugador revirtió dos acciones y después hizo otras dos distintas, **When** consulta «historia #k» con los números de las acciones nuevas, **Then** ve el estado antes de las acciones nuevas (la numeración sigue la historia que quedó, sin huecos) (FR-002, FR-007).
 3. **Given** el jugador usó el pergamino, **When** consulta un instante anterior al reloj actual, **Then** el pergamino gastado sigue figurando en el inventario de ese instante, porque se gastó al usarlo, en el reloj actual (FR-008).
 4. **Given** el jugador usó el pergamino y el reloj volvió a R', **When** consulta un instante mayor que R' (aunque antes del pergamino el reloj lo hubiera alcanzado), **Then** la consulta se rechaza por ser posterior al reloj actual (FR-003, FR-007).
+5. **Given** el jugador recogió un pergamino durante acciones que después revirtió con otro pergamino, y el reloj volvió a R', **When** consulta instantes menores que R' y el instante R', **Then** ese pergamino no figura en el inventario de los instantes menores que R' y sí figura desde R' (FR-008).
 
 ---
 
@@ -179,7 +188,7 @@ y comparar memoria y tiempo de consulta con los límites.
 **Pergamino**
 
 - **FR-007**: Las acciones revertidas con un pergamino, con todos sus efectos y eventos, MUST dejar de existir en la línea de tiempo; la línea MUST describir la historia tal como quedó. El pergamino MUST seguir limitado a 5 acciones y MUST NOT depender de la línea de tiempo.
-- **FR-008**: El pergamino gastado MUST figurar en el inventario de los instantes anteriores al reloj actual y dejar de figurar desde el reloj actual, porque se gasta al usarlo y el uso no consume tiempo.
+- **FR-008**: El pergamino gastado MUST figurar en el inventario de los instantes anteriores al reloj actual y dejar de figurar desde el reloj actual, porque se gasta al usarlo y el uso no consume tiempo. Un pergamino recogido durante las acciones revertidas, que sigue en el inventario por la regla de la primera parte (D50), MUST figurar desde el reloj actual y MUST NOT figurar en los instantes anteriores, porque su recogida ya no existe en la historia.
 
 **Persistencia**
 
@@ -227,7 +236,7 @@ y comparar memoria y tiempo de consulta con los límites.
 
 ### Measurable Outcomes
 
-- **SC-001**: Los 27 escenarios de aceptación de esta especificación (8 + 4 + 5 + 3 + 4 + 3), incluidos los 6 obligatorios del Apéndice B, tienen al menos una prueba automatizada o un partida.log que los ejerce y todas pasan.
+- **SC-001**: Los 28 escenarios de aceptación de esta especificación (8 + 5 + 5 + 3 + 4 + 3), incluidos los 6 obligatorios del Apéndice B, tienen al menos una prueba automatizada o un partida.log que los ejerce y todas pasan.
 - **SC-002**: En 1000 consultas a instantes y números de acción elegidos con semilla fija, sobre partidas sintéticas de al menos 500 acciones con pergaminos y viajes «ir a», el resumen coincide en el 100 % de los casos con el estado que se obtiene reproduciendo desde el principio solo las acciones que siguen existiendo en la historia (sin las revertidas por pergaminos) hasta ese instante. No sirve reproducir la partida tal como se jugó: con pergaminos el reloj vuelve atrás y las acciones nuevas reusan los mismos instantes, así que esa reproducción pasa por la rama revertida.
 - **SC-003**: En una partida de al menos 5000 acciones del jugador con el K por defecto, todas las consultas medidas por --bench tardan menos de 50 ms.
 - **SC-004**: En 1000 secuencias aleatorias de acciones con consultas intercaladas, la partida resultante (reloj, estado, partida.log y lo que revierte el siguiente pergamino) es idéntica a la misma secuencia sin consultas.
@@ -239,9 +248,9 @@ y comparar memoria y tiempo de consulta con los límites.
 
 - **Fuente de las reglas**: Cripta Parte II §3.6 (línea de tiempo), §5.5 (línea de tiempo y puntos de control), §5.6 (revisión del historial de retroceso), §6.1 (límite de 50 ms con 5000 acciones), §6.3 (mediciones con --bench), §7.3 (interfaz mínima: consultar la línea de tiempo con historia <t> e historia #k) y Apéndice B (6 escenarios obligatorios); de la primera parte, el reloj, la agenda con su desempate, el pergamino (5 acciones, no consume tiempo ni cuenta como acción) y el guardado.
 - **El pergamino en la línea**: usar el pergamino no cuenta como acción ni consume tiempo (primera parte); el reloj vuelve al instante de antes de lo revertido y el pergamino se gasta en ese instante, así que figura en el inventario de los instantes anteriores (FR-008).
-- **--replay … --hasta y los pergaminos**: el resumen corresponde a la historia tal como quedó al final del log (FR-014), no al estado que la reproducción tuvo de paso antes de aplicar un pergamino posterior. Así coincide con «historia <t>» en la partida original. Candidato a confirmar en /speckit-clarify.
-- **H durante un viaje «ir a»**: en la feature 002 se decidió que las teclas de presentación (M, Tab, O, L, V) no detienen un viaje; H lo detiene como la interrupción manual (motivo "interrumpido"), como excepción deliberada, porque no se puede escribir un instante mientras el jugador camina (FR-017). Candidato a confirmar en /speckit-clarify.
-- **Pergamino recogido dentro de un tramo revertido**: por la regla de la primera parte (D50), un pergamino que el jugador recogió durante las acciones revertidas sigue en su inventario, pero su recogida ya no existe en la historia que quedó. Supuesto por omisión: figura en el inventario desde el reloj actual (el instante al que volvió el reloj), igual que el pergamino gastado de FR-008, y no figura en los instantes anteriores. Candidato a confirmar en /speckit-clarify.
+- **--replay … --hasta y los pergaminos**: el resumen corresponde a la historia tal como quedó al final del log (FR-014), no al estado que la reproducción tuvo de paso antes de aplicar un pergamino posterior. Así coincide con «historia <t>» en la partida original (confirmado en Clarifications).
+- **H durante un viaje «ir a»**: en la feature 002 se decidió que las teclas de presentación (M, Tab, O, L, V) no detienen un viaje; H lo detiene como la interrupción manual (motivo "interrumpido"), como excepción deliberada, porque no se puede escribir un instante mientras el jugador camina (FR-017; confirmado en Clarifications).
+- **Pergamino recogido dentro de un tramo revertido**: por la regla de la primera parte (D50), un pergamino que el jugador recogió durante las acciones revertidas sigue en su inventario, pero su recogida ya no existe en la historia que quedó. Supuesto por omisión: figura en el inventario desde el reloj actual (el instante al que volvió el reloj), igual que el pergamino gastado de FR-008, y no figura en los instantes anteriores (FR-008; confirmado en Clarifications).
 - **Formato de guardado**: la feature 002 usa la versión 3; esta, la 4. Un archivo de la versión 3 o anterior se reporta incompatible, sin migrar, igual que decidió la 002.
 - **Partida terminada**: en la ventana, la consulta existe durante la partida; después de terminar, se consulta con --replay … --hasta sobre el log archivado.
 - **Mapa conocido**: lo da la feature 002 (conocimiento del jugador, reversible); esta feature solo lo muestra en el instante consultado.

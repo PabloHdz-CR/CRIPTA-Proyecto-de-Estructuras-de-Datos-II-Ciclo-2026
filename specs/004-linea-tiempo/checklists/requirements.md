@@ -32,7 +32,8 @@
 ## Notes
 
 - La spec no nombra estructuras, clases ni módulos (constitución, principio VII). Las menciones a partida.log, --replay, --hasta, --checkpoint-cada, --bench, el archivo de partida y la tecla H son parte del contrato del juego definido por el enunciado, no detalles de implementación. "Punto de control" y "cambio registrado" son conceptos del enunciado (§3.6), no estructuras.
-- Los 6 escenarios obligatorios del Apéndice B están en US1 (1, 2 y 3), US2 (1), US3 (1) y US4 (2). SC-001 cuenta 27 escenarios (8 + 4 + 5 + 3 + 4 + 3).
+- Los 6 escenarios obligatorios del Apéndice B están en US1 (1, 2 y 3), US2 (1), US3 (1) y US4 (2). SC-001 cuenta 28 escenarios (8 + 5 + 5 + 3 + 4 + 3).
 - Depende de la feature 002 (conocimiento del jugador reversible y formato 3) y de las reglas de la primera parte para el reloj, la agenda, el pergamino y el guardado.
 - Supuestos candidatos a confirmar con `/speckit-clarify`: que `--replay … --hasta t` muestre la historia tal como quedó con los pergaminos aplicados (FR-014); que H detenga un viaje «ir a» en curso antes de abrir la consulta, como excepción a la regla de la feature 002 (FR-017); y desde qué instante figura en la línea de tiempo un pergamino recogido dentro de un tramo revertido (regla D50 de la primera parte).
 - Corrección del 2026-11-17 (fase specify): la referencia de SC-002 y de las pruebas independientes de US1 y US3 es reproducir solo las acciones que siguen existiendo, no la partida tal como se jugó; FR-017 explica la excepción de H a la regla de la feature 002. Todos los ítems siguen cumpliéndose.
+- Clarify del 2026-11-17 (3 preguntas): --replay … --hasta muestra la historia tal como quedó con los pergaminos aplicados (FR-014); H detiene un viaje «ir a» como excepción a la regla de la feature 002 (FR-017); un pergamino recogido dentro de un tramo revertido figura desde el reloj actual (FR-008, escenario 5 de US2). Todos los ítems siguen cumpliéndose (16/16).
