@@ -201,11 +201,14 @@ class OraculoVivo:
                 evento = partida.mutador.agenda_extraer()
                 if evento.tiempo > partida.reloj:
                     partida.mutador.asignar(partida, "reloj", evento.tiempo)
+                # El instante se toma ANTES de ejecutar: un evento de acción se
+                # reprograma a sí mismo y cambia su propio tiempo.
+                momento = evento.tiempo
                 evento.ejecutar(partida)
                 proximo = partida.agenda.ver_siguiente()
-                if proximo is not None and proximo.tiempo <= evento.tiempo:
+                if proximo is not None and proximo.tiempo <= momento:
                     continue            # quedan eventos de este mismo instante
-                oraculo.instantes[evento.tiempo] = huella_partida(partida)
+                oraculo.instantes[momento] = huella_partida(partida)
 
         partida._procesar_eventos = procesar_eventos
 

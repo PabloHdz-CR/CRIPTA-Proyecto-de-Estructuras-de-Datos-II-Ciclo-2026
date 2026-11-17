@@ -69,7 +69,7 @@ description: "Tareas de la feature 004: línea de tiempo"
 
 ### Tests for User Story 1 ⚠️ (escritas primero, deben fallar)
 
-- [ ] T013 [P] [US1] Crear `pruebas/prueba_linea_consulta.py`, un caso por escenario de US1:
+- [X] T013 [P] [US1] Crear `pruebas/prueba_linea_consulta.py`, un caso por escenario de US1:
   - escenario 1 (FR-003, FR-012; **Apéndice B 1**): t > reloj actual se rechaza con el reloj en el mensaje y nada cambia;
   - escenario 2 (FR-001, FR-004; **Apéndice B 3**): varios eventos en el mismo instante t → estado después de todos;
   - escenario 3 (FR-011, FR-012; **Apéndice B 4**): la consulta no consume tiempo, no escribe en partida.log y el siguiente pergamino revierte lo mismo que sin la consulta;
@@ -80,13 +80,15 @@ description: "Tareas de la feature 004: línea de tiempo"
   - escenario 8 (FR-001, FR-002): «historia 0» y «#1» dan el estado inicial;
   - caso borde: t entre dos decisiones (FR-001).
   Compara con `OraculoVivo` (T003). Cubre: FR-001 a FR-006, FR-011, FR-012.
-- [ ] T014 [P] [US1] En `pruebas/prueba_linea_consulta.py`, caso SC-002 sin pergaminos: 300 consultas a instantes y números de acción elegidos con semilla sobre partidas sintéticas de 500 acciones con viajes «ir a», todas iguales a la huella del oráculo en vivo, y resultado independiente de K (FR-026: mismas consultas con K = 1, 25 y 100). Cubre: SC-002, FR-026.
+- [X] T014 [P] [US1] En `pruebas/prueba_linea_consulta.py`, caso SC-002 sin pergaminos: 300 consultas a instantes y números de acción elegidos con semilla sobre partidas sintéticas de 500 acciones con viajes «ir a», todas iguales a la huella del oráculo en vivo, y resultado independiente de K (FR-026: mismas consultas con K = 1, 25 y 100). Cubre: SC-002, FR-026.
 
 ### Implementation for User Story 1
 
-- [ ] T015 [US1] En `cripta/modelo/nucleo/lineaTiempo.py`: `reconstruir_accion(k, servicio_real)` (bloque ⌊(k−1)/K⌋ con `ArregloArbol.obtener`, restaurar el punto de control con `ServicioSoloLectura`, aplicar completas las acciones anteriores a k) y `reconstruir_instante(t, servicio_real)` (búsqueda binaria por `tiempo_inicio`; aplicar completas las acciones cuya siguiente decisión es ≤ t y la última con `limite=t`, R3). La copia no tiene diario, vista ni registro. Nunca aplica más de K acciones (FR-021). Cubre: FR-001 a FR-004, FR-021, FR-023. Depende de: T011, T012.
-- [ ] T016 [P] [US1] Agregar `ResumenInstante` (DTO inmutable, campos de data-model.md) en `cripta/vista/estadoVista.py` y crear `cripta/controlador/constructorResumen.py`: arma el resumen desde una Partida (con el mapa conocido de la 002 vía el mismo constructor del panel M) y su texto según contracts/cli.md. Cubre: FR-005, FR-006. Depende de: T012.
-- [ ] T017 [US1] En `cripta/controlador/controladorJuego.py`: crear la `LineaTiempo(K, CopiadorBinario)` y conectarla a la partida al empezar; verbo de sesión `historia` (no consume tiempo, no va al log, no detiene viajes): interpretar `"<t>"` o `"#<k>"`, validar (FR-003, con el motivo en `mostrar_error`), reconstruir y mandar el `ResumenInstante` en `EstadoVista.historia` (solo mientras la consulta está abierta). Cubre: FR-002, FR-003, FR-011, FR-012. Depende de: T015, T016. T013 y T014 pasan.
+- [X] T015 [US1] En `cripta/modelo/nucleo/lineaTiempo.py`: `reconstruir_accion(k, servicio_real)` (bloque ⌊(k−1)/K⌋ con `ArregloArbol.obtener`, restaurar el punto de control con `ServicioSoloLectura`, aplicar completas las acciones anteriores a k) y `reconstruir_instante(t, servicio_real)` (búsqueda binaria por `tiempo_inicio`; aplicar completas las acciones cuya siguiente decisión es ≤ t y la última con `limite=t`, R3). La copia no tiene diario, vista ni registro. Nunca aplica más de K acciones (FR-021). Cubre: FR-001 a FR-004, FR-021, FR-023. Depende de: T011, T012.
+- [X] T016 [P] [US1] Agregar `ResumenInstante` (DTO inmutable, campos de data-model.md) en `cripta/vista/estadoVista.py` y crear `cripta/controlador/constructorResumen.py`: arma el resumen desde una Partida (con el mapa conocido de la 002 vía el mismo constructor del panel M) y su texto según contracts/cli.md. Cubre: FR-005, FR-006. Depende de: T012.
+  **Hecho:** ResumenInstante lleva el EstadoVista de la copia (campo estado) en vez de repetir sus campos uno por uno: así el resumen y el dibujo del juego salen del mismo constructor. Se anota en contracts/ en T038.
+- [X] T017 [US1] En `cripta/controlador/controladorJuego.py`: crear la `LineaTiempo(K, CopiadorBinario)` y conectarla a la partida al empezar; verbo de sesión `historia` (no consume tiempo, no va al log, no detiene viajes): interpretar `"<t>"` o `"#<k>"`, validar (FR-003, con el motivo en `mostrar_error`), reconstruir y mandar el `ResumenInstante` en `EstadoVista.historia` (solo mientras la consulta está abierta). Cubre: FR-002, FR-003, FR-011, FR-012. Depende de: T015, T016. T013 y T014 pasan.
+  **Hecho:** El copiador entra por el constructor de ControladorJuego (copiador_estado, k_linea), así el Controlador no importa adaptadores (D48); apoyo_niebla.controlador_sobre pasa CopiadorBinario. Un instante posterior al reloj actual se rechaza aunque sea el de la decisión pendiente: esa se consulta con #(n+1).
 
 **Checkpoint**: US1 en verde: MVP de la línea de tiempo (consulta sin pergaminos).
 

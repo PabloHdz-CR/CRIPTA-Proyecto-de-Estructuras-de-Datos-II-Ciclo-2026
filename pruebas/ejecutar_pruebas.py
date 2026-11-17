@@ -91,6 +91,7 @@ PRUEBAS = (
     "prueba_arreglo_arbol",
     "prueba_limite_eventos",
     "prueba_servicio_solo_lectura",
+    "prueba_linea_consulta",
 
 )
 

@@ -43,14 +43,17 @@ from ..modelo.nucleo.accion import Mover
 from ..modelo.nucleo.viajeIrA import (
     INTERRUMPIDO, PERGAMINO, SIN_RUTA, ViajeIrA)
 from ..modelo.nucleo.diario import Diario
+from ..modelo.nucleo.lineaTiempo import K_POR_OMISION, LineaTiempo
 from ..modelo.nucleo.partida import Partida
 from ..modelo.objetos.inventario import CRITERIOS_ORDEN
 from ..modelo.puertos.errores import ErrorCripta
 from ..modelo.puertos.registroAcciones import EncabezadoPartida
 from ..modelo.resolubilidad.resultadoResolubilidad import ResultadoResolubilidad
 from ..modelo.resolubilidad.verificacion import verificar_cripta
-from ..vista.estadoVista import ReporteResolubilidadVisible, ResultadoFinVisible, ViajeVisible
+from ..vista.estadoVista import (
+    ReporteResolubilidadVisible, ResultadoFinVisible, ResumenInstante, ViajeVisible)
 from .constructorEstadoVista import ConstructorEstadoVista
+from .constructorResumen import ConstructorResumen
 from .mapaEtiquetas import MapaEtiquetas
 from .textoResolubilidad import AVISO_RESOLUBLE, AVISO_SIN_REPORTE, lineas_reporte
 from .traductorComandos import ErrorTraduccion, TraductorComandos
@@ -72,7 +75,11 @@ ORDEN_REAL = "real"
 # la ventana, en segundos de tiempo real. No toca el reloj del juego.
 PAUSA_PASO_VIAJE = 0.5
 VERBOS_PRESENTACION = ("alternar_mapa", "inventario_siguiente", "inventario_anterior",
-                       "ordenar_inventario", "ver_resolubilidad")
+                       "ordenar_inventario", "ver_resolubilidad", "historia",
+                       "cerrar_historia")
+# 004-linea-tiempo (FR-003): el texto de ayuda de una consulta mal escrita.
+AYUDA_HISTORIA = ("Escribe un instante (por ejemplo 120) o el número de una acción con # "
+                  "(por ejemplo #3).")
 
 
 class ControladorJuego:
@@ -81,7 +88,8 @@ class ControladorJuego:
                  registro: "RegistroAcciones", gestor_guardado: "GestorGuardado",
                  almacen_puntajes: "AlmacenPuntajes", reporte_final: "ReporteFinal",
                  nombre_jugador: str = "Jugador",
-                 reloj_real: Optional[Callable[..., float]] = None) -> None:
+                 reloj_real: Optional[Callable[..., float]] = None,
+                 copiador_estado=None, k_linea: int = K_POR_OMISION) -> None:
         self._servicio = servicio
         self._vista = vista
         self._registro = registro
@@ -126,6 +134,15 @@ class ControladorJuego:
         # CUÁNDO dar el paso siguiente, no qué pasa en él.
         self._reloj_real = reloj_real
         self._proximo_paso = 0.0
+        # 004-linea-tiempo: la línea de tiempo de cada partida usa este copiador
+        # (puerto CopiadorEstado, inyectado por FabricaAplicacion) y K acciones
+        # por bloque. Sin copiador no hay línea (pruebas viejas).
+        self._copiador_estado = copiador_estado
+        self._k_linea = k_linea
+        self._constructor_resumen = ConstructorResumen()
+        # El resumen de la consulta «historia» abierta, o None. Presentación:
+        # no se guarda, no se revierte y no va al log (FR-011, FR-012).
+        self._historia: Optional[ResumenInstante] = None
 
     # ------------------------------------------------------------------
     # Arranque
@@ -185,6 +202,7 @@ class ControladorJuego:
         self.partida.conectar_diario(Diario())
         self._mapa_etiquetas.reiniciar()
         self.partida.iniciar(semilla)
+        self._conectar_linea()
         if aviso is not None:
             # Presentación: va a la bitácora, no al log ni al reloj, y no se
             # revierte (Partida.avisar).
@@ -256,12 +274,52 @@ class ControladorJuego:
             self._ordenar_inventario(comando.argumentos)
         elif verbo == "ver_resolubilidad":
             self._ver_resolubilidad()
+        elif verbo == "historia":
+            self._consultar_historia(comando.argumentos)
+        elif verbo == "cerrar_historia":
+            self._historia = None
+            self._mostrar_estado_actual()
         elif verbo == "alternar_mapa":
             # 002-niebla-guerra (FR-017): no es acción del jugador, no gasta reloj.
             self._mapa_abierto = not self._mapa_abierto
             self._mostrar_estado_actual()
         else:
             self._procesar_accion(comando)
+
+    # ------------------------------------------------------------------
+    # Línea de tiempo (004-linea-tiempo)
+    # ------------------------------------------------------------------
+
+    def _conectar_linea(self) -> None:
+        """Conecta una línea de tiempo nueva a la partida (si hay copiador)."""
+        if self._copiador_estado is not None:
+            self.partida.conectar_linea(LineaTiempo(self._k_linea, self._copiador_estado))
+
+    def _consultar_historia(self, argumentos: tuple) -> None:
+        """«historia <t>» o «historia #k» (FR-001 a FR-003): reconstruye una
+        copia, sin tocar la partida (FR-011, FR-012), y la muestra. Un pedido
+        inválido muestra el motivo y la consulta sigue abierta."""
+        linea = self.partida.linea
+        if linea is None:
+            self._vista.mostrar_error("Esta partida no tiene línea de tiempo.")
+            return
+        texto = str(argumentos[0]).strip() if argumentos else ""
+        numero = texto[1:] if texto.startswith("#") else texto
+        if not numero.isdigit():
+            self._vista.mostrar_error(AYUDA_HISTORIA)
+            return
+        try:
+            if texto.startswith("#"):
+                copia = linea.reconstruir_accion(int(numero), self.partida)
+                instante = None
+            else:
+                instante = int(numero)
+                copia = linea.reconstruir_instante(instante, self.partida)
+        except ErrorCripta as error:
+            self._vista.mostrar_error(str(error))
+            return
+        self._historia = self._constructor_resumen.construir(copia, texto, instante)
+        self._mostrar_estado_actual()
 
     def _procesar_accion(self, comando: "Comando") -> None:
         try:
@@ -447,6 +505,9 @@ class ControladorJuego:
         # a objetos vivos, y §4.6 prohíbe copias completas del estado): una
         # partida cargada empieza con el Diario vacío.
         self.partida.conectar_diario(Diario())
+        if self.partida.linea is None:
+            self._conectar_linea()
+        self._historia = None
         self._mapa_etiquetas.reiniciar()
         self._criterio_orden = None
         self._mostrar_estado_actual()
@@ -459,7 +520,7 @@ class ControladorJuego:
         self._vista.mostrar_estado(self._constructor.construir(
             self.partida, self._criterio_orden, nombre_jugador=self._nombre_jugador,
             resolubilidad=self._reporte_visible, mapa_abierto=self._mapa_abierto,
-            viaje=self._viaje_visible()))
+            viaje=self._viaje_visible(), historia=self._historia))
 
     def _viaje_visible(self) -> Optional[ViajeVisible]:
         """El viaje en curso para el HUD (FR-025), o None."""

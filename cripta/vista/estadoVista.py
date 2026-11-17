@@ -189,6 +189,22 @@ class EstadoVista:
     mapa: Optional[MapaConocidoVisible] = None
     # 002-niebla-guerra: el viaje «ir a» en curso (None si no hay).
     viaje: Optional[ViajeVisible] = None
+    # 004-linea-tiempo: el resumen de la consulta «historia», solo mientras
+    # está abierta (FR-005, FR-017); None si no hay consulta.
+    historia: Optional["ResumenInstante"] = None
+
+
+@dataclass(frozen=True)
+class ResumenInstante:
+    """El resumen de un instante consultado (004-linea-tiempo, FR-005, FR-006).
+    Se arma una sola vez en el Controlador y se usa igual en el panel de la
+    ventana y en el texto de --replay … --hasta (FR-014)."""
+    pedido: str                     # lo consultado: "120" o "#3"
+    instante: Optional[int]         # t pedido (None si se pidió #k)
+    numero_accion: int              # la próxima acción del jugador en ese estado (k)
+    estado: "EstadoVista"           # el estado de ese instante, con su mapa conocido
+    lineas: ListaEnlazada           # el texto del resumen (contracts/cli.md)
+    aviso: Optional[str] = None     # "La partida terminó antes, en el instante F."
 
 
 @dataclass(frozen=True)

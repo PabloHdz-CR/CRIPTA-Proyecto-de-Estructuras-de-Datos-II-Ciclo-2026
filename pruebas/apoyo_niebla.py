@@ -29,6 +29,7 @@ from pathlib import Path
 
 from cripta.adaptadores.almacenLocalDisco import AlmacenLocalDisco
 from cripta.adaptadores.almacenPartidaDisco import AlmacenPartidaDisco
+from cripta.adaptadores.partidaBinaria import CopiadorBinario
 from cripta.adaptadores.puntajesArchivo import PuntajesArchivo
 from cripta.controlador.controladorJuego import ControladorJuego
 from cripta.controlador.gestorGuardado import GestorGuardado
@@ -443,7 +444,7 @@ def viajar(controlador, id_sala: int, maximo: int = 60) -> list:
 
 def controlador_sobre(descripcion, semilla: int = 1, sala_inicial: int = 1,
                       sala_salida=None, vida_jugador: int = 100, registro=None,
-                      reloj_real=None, vista=None):
+                      reloj_real=None, vista=None, k_linea: int = 25):
     """(ControladorJuego, VistaNiebla, registro) con una partida nueva iniciada
     sobre la descripción. Por omisión el registro es un RegistroEnMemoria."""
     servicio = servicio_niebla(descripcion, sala_inicial=sala_inicial,
@@ -455,7 +456,8 @@ def controlador_sobre(descripcion, semilla: int = 1, sala_inicial: int = 1,
     carpeta = Path(tempfile.mkdtemp(prefix="apoyo_niebla_ctrl_"))
     controlador = ControladorJuego(
         servicio, vista, registro, GestorGuardado(AlmacenPartidaDisco(carpeta / "guardados")),
-        PuntajesArchivo(carpeta / "puntajes.jsonl"), ReporteFinal(), reloj_real=reloj_real)
+        PuntajesArchivo(carpeta / "puntajes.jsonl"), ReporteFinal(), reloj_real=reloj_real,
+        copiador_estado=CopiadorBinario(), k_linea=k_linea)
     controlador.iniciar_nueva(ID_CRIPTA, semilla)
     return controlador, vista, registro
 
