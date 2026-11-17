@@ -33,7 +33,7 @@ ventana) o la miden.
 
 **Independent Test**: En una cripta sintética, sin vista ni red, jugar una
 secuencia fija de acciones, consultar varios instantes y números de acción, y
-comparar cada resumen con el estado que se obtiene reproduciendo desde el principio solo las acciones que siguen existiendo en la historia (sin las revertidas por pergaminos) hasta ese instante. No sirve reproducir la partida tal como se jugó: con pergaminos el reloj vuelve atrás y las acciones nuevas reusan los mismos instantes, así que esa reproducción pasa por la rama revertida (FR-007, FR-014).
+comparar cada resumen con el estado que la partida real tuvo en ese instante de la historia que quedó: por ejemplo, el resumen capturado en vivo en cada decisión del jugador, quitando los de las acciones revertidas con pergaminos. No sirven como referencia ni reproducir la partida tal como se jugó (con pergaminos el reloj vuelve atrás y esa reproducción pasa por la rama revertida) ni reproducir solo las acciones que quedaron (no reproduce el pergamino gastado de FR-008 ni los pergaminos que la regla D50 deja donde el jugador los movió, porque no son acciones) (FR-007, FR-008, FR-014).
 
 **Acceptance Scenarios**:
 
@@ -84,8 +84,9 @@ la que se usa en la revisión para repetir escenarios.
 **Independent Test**: Grabar una partida con pergaminos y viajes «ir a»,
 reproducirla con --replay … --hasta t para varios t y comparar cada resumen
 con el que da «historia <t>» al final de la partida original y con el estado
-que se obtiene reproduciendo desde el principio solo las acciones que siguen
-existiendo (sin las revertidas), no la partida tal como se jugó (FR-014).
+que la partida real tuvo en ese instante de la historia que quedó (el resumen
+capturado en vivo en cada decisión, quitando los de las acciones revertidas),
+no con una reproducción de las acciones (FR-008, FR-014).
 
 **Acceptance Scenarios**:
 
@@ -237,7 +238,7 @@ y comparar memoria y tiempo de consulta con los límites.
 ### Measurable Outcomes
 
 - **SC-001**: Los 28 escenarios de aceptación de esta especificación (8 + 5 + 5 + 3 + 4 + 3), incluidos los 6 obligatorios del Apéndice B, tienen al menos una prueba automatizada o un partida.log que los ejerce y todas pasan.
-- **SC-002**: En 1000 consultas a instantes y números de acción elegidos con semilla fija, sobre partidas sintéticas de al menos 500 acciones con pergaminos y viajes «ir a», el resumen coincide en el 100 % de los casos con el estado que se obtiene reproduciendo desde el principio solo las acciones que siguen existiendo en la historia (sin las revertidas por pergaminos) hasta ese instante. No sirve reproducir la partida tal como se jugó: con pergaminos el reloj vuelve atrás y las acciones nuevas reusan los mismos instantes, así que esa reproducción pasa por la rama revertida.
+- **SC-002**: En 1000 consultas a instantes y números de acción elegidos con semilla fija, sobre partidas sintéticas de al menos 500 acciones con pergaminos y viajes «ir a», el resumen coincide en el 100 % de los casos con el estado que la partida real tuvo en ese instante de la historia que quedó: por ejemplo, el resumen capturado en vivo en cada decisión del jugador, quitando los de las acciones revertidas con pergaminos. No sirven como referencia ni reproducir la partida tal como se jugó (con pergaminos el reloj vuelve atrás y esa reproducción pasa por la rama revertida) ni reproducir solo las acciones que quedaron (no reproduce el pergamino gastado de FR-008 ni los pergaminos que la regla D50 deja donde el jugador los movió, porque no son acciones).
 - **SC-003**: En una partida de al menos 5000 acciones del jugador con el K por defecto, todas las consultas medidas por --bench tardan menos de 50 ms.
 - **SC-004**: En 1000 secuencias aleatorias de acciones con consultas intercaladas, la partida resultante (reloj, estado, partida.log y lo que revierte el siguiente pergamino) es idéntica a la misma secuencia sin consultas.
 - **SC-005**: Guardar y cargar en un punto elegido con semilla, en cada una de esas secuencias, no cambia el resumen de ningún instante consultado.
