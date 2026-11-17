@@ -93,6 +93,7 @@ PRUEBAS = (
     "prueba_servicio_solo_lectura",
     "prueba_linea_consulta",
     "prueba_linea_pergamino",
+    "prueba_replay_hasta",
 
 )
 

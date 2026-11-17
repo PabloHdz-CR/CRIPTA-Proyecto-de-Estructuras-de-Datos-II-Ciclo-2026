@@ -13,6 +13,10 @@ donde se decide HTTP u offline (sin propagar un if por el modelo, §6).
     --forzar              permite iniciar una cripta no resoluble o que no se
                           pudo verificar, tras ver su reporte (003-resolubilidad,
                           FR-020, FR-031)
+    --hasta T             con --replay: imprime el estado del instante T de la
+                          historia tal como quedó (004-linea-tiempo, FR-013)
+    --checkpoint-cada K   acciones del jugador entre puntos de control de la
+                          línea de tiempo (entero ≥ 1; 25 por defecto, FR-022)
 
 DECISIÓN: ninguna ruta, id ni presupuesto de una cripta concreta está aquí
 (§9): solo carpetas por defecto del programa y la URL base del API.
@@ -28,11 +32,13 @@ from ..adaptadores.almacenPartidaDisco import AlmacenPartidaDisco
 from ..adaptadores.clienteHttp import ClienteHttp
 from ..adaptadores.contadorSolicitudes import ContadorSolicitudes
 from ..adaptadores.fuenteOffline import FuenteOffline
+from ..adaptadores.partidaBinaria import CopiadorBinario
 from ..adaptadores.puntajesArchivo import PuntajesArchivo
 from ..adaptadores.registroArchivo import CarpetaRegistros, RegistroArchivo
 from ..modelo.datos.cacheFichas import CacheFichas
 from ..modelo.datos.fuenteAsincrona import FuenteAsincrona
 from ..modelo.datos.servicioDatos import ServicioDatos
+from ..modelo.nucleo.lineaTiempo import K_POR_OMISION
 from ..vista.vistaNula import VistaNula
 from .controladorMenu import ControladorMenu
 from .gestorGuardado import GestorGuardado
@@ -49,6 +55,7 @@ CARPETA_GUARDADOS_POR_DEFECTO = "guardados"
 CARPETA_LOGS_POR_DEFECTO = "partidas"
 ARCHIVO_PUNTAJES_POR_DEFECTO = "puntajes.jsonl"
 RITMO_SEGUNDOS = 1 / 60     # ritmo de cuadro: evita usar 100 % de un núcleo
+CODIGO_USO_INCORRECTO = 2   # 004-linea-tiempo (FR-015, FR-022): opción mal escrita
 
 
 class FabricaAplicacion:
@@ -59,6 +66,10 @@ class FabricaAplicacion:
         self._argumentos = tuple(argumentos) if argumentos is not None else tuple(sys.argv[1:])
 
     def ejecutar(self) -> None:
+        # 004-linea-tiempo: las opciones nuevas se validan ANTES de todo, así
+        # un error de uso termina sin abrir la ventana ni leer el log.
+        k_linea = self._leer_checkpoint_cada()
+        hasta = self._leer_hasta()
         offline, carpeta_offline = self._leer_offline()
         ruta_replay = self._leer_opcion_con_valor("--replay")
         modo_bench = "--bench" in self._argumentos
@@ -86,12 +97,13 @@ class FabricaAplicacion:
         reporte_final = ReporteFinal()
 
         if ruta_replay is not None:
-            modo = ModoReplay(servicio, VistaNula(), reporte_final)
-            if not modo.ejecutar(RegistroArchivo(ruta_replay)):
+            modo = ModoReplay(servicio, VistaNula(), reporte_final,
+                              copiador_estado=CopiadorBinario(), k_linea=k_linea)
+            if not modo.ejecutar(RegistroArchivo(ruta_replay), hasta=hasta):
                 sys.exit(1)       # código de salida distinto de 0: útil en revisión
             return
 
-        self._correr_interactivo(servicio, reporte_final, forzar)
+        self._correr_interactivo(servicio, reporte_final, forzar, k_linea)
 
     def _armar_servicio(self, offline: bool, carpeta_offline: Optional[str],
                         tamano_cache: int) -> ServicioDatos:
@@ -107,7 +119,7 @@ class FabricaAplicacion:
         return ServicioDatos(sincrona, asincrona, cache, almacen)
 
     def _correr_interactivo(self, servicio: ServicioDatos, reporte_final: ReporteFinal,
-                            forzar: bool = False) -> None:
+                            forzar: bool = False, k_linea: int = K_POR_OMISION) -> None:
         # DECISIÓN: VistaArcade se importa AQUÍ: --replay y --bench corren sin
         # que pyarcade/pyglet siquiera se importen (§6). Verificado.
         from ..vista.vistaArcade import VistaArcade
@@ -118,7 +130,8 @@ class FabricaAplicacion:
             GestorGuardado(AlmacenPartidaDisco(CARPETA_GUARDADOS_POR_DEFECTO)),
             PuntajesArchivo(ARCHIVO_PUNTAJES_POR_DEFECTO),
             CarpetaRegistros(CARPETA_LOGS_POR_DEFECTO),
-            reporte_final, con_pantalla_titulo=True, forzar=forzar)
+            reporte_final, con_pantalla_titulo=True, forzar=forzar,
+            copiador_estado=CopiadorBinario(), k_linea=k_linea)
         controlador.iniciar()
         try:
             # DECISIÓN (D44): el Controlador es el dueño del bucle; nunca se
@@ -151,6 +164,27 @@ class FabricaAplicacion:
             if argumento == nombre and indice + 1 < len(self._argumentos):
                 return self._argumentos[indice + 1]
         return None
+
+    def _leer_checkpoint_cada(self) -> int:
+        """--checkpoint-cada K (FR-022): entero ≥ 1, o el valor por omisión."""
+        if "--checkpoint-cada" not in self._argumentos:
+            return K_POR_OMISION
+        valor = self._leer_opcion_con_valor("--checkpoint-cada")
+        if valor is None or not valor.isdigit() or int(valor) < 1:
+            Reporte().nota("--checkpoint-cada necesita un entero mayor o igual que 1")
+            sys.exit(CODIGO_USO_INCORRECTO)
+        return int(valor)
+
+    def _leer_hasta(self) -> Optional[int]:
+        """--hasta T (FR-015): solo con --replay; T entero ≥ 0."""
+        if "--hasta" not in self._argumentos:
+            return None
+        valor = self._leer_opcion_con_valor("--hasta")
+        if "--replay" not in self._argumentos or valor is None or not valor.isdigit():
+            Reporte().nota("Uso: python main.py --replay partida.log --hasta T "
+                           "(T entero mayor o igual que 0)")
+            sys.exit(CODIGO_USO_INCORRECTO)
+        return int(valor)
 
     def _leer_cache_size(self) -> int:
         valor = self._leer_opcion_con_valor("--cache-size")

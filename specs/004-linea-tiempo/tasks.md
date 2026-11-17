@@ -131,7 +131,7 @@ description: "Tareas de la feature 004: línea de tiempo"
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T022 [P] [US3] Crear `pruebas/prueba_replay_hasta.py`:
+- [X] T022 [P] [US3] Crear `pruebas/prueba_replay_hasta.py`:
   - escenario 1 (FR-013; **Apéndice B 5**): t mayor que el final → estado final y "La partida terminó antes, en el instante F.";
   - escenario 2 (FR-013, FR-014): t ≤ final → el mismo texto que «historia <t>» al final de la partida original, sin abrir la ventana;
   - escenario 3 (FR-007, FR-014): log con pergaminos → la historia tal como quedó;
@@ -143,8 +143,8 @@ description: "Tareas de la feature 004: línea de tiempo"
 
 ### Implementation for User Story 3
 
-- [ ] T023 [US3] En `cripta/controlador/fabricaAplicacion.py`: leer `--hasta t` (solo con `--replay`; t entero ≥ 0) y `--checkpoint-cada K` (entero ≥ 1, por omisión 25), con los mensajes y códigos de contracts/cli.md; pasar K a `ControladorJuego` y a `ModoReplay`. Actualizar el docstring de opciones. Cubre: FR-015, FR-022. Depende de: T017.
-- [ ] T024 [US3] En `cripta/controlador/modoReplay.py`: conectar una `LineaTiempo(K)` a la partida reproducida; con `--hasta`, al terminar el log reconstruir t (o el estado final con el aviso si t es mayor que el reloj final) e imprimir el texto de `ConstructorResumen` con `Reporte`; la comprobación de versiones queda igual. Cubre: FR-013, FR-014, FR-016. Depende de: T021, T023. T022 pasa.
+- [X] T023 [US3] En `cripta/controlador/fabricaAplicacion.py`: leer `--hasta t` (solo con `--replay`; t entero ≥ 0) y `--checkpoint-cada K` (entero ≥ 1, por omisión 25), con los mensajes y códigos de contracts/cli.md; pasar K a `ControladorJuego` y a `ModoReplay`. Actualizar el docstring de opciones. Cubre: FR-015, FR-022. Depende de: T017.
+- [X] T024 [US3] En `cripta/controlador/modoReplay.py`: conectar una `LineaTiempo(K)` a la partida reproducida; con `--hasta`, al terminar el log reconstruir t (o el estado final con el aviso si t es mayor que el reloj final) e imprimir el texto de `ConstructorResumen` con `Reporte`; la comprobación de versiones queda igual. Cubre: FR-013, FR-014, FR-016. Depende de: T021, T023. T022 pasa.
 
 **Checkpoint**: las tres historias P1 en verde.
 
