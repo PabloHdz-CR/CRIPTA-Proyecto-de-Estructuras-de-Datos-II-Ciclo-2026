@@ -49,6 +49,10 @@ class Partida:
         self.validador = ValidadorAcciones()
         self.bitacora = ColaAcotada(TAMANO_BITACORA)
         self.diario = None                     # lo conecta conectar_diario()
+        # 004-linea-tiempo: la línea de tiempo, o None (copias, pruebas sin
+        # línea). La alimentan aplicar_accion, _usar_pergamino y
+        # _asegurar_contenido.
+        self.linea = None
         self.reloj = 0
         self.semilla = None
         self.azar = None                       # random.Random(semilla), propio
@@ -171,6 +175,12 @@ class Partida:
                 mayor = cazador.comportamiento.rango
         return mayor
 
+    def conectar_linea(self, linea) -> None:
+        """Engancha la línea de tiempo (004-linea-tiempo). Registra el
+        contenido de las salas que ya están cargadas."""
+        self.linea = linea
+        linea.conectar(self)
+
     def conectar_diario(self, diario) -> None:
         """Engancha el Diario de retroceso al punto único de mutación."""
         self.diario = diario
@@ -201,9 +211,14 @@ class Partida:
     # Acción del jugador
     # ------------------------------------------------------------------
 
-    def aplicar_accion(self, accion) -> ResultadoAccion:
+    def aplicar_accion(self, accion, limite=None) -> ResultadoAccion:
         """Valida, ejecuta y procesa eventos hasta la próxima decisión. Un
-        rechazo no consume tiempo ni cambia nada (Apéndice B)."""
+        rechazo no consume tiempo ni cambia nada (Apéndice B).
+
+        limite (004-linea-tiempo, R3): si no es None, después de la acción
+        solo se ejecutan los eventos con tiempo ≤ limite. Lo usan únicamente
+        las copias de la línea de tiempo para detenerse en un instante; la
+        partida real nunca lo pasa."""
         if self.fin is not None:
             return ResultadoAccion.rechazada("La partida ya terminó.")
         motivo = self.validador.validar(self, accion)
@@ -215,6 +230,11 @@ class Partida:
         if isinstance(accion, UsarPergamino):
             self._usar_pergamino()
             return ResultadoAccion.aceptada_con(self._mensajes)
+        # 004-linea-tiempo (research R1, R3): el instante de decisión y, cada K
+        # acciones, el punto de control con el estado justo antes de decidir.
+        decision = self.jugador.evento_accion.tiempo
+        if self.linea is not None:
+            self.linea.antes_de_accion(self, decision)
         # DECISIÓN: el contenido se asegura ANTES de abrir el intervalo y de cualquier
         # mutación: si la red falla el estado queda intacto, y esperar la red no
         # mueve el reloj virtual (§2.5).
@@ -240,9 +260,11 @@ class Partida:
         self.mutador.asignar(self.jugador, "acciones", self.jugador.acciones + 1)
         if self.fin is None:
             self.programar_accion(self.jugador, costo)
-        self._procesar_eventos()
+        self._procesar_eventos(limite)
         if self.diario is not None:
             self.diario.cerrar_intervalo()
+        if self.linea is not None:
+            self.linea.registrar_accion(accion, decision)
         resultado = ResultadoAccion.aceptada_con(self._mensajes)
         resultado.entro_con_enemigos = self._entro_con_enemigos
         resultado.dano_recibido = self._dano_recibido
@@ -349,16 +371,22 @@ class Partida:
     # Bucle de eventos
     # ------------------------------------------------------------------
 
-    def _procesar_eventos(self) -> None:
+    def _procesar_eventos(self, limite=None) -> None:
         """Ejecuta eventos en orden de (tiempo, secuencia) hasta que el turno
         del jugador sea el siguiente (o la partida termine). Nunca usa la hora
-        real ni el orden de llegada de las respuestas HTTP (§2.3)."""
+        real ni el orden de llegada de las respuestas HTTP (§2.3).
+
+        limite (004-linea-tiempo, FR-001, FR-004): si no es None, se detiene
+        antes del primer evento con tiempo > limite; los de un mismo instante
+        ≤ limite se ejecutan todos."""
         # DECISIÓN: el bucle se detiene cuando el turno del jugador es el siguiente
         # (comparación por IDENTIDAD, no por tiempo): así los eventos con igual tiempo
         # y secuencia menor se ejecutan antes de pedirle su decisión.
         while self.fin is None:
             siguiente = self.agenda.ver_siguiente()
             if siguiente is None or siguiente is self.jugador.evento_accion:
+                return
+            if limite is not None and siguiente.tiempo > limite:
                 return
             evento = self.mutador.agenda_extraer()
             if evento.tiempo > self.reloj:
@@ -525,5 +553,7 @@ class Partida:
         if self.mundo.tiene_contenido(id_sala):
             return
         contenido = self.servicio.asegurar_contenido(id_sala)
+        if self.linea is not None:
+            self.linea.registrar_contenido(id_sala, contenido)     # 004, research R5
         enemigos, objetos, trampas = self._fabrica.construir(contenido, id_sala)
         self.mundo.incorporar_contenido(id_sala, enemigos, objetos, trampas)

@@ -87,6 +87,10 @@ PRUEBAS = (
     "prueba_persistencia_niebla",    # FR-012, FR-013, SC-003 (US5 3 y 4, T039)
     "prueba_rendimiento_ir_a",       # FR-031, SC-004: paso de «ir a» < 5 ms (US6 1, T043)
     "prueba_conteo_niebla",          # FR-032, FR-033, SC-005: conteos (US6 2, T044)
+    # 004-linea-tiempo (specs/004-linea-tiempo/tasks.md)
+    "prueba_arreglo_arbol",
+    "prueba_limite_eventos",
+    "prueba_servicio_solo_lectura",
 
 )
 

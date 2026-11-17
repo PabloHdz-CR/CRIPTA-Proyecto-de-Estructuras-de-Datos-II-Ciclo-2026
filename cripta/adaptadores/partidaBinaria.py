@@ -70,6 +70,7 @@ from ..modelo.nucleo.fabricaEntidades import FabricaEntidades
 from ..modelo.objetos.objeto import crear_objeto
 from ..modelo.puertos.dto import DIRECCIONES
 from ..modelo.mundo.conocimiento import CERRADA, EXPLORADA
+from ..modelo.puertos.copiadorEstado import CopiadorEstado
 from ..modelo.puertos.errores import ErrorCripta, VersionIncompatible
 from ..modelo.reloj.agenda import Agenda
 from ..modelo.reloj.efecto import (
@@ -111,6 +112,16 @@ class PartidaBinaria:
 
     @staticmethod
     def guardar(partida: Partida, ruta) -> None:
+        """Escribe el estado completo de la partida en el archivo 'ruta'."""
+        datos = PartidaBinaria.a_bytes(partida)
+        with open(ruta, "wb") as archivo:
+            archivo.write(datos)
+
+    @staticmethod
+    def a_bytes(partida: Partida) -> bytes:
+        """El estado completo de la partida en el formato de archivo, en
+        memoria (004-linea-tiempo, R1: también es un punto de control). No
+        modifica la partida: la agenda se extrae y se reinserta igual."""
         escritor = EscritorBinario()
         escritor.crudo(MAGIC)
         escritor.uentero32(FORMATO_VERSION)
@@ -153,9 +164,7 @@ class PartidaBinaria:
             escritor.entero(longitud)
 
         escritor.sobrescribir_entero(posicion_offset_indice, offset_indice)
-
-        with open(ruta, "wb") as archivo:
-            archivo.write(escritor.bytes())
+        return escritor.bytes()
 
     @staticmethod
     def _escribir_encabezado_logico(escritor, partida) -> None:
@@ -362,8 +371,15 @@ class PartidaBinaria:
 
     @staticmethod
     def cargar(ruta, servicio) -> Partida:
+        """La partida guardada en el archivo 'ruta'."""
         with open(ruta, "rb") as archivo:
             datos = archivo.read()
+        return PartidaBinaria.desde_bytes(datos, servicio)
+
+    @staticmethod
+    def desde_bytes(datos: bytes, servicio) -> Partida:
+        """Una Partida nueva desde los bytes del formato de archivo
+        (004-linea-tiempo, R1: también restaura un punto de control)."""
         lector = LectorBinario(datos)
         PartidaBinaria._leer_encabezado_fijo(lector)
 
@@ -373,6 +389,7 @@ class PartidaBinaria:
         partida.validador = ValidadorAcciones()
         partida.bitacora = ColaAcotada(TAMANO_BITACORA)
         partida.diario = None
+        partida.linea = None
         partida._mensajes = ListaEnlazada()
 
         id_cripta, version_cripta, version_catalogo, siguiente_id_objeto = \
@@ -783,3 +800,15 @@ def _en_rango(valor: int, maximo: int, campo: str, id_sala: int, direccion=None)
         donde = f"sala {id_sala}" + (f", salida {direccion}" if direccion else "")
         raise ErrorCripta(f"Archivo de partida corrupto: {campo} = {valor} en la {donde}")
     return valor
+
+
+class CopiadorBinario(CopiadorEstado):
+    """Adaptador del puerto CopiadorEstado (004-linea-tiempo, R1): el punto de
+    control son los mismos bytes del formato de archivo, en memoria."""
+
+    def tomar(self, partida) -> bytes:
+        return PartidaBinaria.a_bytes(partida)
+
+    def restaurar(self, datos: bytes, servicio):
+        return PartidaBinaria.desde_bytes(datos, servicio)
+
