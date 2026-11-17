@@ -203,7 +203,8 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 
   Las pruebas del Controlador (mensaje de detención, `interrumpir`, comandos que detienen o no el viaje, `None` hacia la partida) están en T023. Depende de: T012, T032.
 - [X] T035 [US3] En `cripta/vista/pantallaJuego.py`, con el panel M abierto: ↑/↓ mueven un cursor que salta las avistadas, Enter encola `Comando("ir_a", (id,))`, y las flechas no mueven al jugador; **I** encola `Comando("interrumpir")`. En `cripta/vista/hudJuego.py`, la línea "Viajando a <id> <nombre> — paso <n> (I para detener)" y la marca del cursor en el panel. Cubre: FR-028, FR-035. Depende de: T018, T033, T034. T034 pasa.
-- [X] T055 [US3] FR-036 (enmienda de la spec `5d32f60`, agregada durante la implementación): pausa de presentación de `PAUSA_PASO_VIAJE = 0,15` s de tiempo real entre pasos de «ir a» en la ventana. La decide `ControladorJuego` con un `reloj_real` inyectado (el mismo `time.perf_counter` que `ControladorMenu` ya le pasa al replay); sin reloj (pruebas sin vista, `--replay`, `--bench`) no hay pausa. El Modelo y el reloj del juego no cambian. Pruebas primero en `pruebas/prueba_ir_a.py` (`caso_fr036_pausa_entre_pasos`, `caso_fr036_pausa_no_cambia_el_juego`; US3 escenario 12). Cubre: FR-036. Depende de: T031, T032.
+- [X] T055 [US3] FR-036 (enmienda de la spec `5d32f60`, agregada durante la implementación): pausa de presentación de `PAUSA_PASO_VIAJE` (0,15 s al principio; 0,5 s desde T057) de tiempo real entre pasos de «ir a» en la ventana. La decide `ControladorJuego` con un `reloj_real` inyectado (el mismo `time.perf_counter` que `ControladorMenu` ya le pasa al replay); sin reloj (pruebas sin vista, `--replay`, `--bench`) no hay pausa. El Modelo y el reloj del juego no cambian. Pruebas primero en `pruebas/prueba_ir_a.py` (`caso_fr036_pausa_entre_pasos`, `caso_fr036_pausa_no_cambia_el_juego`; US3 escenario 12). Cubre: FR-036. Depende de: T031, T032.
+- [X] T057 [US3] FR-036 (enmienda de la spec `c470bae`, por la prueba en la ventana): `PAUSA_PASO_VIAJE` pasa de 0,15 a 0,5 s porque con 0,15 s no alcanzaba el tiempo para apretar I o P a mitad de un viaje. `prueba_ir_a` (caso_fr036_pausa_entre_pasos) ajustada: sin paso a 0,4 s y con paso a 0,51 s; contracts/vista.md y D85 al día. Cubre: FR-036. Depende de: T055.
 - [X] T056 [US3] FR-037 (enmienda de la spec `751bc3b`, por la prueba en la ventana): con el panel del mapa abierto, R, A, U, Q y S abrían su selección encima del mapa y quedaban dos cursores. Ahora `PantallaJuego._entrar_modo_objetivo` encola `alternar_mapa` y deja la selección pendiente en `VistaArcade.pedir_objetivo`; la `PantallaJuego` siguiente, que llega sin mapa, la abre en `on_show_view`. Prueba primero en `pruebas/prueba_vista_mapa.py` (`caso_us1_e6_seleccion_cierra_el_mapa`, US1 escenario 6, con S, U y Q, el Controlador real y ESC). Cubre: FR-037. Depende de: T018, T035.
 
 **Checkpoint**: US1, US2 y US3 en verde: MVP de la Parte II para esta feature (niebla + «ir a»).
@@ -316,8 +317,8 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
   **Hecho:** `prueba_reglas` en verde (140 archivos) y `prueba_sin_datos_concretos` en verde.
 - [X] T052 Correr `py pruebas/ejecutar_pruebas.py` completa: todas en verde, con el total de T001 más las 12 pruebas nuevas de esta feature (`prueba_niebla_registro`, `prueba_niebla_conocimiento`, `prueba_vista_mapa`, `prueba_niebla_puertas`, `prueba_ir_a`, `prueba_ir_a_equivalencia`, `prueba_replay_ir_a`, `prueba_niebla_antorcha`, `prueba_niebla_retroceso`, `prueba_persistencia_niebla`, `prueba_rendimiento_ir_a`, `prueba_conteo_niebla`). Anotar el total en esta tarea y en el README. Cubre: SC-001.
   **Hecho:** 67 de 67 (55 de la línea base + 12 de esta feature), anotado en el README.
-- [ ] T053 Validación a mano con `py main.py --offline` según `quickstart.md` §3 (pasos 1 a 8) y §4, a 1024×720, anotando el resultado de cada paso en esta tarea. Cubre: FR-016, FR-025, FR-028, FR-029, FR-035; SC-001.
-  **Pendiente:** la hace Pablo en la ventana. US1 y US3 ya los probó (mapa, viaje, detención por enemigos y puertas recordadas); faltan la antorcha, el pergamino durante un viaje y guardar/cargar.
+- [X] T053 Validación a mano con `py main.py --offline` según `quickstart.md` §3 (pasos 1 a 8) y §4, a 1024×720, anotando el resultado de cada paso en esta tarea. Cubre: FR-016, FR-025, FR-028, FR-029, FR-035; SC-001.
+  **Hecha (2026-11-17, Pablo en la ventana):** mapa conocido, «ir a», detención por enemigos y puertas recordadas; la antorcha explora las vecinas con sus puertas "no observada" salvo la compartida; P durante un viaje retrocede un solo paso con "pergamino de retroceso" y el viaje no sigue; guardar y cargar conserva el mapa con los estados recordados; con el mapa abierto, S lo cierra antes de "Soltar". Todo funciona.
 - [X] T054 Registrar en `PROMPTS_LLM.md` cada prompt usado durante la implementación de esta feature (constitución, "Flujo y definición de hecho"). Cubre: SC-001 (definición de hecho).
   **Hecho:** entradas 156 a 165 de PROMPTS_LLM.md.
 
@@ -332,7 +333,7 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 | US1 6 | `prueba_vista_mapa` | T056 |
 | US2 1–3 | `prueba_niebla_puertas` | T019 |
 | US3 1 (**Apéndice B 1**), 2 (**Apéndice B 2**), 3 (**Apéndice B 3**), 4 y 11 (mismo armado), 5–9 | `prueba_ir_a` | T023 |
-| US3 12 | `prueba_ir_a` | T055 |
+| US3 12 | `prueba_ir_a` | T055, T057 |
 | US3 10 | `prueba_replay_ir_a` | T025 |
 | US4 1 (**Apéndice B 4**), 2–4 | `prueba_niebla_antorcha` | T036 |
 | US5 1 (**Apéndice B 5**), 2 (**Apéndice B 6**) | `prueba_niebla_retroceso` | T038 |
@@ -367,7 +368,7 @@ heapq, bisect, collections ni bibliotecas de grafos (`prueba_reglas`).
 | FR-032, FR-033 | T044 | T007, T013, T037, T046 |
 | FR-034 | T038 | T010 |
 | FR-035 | T034 | T035 |
-| FR-036 | T055 | T055 |
+| FR-036 | T055, T057 | T055, T057 |
 | FR-037 | T056 | T056 |
 | SC-001 | T052 | — |
 | SC-002 | T012, T024 | T016, T027 |

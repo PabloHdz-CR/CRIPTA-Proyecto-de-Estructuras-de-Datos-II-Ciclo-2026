@@ -54,7 +54,7 @@ Mapa conocido: 12 exploradas, 5 avistadas          Enter: ir a   M: cerrar
 ## Viaje y motivo de detención
 
 - Mientras hay viaje, el HUD muestra `Viajando a <id> <nombre> - paso <n> (I para detener)` desde `EstadoVista.viaje`.
-- En la ventana, entre un paso y el siguiente pasa una pausa de presentación de 0,15 s de tiempo real (FR-036); el Controlador la mide con el reloj real que le pasa el menú. Sin ese reloj (pruebas, `--replay`, `--bench`) no hay pausa.
+- En la ventana, entre un paso y el siguiente pasa una pausa de presentación de 0,5 s de tiempo real (FR-036); el Controlador la mide con el reloj real que le pasa el menú. Sin ese reloj (pruebas, `--replay`, `--bench`) no hay pausa.
 - Al detenerse, el Controlador envía `mostrar_mensajes` con
   `Viaje detenido: <motivo>.`, y el mensaje queda en la bitácora (FR-025).
   Motivos: llegada, enemigos en la sala, daño recibido, sin ruta conocida,

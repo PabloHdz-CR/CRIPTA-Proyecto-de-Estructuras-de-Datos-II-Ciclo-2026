@@ -70,7 +70,7 @@ ORDEN_REAL = "real"
 # no detienen un viaje en curso. Tupla de 5: el `in` es O(1) en la práctica.
 # 002-niebla-guerra (FR-036): pausa de PRESENTACIÓN entre pasos de «ir a» en
 # la ventana, en segundos de tiempo real. No toca el reloj del juego.
-PAUSA_PASO_VIAJE = 0.15
+PAUSA_PASO_VIAJE = 0.5
 VERBOS_PRESENTACION = ("alternar_mapa", "inventario_siguiente", "inventario_anterior",
                        "ordenar_inventario", "ver_resolubilidad")
 

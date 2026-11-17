@@ -398,7 +398,7 @@ class RelojFalso:
 
 def caso_fr036_pausa_entre_pasos():
     """US3 escenario 12 (FR-036): con un reloj real (la ventana) cada paso
-    espera alrededor de 0,15 s; en la pausa se puede interrumpir."""
+    espera alrededor de 0,5 s; en la pausa se puede interrumpir."""
     reloj = RelojFalso()
     controlador, vista, _ = controlador_sobre(pasillo_n(5), reloj_real=reloj)
     partida = controlador.partida
@@ -406,10 +406,10 @@ def caso_fr036_pausa_entre_pasos():
     controlador.procesar(Comando("ir_a", (5,)))
     assert partida.jugador.sala == 2, "FR-036: el primer paso sale enseguida"
     controlador.procesar(None)
-    reloj.t += 0.10
+    reloj.t += 0.40
     controlador.procesar(None)
     assert partida.jugador.sala == 2, "FR-036: antes de la pausa no hay otro paso"
-    reloj.t += 0.06
+    reloj.t += 0.11
     controlador.procesar(None)
     assert partida.jugador.sala == 3, "FR-036: pasada la pausa, el paso siguiente"
     controlador.procesar(Comando("interrumpir"))
@@ -432,7 +432,7 @@ def caso_fr036_pausa_no_cambia_el_juego():
     sin_pausa, vista_b, registro_b = controlador_sobre(pasillo_n(6))
     conocer(sin_pausa.partida, 2, 3, 4, 5, 6)
     assert viajar(sin_pausa, 6) == [LLEGADA]
-    assert vueltas >= 4 * 3, f"FR-036: con pausa hacen falta más vueltas ({vueltas})"
+    assert vueltas >= 4 * 9, f"FR-036: con pausa hacen falta más vueltas ({vueltas})"
     assert (con_pausa.partida.reloj, movimientos(registro_a), vista_a.mensajes[-1]) == (
         sin_pausa.partida.reloj, movimientos(registro_b), vista_b.mensajes[-1]), (
         "FR-036: la pausa no cambia el tiempo del juego, los pasos ni el motivo")
