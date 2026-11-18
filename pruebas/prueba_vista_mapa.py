@@ -18,8 +18,8 @@ from cripta.vista.comando import Comando
 from cripta.vista.vistaArcade import VistaArcade
 
 from pruebas.apoyo_niebla import (
-    ANTORCHA, cerrar_fuentes, con_contenido, controlador_sobre, dar_objeto, doble, sala_n,
-    PINCHOS, RATA)
+    ANTORCHA, cerrar_fuentes, con_contenido, controlador_sobre, dar_objeto, doble, pasillo_n,
+    sala_n, PINCHOS, RATA)
 
 
 def cripta():
@@ -226,6 +226,61 @@ def caso_controles_sin_encimarse():
             vista.cerrar()
 
 
+def _fila_del_cursor(pantalla):
+    """Índice de la fila marcada con ">" (la sala bajo el cursor) y la ventana
+    visible (desde, hasta) tal como la dibuja el HUD."""
+    hud = pantalla._hud
+    filas = list(hud.filas_mapa)
+    cursor = [i for i, fila in enumerate(filas) if fila.startswith(">")]
+    assert len(cursor) == 1, f"una sola fila con el cursor: {cursor}"
+    visibles = hud.visibles_mapa
+    desde = min(pantalla._vista_arcade.desplazamiento_mapa, max(0, len(filas) - visibles))
+    return cursor[0], desde, desde + visibles, len(filas)
+
+
+def caso_t058_la_vista_sigue_al_cursor():
+    """T058 (FR-035, enmienda dc54119): con más salas conocidas de las que
+    caben, la fila del cursor queda siempre entre las visibles al bajar con la
+    flecha hasta la última explorada y al subir hasta la primera (también al
+    saltar la avistada del final); RePág/AvPág siguen desplazando el panel."""
+    vista = VistaArcade(ancho=1024, alto=720, titulo="prueba", visible=False)
+    try:
+        controlador, _, _ = controlador_sobre(pasillo_n(40), vista=vista)
+        for _ in range(30):                              # 31 exploradas y una avistada
+            controlador.procesar(Comando("mover", ("E",)))
+        controlador.procesar(Comando("alternar_mapa"))
+        pantalla = vista._pantalla_actual
+        vista.actualizar()
+        _, _, _, total = _fila_del_cursor(pantalla)
+        assert total > pantalla._hud.visibles_mapa, (
+            f"la prueba necesita más filas ({total}) que las visibles ({pantalla._hud.visibles_mapa})")
+        exploradas = [s.id for s in pantalla._estado.mapa.salas if s.explorada]
+        for paso in range(len(exploradas) - 1):
+            pantalla.on_key_press(arcade.key.DOWN, 0)
+            fila, desde, hasta, _ = _fila_del_cursor(pantalla)
+            assert desde <= fila < hasta, (
+                f"FR-035: al bajar (paso {paso + 1}) el cursor está en la fila {fila} y se ven {desde}-{hasta - 1}")
+        assert vista.cursor_mapa == exploradas[-1], "llegó a la última explorada"
+        pantalla.on_key_press(arcade.key.DOWN, 0)        # en la última se queda (y salta la avistada)
+        fila, desde, hasta, _ = _fila_del_cursor(pantalla)
+        assert vista.cursor_mapa == exploradas[-1] and desde <= fila < hasta
+        for paso in range(len(exploradas) - 1):
+            pantalla.on_key_press(arcade.key.UP, 0)
+            fila, desde, hasta, _ = _fila_del_cursor(pantalla)
+            assert desde <= fila < hasta, (
+                f"FR-035: al subir (paso {paso + 1}) el cursor está en la fila {fila} y se ven {desde}-{hasta - 1}")
+        assert vista.cursor_mapa == exploradas[0] and _fila_del_cursor(pantalla)[1] == 0
+        visibles = pantalla._hud.visibles_mapa
+        _comandos(vista)            # solo cuenta lo que encolen RePág/AvPág
+        pantalla.on_key_press(arcade.key.PAGEDOWN, 0)
+        assert vista.desplazamiento_mapa == visibles, "AvPág desplaza una página, como antes"
+        assert _comandos(vista) == [], "RePág/AvPág no son comandos"
+        pantalla.on_key_press(arcade.key.PAGEUP, 0)
+        assert vista.desplazamiento_mapa == 0, "RePág vuelve, como antes"
+    finally:
+        vista.cerrar()
+
+
 def _llevar_al_controlador(vista, controlador):
     """Lo que la Vista encoló, procesado por el Controlador (una vuelta del bucle)."""
     for comando in _comandos(vista):
@@ -266,7 +321,8 @@ def caso_us1_e6_seleccion_cierra_el_mapa():
 
 CASOS = (caso_us1_e4_nada_desconocido, caso_us1_e5_mapa_sin_tiempo, caso_orden_por_id,
          caso_tecla_m, caso_panel_se_dibuja, caso_t034_cursor_y_enter,
-         caso_controles_sin_encimarse, caso_us1_e6_seleccion_cierra_el_mapa)
+         caso_controles_sin_encimarse, caso_us1_e6_seleccion_cierra_el_mapa,
+         caso_t058_la_vista_sigue_al_cursor)
 
 
 def main():
