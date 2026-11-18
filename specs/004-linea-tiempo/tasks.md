@@ -186,7 +186,7 @@ description: "Tareas de la feature 004: línea de tiempo"
 
 ### Tests for User Story 5 ⚠️
 
-- [ ] T028 [P] [US5] Crear `pruebas/prueba_vista_historia.py` (vaciar la cola antes de cada tecla):
+- [X] T028 [P] [US5] Crear `pruebas/prueba_vista_historia.py` (vaciar la cola antes de cada tecla):
   - escenario 1 (FR-017, FR-018): H, "120", Enter → `Comando("historia", ("120",))` y el panel muestra el resumen; ESC vuelve y el reloj no cambió;
   - escenario 2 (FR-017): "#3" y Enter;
   - escenario 3 (FR-003, FR-017): valor inválido → el motivo y la consulta sigue abierta;
@@ -198,8 +198,10 @@ description: "Tareas de la feature 004: línea de tiempo"
 
 ### Implementation for User Story 5
 
-- [ ] T029 [US5] En `cripta/vista/pantallaJuego.py`: tecla H y modo **historia** según contracts/vista.md (dígitos, `#`, Retroceso, Enter encola `historia`, ESC cierra; las demás teclas no hacen nada; con viaje en curso encola `interrumpir` primero; con el mapa abierto lo cierra antes). Cubre: FR-017, FR-018. Depende de: T017.
-- [ ] T030 [US5] En `cripta/vista/hudJuego.py`: panel del resumen (`EstadoVista.historia`) sobre el mapa con `partirLineas` y desplazamiento (↑/↓, RePág/AvPág), la línea de entrada mientras se escribe, y la fila "H Historia" en el panel de Controles sin encimarse (la prueba `caso_controles_sin_encimarse` sigue pasando). Cubre: FR-017. Depende de: T029. T028 pasa.
+- [X] T029 [US5] En `cripta/vista/pantallaJuego.py`: tecla H y modo **historia** según contracts/vista.md (dígitos, `#`, Retroceso, Enter encola `historia`, ESC cierra; las demás teclas no hacen nada; con viaje en curso encola `interrumpir` primero; con el mapa abierto lo cierra antes). Cubre: FR-017, FR-018. Depende de: T017.
+  **Hecho:** Lo escrito, si la consulta está abierta y su desplazamiento viven en VistaArcade (cada EstadoVista trae una PantallaJuego nueva, como el cursor del mapa). Los dígitos y # llegan por on_text, así # sirve con cualquier distribución de teclado; el eco de la H es una letra y no se escribe.
+- [X] T030 [US5] En `cripta/vista/hudJuego.py`: panel del resumen (`EstadoVista.historia`) sobre el mapa con `partirLineas` y desplazamiento (↑/↓, RePág/AvPág), la línea de entrada mientras se escribe, y la fila "H Historia" en el panel de Controles sin encimarse (la prueba `caso_controles_sin_encimarse` sigue pasando). Cubre: FR-017. Depende de: T029. T028 pasa.
+  **Hecho:** El panel va sobre el mapa con el mismo texto que --replay … --hasta; Controles muestra H Historia y caso_controles_sin_encimarse sigue pasando a 1024 y 1280 de ancho.
 
 **Checkpoint**: US5 en verde.
 

@@ -69,6 +69,12 @@ class VistaArcade(VistaJuego):
         # abierto ("soltar", "usar"...). Se abre en la pantalla siguiente, la
         # que llega con el mapa ya cerrado. Presentación pura.
         self._objetivo_pendiente = None
+        # 004-linea-tiempo (FR-017): la consulta de la tecla H. Si está abierta,
+        # lo escrito y el desplazamiento del resumen. Presentación pura: se
+        # mantiene entre turnos (cada EstadoVista trae una PantallaJuego nueva).
+        self._historia_abierta = False
+        self._texto_historia = ""
+        self._desplazamiento_historia = 0
 
     @property
     def ventana(self) -> arcade.Window:
@@ -113,6 +119,7 @@ class VistaArcade(VistaJuego):
         self._desplazamiento_mapa = 0
         self._cursor_mapa = None
         self._objetivo_pendiente = None
+        self.cerrar_historia()
         self._mostrar(PantallaMenu(self, criptas, self._nombre_jugador))
 
     def mostrar_titulo(self) -> None:
@@ -165,6 +172,41 @@ class VistaArcade(VistaJuego):
 
     def poner_cursor_mapa(self, id_sala) -> None:
         self._cursor_mapa = id_sala
+
+    # -- 004-linea-tiempo: consulta de la línea de tiempo (tecla H) --
+
+    @property
+    def historia_abierta(self) -> bool:
+        return self._historia_abierta
+
+    @property
+    def texto_historia(self) -> str:
+        return self._texto_historia
+
+    @property
+    def desplazamiento_historia(self) -> int:
+        return self._desplazamiento_historia
+
+    def abrir_historia(self) -> None:
+        self._historia_abierta = True
+        self._texto_historia = ""
+        self._desplazamiento_historia = 0
+
+    def cerrar_historia(self) -> None:
+        self._historia_abierta = False
+        self._texto_historia = ""
+        self._desplazamiento_historia = 0
+
+    def escribir_historia(self, caracter: str) -> None:
+        """Solo dígitos y '#' (t o #k); como mucho 12 caracteres."""
+        if (caracter.isdigit() or caracter == "#") and len(self._texto_historia) < 12:
+            self._texto_historia += caracter
+
+    def borrar_historia(self) -> None:
+        self._texto_historia = self._texto_historia[:-1]
+
+    def desplazar_historia(self, delta: int, maximo: int) -> None:
+        self._desplazamiento_historia = max(0, min(maximo, self._desplazamiento_historia + delta))
 
     def pedir_objetivo(self, verbo: str) -> None:
         """FR-037: abrir la selección `verbo` cuando el mapa ya esté cerrado."""

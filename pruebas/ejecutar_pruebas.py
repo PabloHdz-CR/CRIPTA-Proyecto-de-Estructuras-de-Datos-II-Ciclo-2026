@@ -96,6 +96,7 @@ PRUEBAS = (
     "prueba_replay_hasta",
     "prueba_rendimiento_linea",
     "prueba_persistencia_linea",
+    "prueba_vista_historia",
 
 )
 

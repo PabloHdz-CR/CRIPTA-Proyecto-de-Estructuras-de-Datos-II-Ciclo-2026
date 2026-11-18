@@ -153,7 +153,66 @@ class PantallaJuego(_PantallaCripta):
         if self._modo == "objetivo" and symbol == arcade.key.ESCAPE:
             self._salir_modo_objetivo()
             return
+        if self._historia_abierta():
+            self._tecla_en_historia(symbol)
+            return
         super().on_key_press(symbol, modifiers)
+
+    def on_text(self, text) -> None:
+        """004-linea-tiempo (FR-017): con la consulta abierta, los dígitos y '#'
+        se escriben (on_text, así '#' sirve en cualquier distribución de
+        teclado). El eco de la propia H es una letra y no se escribe."""
+        if not self._historia_abierta():
+            return
+        for caracter in text:
+            self._vista_arcade.escribir_historia(caracter)
+        self._armar_textos()
+
+    # -- 004-linea-tiempo: consulta de la línea de tiempo (H) --
+
+    def _historia_abierta(self) -> bool:
+        return self._vista_arcade.historia_abierta and self._estado.replay is None
+
+    def _abrir_historia(self) -> None:
+        """H (contracts/vista.md): con un viaje en curso, primero interrumpir
+        (excepción deliberada a la regla de 002); con el mapa abierto, lo
+        cierra antes (como FR-037 de 002). Luego abre la consulta."""
+        if self._estado.viaje is not None:
+            self._vista_arcade._encolar(Comando("interrumpir"))
+        if self._estado.mapa is not None:
+            self._vista_arcade._encolar(Comando("alternar_mapa"))
+        self._vista_arcade.abrir_historia()
+        self._armar_textos()
+
+    def _tecla_en_historia(self, symbol) -> None:
+        """FR-018: Retroceso borra, Enter consulta, ESC vuelve, ↑/↓ y
+        RePág/AvPág desplazan el resumen; las demás teclas no hacen nada."""
+        vista = self._vista_arcade
+        if symbol == arcade.key.ESCAPE:
+            vista.cerrar_historia()
+            vista._encolar(Comando("cerrar_historia"))
+        elif symbol == arcade.key.BACKSPACE:
+            vista.borrar_historia()
+        elif symbol in (arcade.key.ENTER, arcade.key.RETURN, arcade.key.NUM_ENTER):
+            if vista.texto_historia:
+                vista._encolar(Comando("historia", (vista.texto_historia,)))
+            return
+        elif symbol in (arcade.key.UP, arcade.key.DOWN, arcade.key.PAGEUP, arcade.key.PAGEDOWN):
+            hud = self._hud
+            visibles = max(1, hud.visibles_historia)
+            maximo = max(0, len(hud.filas_historia) - visibles)
+            if symbol == arcade.key.UP:
+                pasos = -1
+            elif symbol == arcade.key.DOWN:
+                pasos = 1
+            elif symbol == arcade.key.PAGEUP:
+                pasos = -visibles
+            else:
+                pasos = visibles
+            vista.desplazar_historia(pasos, maximo)
+        else:
+            return
+        self._armar_textos()
 
     def tecla_propia(self, symbol, modifiers) -> None:
         if self._modo == "objetivo":
@@ -303,6 +362,9 @@ class PantallaJuego(_PantallaCripta):
             # 002-niebla-guerra (FR-028): detiene el viaje en curso; fuera de un
             # viaje el Controlador lo ignora.
             self._vista_arcade._encolar(Comando("interrumpir"))
+        elif symbol == arcade.key.H:
+            # 004-linea-tiempo (FR-017): consultar la línea de tiempo.
+            self._abrir_historia()
         elif symbol == arcade.key.M:
             # 002-niebla-guerra (FR-016, FR-017): abre o cierra el mapa conocido.
             # Es un verbo de sesión: el Controlador arma el mapa solo si está abierto.
@@ -407,7 +469,9 @@ class PantallaJuego(_PantallaCripta):
                              self._vista_arcade.desplazamiento_resolubilidad,
                              self._vista_arcade.desplazamiento_mapa,
                              cursor_en(self._estado.mapa, self._vista_arcade.cursor_mapa)
-                             if self._estado.mapa is not None else None)
+                             if self._estado.mapa is not None else None,
+                             self._historia_abierta(), self._vista_arcade.texto_historia,
+                             self._vista_arcade.desplazamiento_historia)
 
     # -- textos de una línea (los usan las pruebas de vista) --
 

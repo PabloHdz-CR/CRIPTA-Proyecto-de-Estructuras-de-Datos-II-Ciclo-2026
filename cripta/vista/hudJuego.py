@@ -136,7 +136,9 @@ class HudJuego:
                  verbo_objetivo=None, lista_objetivo=None, cursor_objetivo: int = 0,
                  aviso=None, bitacora_completa: bool = False,
                  panel_resolubilidad: bool = False, desplazamiento_resolubilidad: int = 0,
-                 desplazamiento_mapa: int = 0, cursor_mapa=None):
+                 desplazamiento_mapa: int = 0, cursor_mapa=None,
+                 historia_abierta: bool = False, texto_historia: str = "",
+                 desplazamiento_historia: int = 0):
         self._estado = estado
         self._anterior = anterior
         self._g = geometria
@@ -157,6 +159,13 @@ class HudJuego:
         self._cursor_mapa = cursor_mapa
         self._filas_mapa = ListaEnlazada()
         self._visibles_mapa = 0
+        # 004-linea-tiempo (FR-017): panel de la consulta (H).
+        self._historia_abierta = historia_abierta
+        self._entrada_historia = texto_historia
+        self._desplazamiento_historia_pedido = max(0, desplazamiento_historia)
+        self._texto_historia = ""
+        self._filas_historia = ListaEnlazada()
+        self._visibles_historia = 0
         self._cajas_controles = ListaEnlazada()  # (izq, der, abajo, arriba) por fila de Controles
         self._controles_mostrados = ()
         self._panel_controles = (0, 0, 0, 0)
@@ -204,7 +213,9 @@ class HudJuego:
             y = self._armar_en_la_sala(izq, der, y)
             self._armar_inventario(izq, der, abajo, y)
         self._armar_bitacora_y_controles()
-        if getattr(self._estado, "mapa", None) is not None:
+        if self._historia_abierta:
+            self._armar_panel_historia()
+        elif getattr(self._estado, "mapa", None) is not None:
             self._armar_panel_mapa()
         elif self._panel_resolubilidad and self._estado.resolubilidad is not None:
             self._armar_panel_resolubilidad()
@@ -681,7 +692,77 @@ class HudJuego:
     def desplazamiento_resolubilidad(self) -> int:
         return self._desplazamiento_resolubilidad
 
+    def _armar_panel_historia(self) -> None:
+        """H (004-linea-tiempo, FR-017, contracts/vista.md): la línea de
+        entrada y, si ya se consultó, el resumen del instante con el mismo
+        texto que --replay … --hasta, partido para que quepa (partir_lineas)
+        y desplazable con ↑/↓ y RePág/AvPág."""
+        izq = self._g.mapa_izq
+        der = izq + self._g.lado_mapa
+        abajo, arriba = self._g.mapa_abajo + 8, self._g.mapa_arriba - 8
+        if not _cabe(izq, der, abajo, arriba):
+            return
+        self._superpuestos.agregar_al_final((izq + 8, der - 8, abajo, arriba))
+        textos = self._textos_superpuestos
+        self._texto_historia = TITULO_HISTORIA + "\n> " + self._entrada_historia + "_"
+        ancho_caracter = estilo.ancho_caracter_mono(_TAMANO_REPORTE)
+        maximo = max(1, int((der - izq - 44) / ancho_caracter))
+        y = arriba - 18
+        for fila in partir_lineas((TITULO_HISTORIA,), maximo):
+            textos.agregar_al_final(estilo.texto(fila, izq + 22, y, 11, estilo.DORADO,
+                                                 anchor_y="center", bold=True))
+            y -= _ALTO_FILA_REPORTE
+        textos.agregar_al_final(estilo.texto_mono("> " + self._entrada_historia + "_",
+                                                  izq + 22, y, _TAMANO_REPORTE))
+        resumen = getattr(self._estado, "historia", None)
+        if resumen is None:
+            return
+        lineas = ListaEnlazada()
+        if resumen.aviso:
+            lineas.agregar_al_final(resumen.aviso)
+        for linea in resumen.lineas:
+            lineas.agregar_al_final(linea)
+        filas = partir_lineas(lineas, maximo)
+        self._filas_historia = filas
+        primera_y = y - 26
+        ultima_y = abajo + 30
+        visibles = int((primera_y - ultima_y) // _ALTO_FILA_REPORTE) + 1
+        if visibles < 1:
+            return
+        total = len(filas)
+        self._visibles_historia = min(visibles, total)
+        desplazamiento = min(self._desplazamiento_historia_pedido, max(0, total - visibles))
+        y = primera_y
+        for indice, fila in enumerate(filas):
+            if indice < desplazamiento:
+                continue
+            if indice >= desplazamiento + visibles:
+                break
+            textos.agregar_al_final(estilo.texto_mono(fila, izq + 22, y, _TAMANO_REPORTE))
+            y -= _ALTO_FILA_REPORTE
+        if total > visibles:
+            textos.agregar_al_final(estilo.texto(
+                f"Flechas arriba/abajo, RePág/AvPág: desplazar   (filas {desplazamiento + 1}-"
+                f"{desplazamiento + visibles} de {total})",
+                izq + 22, abajo + 12, 10, estilo.TEXTO_SUAVE, anchor_y="center"))
+
+    @property
+    def texto_historia(self) -> str:
+        """El título y la línea de entrada del panel (para las pruebas)."""
+        return self._texto_historia
+
+    @property
+    def filas_historia(self) -> ListaEnlazada:
+        return self._filas_historia
+
+    @property
+    def visibles_historia(self) -> int:
+        return self._visibles_historia
+
     def _controles(self):
+        if self._historia_abierta:
+            return (("0-9 y #", "Escribir"), ("ENTER", "Consultar"),
+                    ("Flechas", "Desplazar"), ("ESC", "Volver"))
         if self._estado.replay is not None:
             return (("Espacio", "Pausa / seguir"), ("Flecha izquierda", "Paso atrás"),
                     ("Flecha derecha", "Paso adelante"), ("Flecha arriba", "Más rápido"),
@@ -696,7 +777,7 @@ class HudJuego:
                 ("U/Q/S", "Usar/equipar"), ("Tab", "Inventario"),
                 ("O", "Ordenar"), ("P", "Pergamino"), ("G/C", "Guardar/cargar"),
                 ("L", "Bitácora"), ("V", "Resolubilidad"), ("M", "Mapa / ir a"),
-                ("I", "Detener viaje"), ("ESC", "Menú"))
+                ("I", "Detener viaje"), ("H", "Historia"), ("ESC", "Menú"))
 
     def _armar_controles(self, izq, der, abajo, arriba) -> None:
         """Reparte los controles en la menor cantidad de columnas (2 a 4) en la
@@ -865,6 +946,9 @@ class HudJuego:
                                            (240, 150, 60, int(255 * alfa)), 2)
         texto.color = (236, 228, 214, int(255 * alfa))
         texto.draw()
+
+
+TITULO_HISTORIA = "Historia: instante (120) o acción (#3) - Enter consulta, ESC vuelve"
 
 
 def lineas_mapa(mapa, cursor_id=None) -> ListaEnlazada:

@@ -101,6 +101,7 @@ def caso_tecla_m():
     vista = VistaArcade(ancho=400, alto=300, titulo="prueba", visible=False)
     try:
         for codigo in range(arcade.key.A, arcade.key.Z + 1):
+            vista.cerrar_historia()     # 004: H abre la consulta, que se traga las demás teclas
             vista.mostrar_estado(estado)
             _comandos(vista)        # lo que dejaron los eventos reales de la ventana
             vista._pantalla_actual.on_key_press(codigo, 0)
