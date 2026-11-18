@@ -249,7 +249,8 @@ description: "Tareas de la feature 004: línea de tiempo"
   **Hecho:** prueba_reglas OK (147 archivos) y prueba_sin_datos_concretos OK (18 ids y versiones).
 - [X] T040 Registrar las pruebas nuevas en `pruebas/ejecutar_pruebas.py` (con un tope de tiempo propio más alto para las que lo necesiten, como las de SC-002 y SC-004, sin reducir su número; análisis G3) y correr la suite completa tres veces seguidas, todas en verde, anotando el total. Cubre: SC-001.
   **Hecho:** Suite completa tres veces seguidas: 76 de 76 en verde las tres veces.
-- [ ] T041 Validación a mano según `quickstart.md` §2 y §3 a 1024×720 (H, `#k`, valor inválido, pergamino, H durante un viaje, guardar y cargar), anotando el resultado en esta tarea. Cubre: FR-017, FR-018, SC-001.
+- [X] T041 Validación a mano según `quickstart.md` §2 y §3 a 1024×720 (H, `#k`, valor inválido, pergamino, H durante un viaje, guardar y cargar), anotando el resultado en esta tarea. Cubre: FR-017, FR-018, SC-001.
+  **Hecha (2026-11-17, Pablo en la ventana, `py main.py --offline`):** a 1280×720 (la ventana no cambia de tamaño; el caso 1024×720 lo cubre caso_controles_sin_encimarse). H con número (20, 200, 5100) y con #3; #99999 y #57 dan error con la consulta abierta; flechas, M y R no hacen nada con la consulta abierta; H con el mapa abierto lo cierra; H durante un viaje lo detiene con "interrumpido"; después de dos pergaminos #57 ya no existe (hay 55 acciones) y 5100 muestra la historia como quedó; guardar y cargar da el mismo resumen en 200; Controles muestra "H Historia" sin encimarse. Todo funciona. Se vio que el mensaje de error largo se cortaba con "…" y tapaba el título del panel (corregido aparte).
 
 ---
 
