@@ -34,6 +34,12 @@
   (la detención la hace la tecla H antes, con `interrumpir`).
 - El Controlador interpreta `"<t>"` o `"#<k>"`; si es inválido (FR-003) manda
   `mostrar_error` con el motivo y la consulta sigue abierta.
+- Con la consulta abierta, el HUD dibuja el motivo dentro del panel, debajo
+  de la línea de entrada, partido en filas con `partir_lineas` (sin "…"), y
+  no arma el cartel de arriba del mapa, para no tapar el título (FR-027,
+  enmienda posterior al código de 59dcbc5). `HudJuego.filas_aviso_historia`
+  expone esas filas; `prueba_vista_historia` las revisa a 1024×720 y
+  1280×720 con el motivo de «#99999».
 - Si es válido, el `EstadoVista` trae `historia: ResumenInstante`; el HUD lo
   dibuja en el panel con `partirLineas`, desplazable con ↑/↓ y RePág/AvPág,
   con el mismo texto que la salida de `--replay … --hasta` (contracts/cli.md).

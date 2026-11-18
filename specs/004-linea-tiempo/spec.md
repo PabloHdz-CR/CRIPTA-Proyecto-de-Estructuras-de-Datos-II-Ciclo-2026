@@ -16,6 +16,10 @@
 - Q: Si el jugador aprieta H mientras un viaje «ir a» está en curso, ¿el viaje se detiene para abrir la consulta? → A: Sí: H detiene el viaje con el motivo "interrumpido" y abre la consulta; es una excepción deliberada a la regla de la feature 002 de que las teclas de presentación no detienen un viaje (FR-017).
 - Q: Un pergamino recogido durante acciones que otro pergamino revirtió sigue en el inventario (D50), pero su recogida ya no existe en la historia: ¿desde qué instante figura en el inventario al consultar la línea de tiempo? → A: Desde el reloj actual (el instante al que volvió el reloj); no figura en los instantes anteriores (FR-008).
 
+### Enmienda posterior al código (2026-11-18)
+
+- El commit 59dcbc5 (17/11/2026) cambió lo que el jugador ve sin enmendar antes la spec: con la consulta abierta, el motivo de un pedido inválido dejó de ir al cartel de arriba del mapa, que lo recortaba con "…" y tapaba el título del panel de Historia, y pasó a leerse completo dentro del panel, partido en filas. Lo encontró la prueba manual de T041 (el mensaje de «#99999»). Se agrega FR-027 y su caso borde para que la spec describa ese comportamiento. No cambia ninguna regla de la consulta ni el texto de los motivos (FR-003), y SC-001 sigue con 28 escenarios: el caso nuevo es un caso borde y ya lo prueba prueba_vista_historia (el motivo largo de «#99999» a 1024×720 y 1280×720).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Consultar el estado de un instante pasado (Priority: P1)
@@ -134,7 +138,7 @@ resumen, el mensaje de error y que la partida no cambió.
 
 1. **Given** una partida en curso en la ventana, **When** el jugador aprieta H, escribe «120» y Enter, **Then** se muestra el resumen del instante 120; con ESC vuelve a la partida sin que el reloj haya avanzado (FR-017, FR-018).
 2. **Given** la consulta abierta, **When** el jugador escribe «#3» y Enter, **Then** se muestra el estado justo antes de su acción número 3 (FR-017).
-3. **Given** la consulta abierta, **When** el jugador escribe un valor inválido (texto, negativo o un instante posterior al reloj actual) y Enter, **Then** se muestra el motivo del rechazo y la consulta sigue abierta para corregirlo (FR-003, FR-017).
+3. **Given** la consulta abierta, **When** el jugador escribe un valor inválido (texto, negativo o un instante posterior al reloj actual) y Enter, **Then** se muestra el motivo del rechazo y la consulta sigue abierta para corregirlo (FR-003, FR-017, FR-027).
 4. **Given** la consulta abierta, **When** el jugador escribe, **Then** las letras y flechas no mueven al jugador ni disparan otras acciones (FR-018).
 
 ---
@@ -171,6 +175,7 @@ y comparar memoria y tiempo de consulta con los límites.
 - **Instante anterior a cualquier acción** (0 ≤ t antes de la primera decisión): muestra el estado inicial más los eventos que ya ocurrieron (FR-001).
 - **K = 1**: puede haber un punto de control por acción; la consulta es inmediata y la memoria es la mayor. **K mayor que la cantidad de acciones**: no hay más punto de control que el inicial y las consultas cuestan más, sin pasar nunca el límite de K acciones por consulta (FR-020, FR-021).
 - **--checkpoint-cada con 0, negativo o texto**: el programa termina con un mensaje de error antes de empezar (FR-022).
+- **Motivo de rechazo más largo que el ancho del panel** (por ejemplo, el de «#99999», que dice de qué número a qué número se puede consultar): se lee completo dentro del panel de Historia, partido en filas, sin "…" y sin tapar el título del panel (FR-027).
 - **Mapa conocido en el pasado**: el resumen muestra lo que el jugador conocía en ese instante, incluidos los recuerdos de puertas que después cambiaron (FR-006).
 
 ## Requirements *(mandatory)*
@@ -212,6 +217,7 @@ y comparar memoria y tiempo de consulta con los límites.
 
 - **FR-017**: En la ventana, la tecla H MUST abrir la consulta: el jugador escribe un instante (por ejemplo «120») o un número de acción con # (por ejemplo «#3»), confirma con Enter y ve el resumen; un valor inválido MUST mostrar el motivo sin cerrar la consulta; ESC MUST volver a la partida. Con un viaje «ir a» en curso, H MUST detener el viaje (motivo "interrumpido") antes de abrir la consulta: es una excepción deliberada a la regla de la feature 002 (las teclas de presentación M, Tab, O, L y V no detienen un viaje), porque no se puede escribir un instante mientras el jugador camina. H MUST existir solo durante la partida, no en el replay en la ventana ni en otras pantallas.
 - **FR-018**: Con la consulta abierta, las teclas MUST ir solo a la consulta: MUST NOT mover al jugador, abrir otras selecciones ni disparar acciones. La tecla H y su uso MUST documentarse en la tabla de teclas del README.
+- **FR-027**: En la ventana, con la consulta abierta, el motivo de un pedido inválido (FR-003) MUST leerse completo dentro del panel de la consulta, debajo de la línea donde se escribe: un motivo más largo que el ancho del panel MUST partirse en varias filas, sin recortarlo con "…", y MUST NOT taparse el título del panel con ese aviso ni con otro cartel. *(Enmienda del 2026-11-18, posterior al código: ver Clarifications.)*
 
 **Memoria y rendimiento**
 
