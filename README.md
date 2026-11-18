@@ -94,6 +94,18 @@ Al elegir objetivo: flecha arriba/abajo, ENTER confirma y ESC cancela.
 
 Al terminar, la pantalla indica si el replay llegó exactamente al mismo final que la partida.
 
+## Spec Kit
+
+La Parte II se desarrolló con **Spec Kit (specify CLI) 1.2.6.dev0**, la misma
+versión con la que se inicializó el proyecto (`speckit_version` en
+`.specify/init-options.json`), con el agente **Claude Code**. Cada feature
+siguió `/speckit-specify`, `/speckit-clarify`, `/speckit-plan`,
+`/speckit-tasks`, `/speckit-analyze` y `/speckit-implement`, bajo la
+constitución de `.specify/memory/constitution.md`; sus artefactos (spec, plan,
+investigación, contratos y tareas) están en `specs/001-terreno-cazador/`,
+`specs/002-niebla-guerra/`, `specs/003-resolubilidad/` y
+`specs/004-linea-tiempo/`, y cada prompt usado está en `PROMPTS_LLM.md`.
+
 ## Terreno y cazador
 
 Especificación, plan y tareas en `specs/001-terreno-cazador/`.
