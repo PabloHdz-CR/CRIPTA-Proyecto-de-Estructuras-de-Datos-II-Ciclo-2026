@@ -109,11 +109,40 @@ def caso_e3_invalido_sigue_abierta():
         _llevar(vista, controlador)
         aviso = vista._pantalla_actual._aviso or ""
         assert "posterior al reloj actual" in aviso, f"FR-003: {aviso}"
+        _sin_recortes_ni_cartel(vista, aviso)
+        # El mensaje largo de la prueba manual: «… se puede consultar de #1 a #n+1».
+        for _ in range(6):
+            vista._pantalla_actual.on_key_press(arcade.key.BACKSPACE, 0)
+        _escribir(vista, "#99999")
+        vista._pantalla_actual.on_key_press(arcade.key.ENTER, 0)
+        _llevar(vista, controlador)
+        aviso = vista._pantalla_actual._aviso or ""
+        assert "se puede consultar de #1 a #" in aviso, f"FR-003: {aviso}"
+        _sin_recortes_ni_cartel(vista, aviso)
+        for _ in range(6):
+            vista._pantalla_actual.on_key_press(arcade.key.BACKSPACE, 0)
+        _escribir(vista, "999999")
         assert vista.historia_abierta, "FR-017: la consulta sigue abierta"
         assert _tecla(vista, arcade.key.ENTER) == [Comando("historia", ("999999",))], (
             "se puede corregir y volver a consultar")
     finally:
         vista.cerrar()
+
+
+def _sin_recortes_ni_cartel(vista, aviso):
+    """T041: con la consulta abierta, el motivo se lee completo dentro del
+    panel, sin "…", y no hay cartel encima del título."""
+    for ancho, alto in ((1024, 720), (1280, 720)):
+        vista.ventana.set_size(ancho, alto)
+        pantalla = vista._pantalla_actual
+        pantalla._armar_textos()
+        hud = pantalla._hud
+        filas = list(hud.filas_aviso_historia)
+        assert filas, f"{ancho}x{alto}: el motivo no está en el panel"
+        unidas = " ".join(fila.strip() for fila in filas)
+        assert unidas.split() == aviso.split(), f"{ancho}x{alto}: {filas} contra {aviso!r}"
+        assert not any("…" in fila for fila in filas), f"{ancho}x{alto}: recortado: {filas}"
+        assert hud._cartel is None, f"{ancho}x{alto}: el cartel tapa el título del panel"
 
 
 def caso_e4_las_demas_teclas_no_hacen_nada():

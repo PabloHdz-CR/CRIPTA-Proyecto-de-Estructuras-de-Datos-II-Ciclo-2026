@@ -165,6 +165,7 @@ class HudJuego:
         self._desplazamiento_historia_pedido = max(0, desplazamiento_historia)
         self._texto_historia = ""
         self._filas_historia = ListaEnlazada()
+        self._filas_aviso_historia = ListaEnlazada()
         self._visibles_historia = 0
         self._cajas_controles = ListaEnlazada()  # (izq, der, abajo, arriba) por fila de Controles
         self._controles_mostrados = ()
@@ -714,6 +715,15 @@ class HudJuego:
             y -= _ALTO_FILA_REPORTE
         textos.agregar_al_final(estilo.texto_mono("> " + self._entrada_historia + "_",
                                                   izq + 22, y, _TAMANO_REPORTE))
+        if self._aviso:
+            # El motivo de un pedido inválido (FR-003) va completo dentro del
+            # panel, partido en filas, y no en el cartel de arriba, que lo
+            # recortaba con "…" y tapaba el título (prueba manual T041).
+            self._filas_aviso_historia = partir_lineas((self._aviso,), maximo)
+            for fila in self._filas_aviso_historia:
+                y -= _ALTO_FILA_REPORTE
+                textos.agregar_al_final(estilo.texto(fila, izq + 22, y, 11, _COLOR_AVISO_HISTORIA,
+                                                     anchor_y="center", bold=True))
         resumen = getattr(self._estado, "historia", None)
         if resumen is None:
             return
@@ -749,6 +759,11 @@ class HudJuego:
     @property
     def filas_historia(self) -> ListaEnlazada:
         return self._filas_historia
+
+    @property
+    def filas_aviso_historia(self) -> ListaEnlazada:
+        """El motivo del último pedido inválido, partido en filas (o vacío)."""
+        return self._filas_aviso_historia
 
     @property
     def visibles_historia(self) -> int:
@@ -829,8 +844,8 @@ class HudJuego:
         return self._panel_controles
 
     def _armar_cartel(self) -> None:
-        if not self._aviso:
-            return
+        if not self._aviso or self._historia_abierta:
+            return            # con la consulta abierta, el aviso va dentro del panel
         centro = self._g.mapa_izq + self._g.lado_mapa / 2
         texto = estilo.texto(_recortar(self._aviso, 70), centro, self._g.mapa_arriba - 26, 12,
                              estilo.TEXTO, anchor_x="center", anchor_y="center", bold=True)
@@ -944,6 +959,7 @@ class HudJuego:
 
 
 TITULO_HISTORIA = "Historia: instante (120) o acción (#3) - Enter consulta, ESC vuelve"
+_COLOR_AVISO_HISTORIA = (240, 150, 60)       # el mismo naranja del borde del cartel
 
 
 def lineas_mapa(mapa, cursor_id=None) -> ListaEnlazada:
