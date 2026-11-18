@@ -13,7 +13,7 @@ pantalla (la partida usa A, C, G, L, O, P, Q, R, S, U y V; el menú, B, N y X).
 | Tecla | Contexto | Comando | Notas |
 |---|---|---|---|
 | **M** | partida | `alternar_mapa` (sesión) | abre o cierra el panel del mapa conocido; no consume tiempo ni va al log (FR-016, FR-017) |
-| ↑ / ↓ | panel abierto | — (local) | mueven el cursor entre las salas **exploradas**; las avistadas se saltan (FR-035) |
+| ↑ / ↓ | panel abierto | — (local) | mueven el cursor entre las salas **exploradas**; las avistadas se saltan; si la fila de la sala elegida queda fuera de las visibles, el panel se desplaza lo justo para mostrarla (FR-035) |
 | RePág / AvPág | panel abierto | — (local) | desplazan el panel, como el de V (D80) |
 | **Enter** | panel abierto | `ir_a <id>` | viaja a la sala bajo el cursor y cierra el panel (FR-035) |
 | **I** | viaje en curso | `interrumpir` | detiene el viaje (FR-028); fuera de un viaje no hace nada |

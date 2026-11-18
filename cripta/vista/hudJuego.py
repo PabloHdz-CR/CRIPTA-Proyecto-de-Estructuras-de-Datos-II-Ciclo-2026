@@ -159,6 +159,7 @@ class HudJuego:
         self._cursor_mapa = cursor_mapa
         self._filas_mapa = ListaEnlazada()
         self._visibles_mapa = 0
+        self._fila_cursor_mapa = -1        # fila con la marca ">" del cursor (T058)
         # 004-linea-tiempo (FR-017): panel de la consulta (H).
         self._historia_abierta = historia_abierta
         self._entrada_historia = texto_historia
@@ -641,6 +642,10 @@ class HudJuego:
         maximo = max(1, int((der - izq - 44) / ancho_caracter))
         filas = partir_lineas(lineas_mapa(mapa, self._cursor_mapa), maximo)
         self._filas_mapa = filas
+        for indice, fila in enumerate(filas):
+            if fila.startswith(">"):       # las filas de continuación empiezan con sangría
+                self._fila_cursor_mapa = indice
+                break
         primera_y = arriba - 42
         ultima_y = abajo + 30
         visibles = int((primera_y - ultima_y) // _ALTO_FILA_REPORTE) + 1
@@ -663,6 +668,11 @@ class HudJuego:
                 f"RePág/AvPág: desplazar   (filas {desplazamiento + 1}-"
                 f"{desplazamiento + visibles} de {total})",
                 izq + 22, abajo + 12, 10, estilo.TEXTO_SUAVE, anchor_y="center"))
+
+    @property
+    def fila_cursor_mapa(self) -> int:
+        """Índice en filas_mapa de la sala bajo el cursor, o -1 (T058)."""
+        return self._fila_cursor_mapa
 
     @property
     def filas_mapa(self) -> ListaEnlazada:

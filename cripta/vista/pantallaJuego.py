@@ -302,6 +302,30 @@ class PantallaJuego(_PantallaCripta):
                     break
             anterior = sala.id
         self._armar_textos()
+        self._seguir_cursor_mapa()
+
+    def _seguir_cursor_mapa(self) -> None:
+        """FR-035 (T058): si la fila de la sala bajo el cursor quedó fuera de
+        las visibles, desplaza el panel lo justo para mostrarla (arriba o
+        abajo). Cambia el mismo desplazamiento que usan RePág/AvPág, así esas
+        teclas siguen igual. Presentación pura."""
+        hud = self._hud
+        visibles = hud.visibles_mapa
+        total = len(hud.filas_mapa)
+        fila = hud.fila_cursor_mapa
+        if visibles < 1 or total <= visibles or fila < 0:
+            return
+        maximo = total - visibles
+        guardado = self._vista_arcade.desplazamiento_mapa
+        actual = min(guardado, maximo)              # lo que el HUD dibuja de verdad
+        if fila < actual:
+            objetivo = fila
+        elif fila >= actual + visibles:
+            objetivo = fila - visibles + 1
+        else:
+            return
+        self._vista_arcade.desplazar_mapa(objetivo - guardado, maximo)
+        self._armar_textos()
 
     def _desplazar_mapa(self, symbol) -> bool:
         """Con el panel del mapa conocido abierto, RePág/AvPág lo desplazan
