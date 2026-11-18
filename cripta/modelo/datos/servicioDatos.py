@@ -226,6 +226,34 @@ class ServicioDatos:
             resultado.agregar_al_final(ficha)
         return resultado
 
+    # ------------------------------------------------------------------
+    # Sin red (004-linea-tiempo, FR-012): para las copias de la línea de tiempo
+    # ------------------------------------------------------------------
+
+    def contenido_en_memoria(self, id_sala):
+        """El contenido de la sala si ya está en memoria, o None. No envía
+        solicitudes ni toca las pendientes. O(salas) por la búsqueda en el
+        esqueleto."""
+        entrada = self._esqueleto.buscar(id_sala)
+        return entrada.contenido if entrada is not None else None
+
+    def resolver_fichas_sin_red(self, ids):
+        """Como resolver_fichas, pero solo desde memoria y disco: nunca pide
+        nada a la red ni gasta presupuesto. Lee la caché con ver() y no
+        inserta, así no cambia la estadística de aciertos (§4.4) ni el orden
+        de desalojo. Si una ficha no está, ErrorCripta con su id."""
+        resultado = ListaEnlazada()
+        for id_ficha in ids:
+            ficha = self._cache.ver(id_ficha)
+            if ficha is None and self._almacen is not None and self._version_catalogo is not None:
+                ficha = self._almacen.cargar_ficha(id_ficha, self._version_catalogo)
+            if ficha is None:
+                raise ErrorCripta(
+                    f"La ficha '{id_ficha}' no está en memoria ni en disco; la consulta "
+                    "de la línea de tiempo no usa la red")
+            resultado.agregar_al_final(ficha)
+        return resultado
+
     def _pedir_fichas_por_red(self, ids_faltantes):
         """Parte 'ids_faltantes' en lotes de hasta 10 y los pide, esperando a
         que TODOS terminen antes de volver (porque resolver_fichas necesita

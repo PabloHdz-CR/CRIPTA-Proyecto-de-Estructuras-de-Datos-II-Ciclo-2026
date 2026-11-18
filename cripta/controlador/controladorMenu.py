@@ -36,6 +36,7 @@ import time
 from random import SystemRandom
 from typing import TYPE_CHECKING, Callable, Optional
 
+from ..modelo.nucleo.lineaTiempo import K_POR_OMISION
 from ..modelo.puertos.errores import ErrorCripta
 from ..vista.estadoVista import BenchmarkVisible
 from .bench.reporte import Reporte
@@ -72,9 +73,13 @@ class ControladorMenu:
                  modo_bench: Optional[ModoBench] = None,
                  reloj: Optional[Callable[..., float]] = None,
                  con_pantalla_titulo: bool = False,
-                 forzar: bool = False) -> None:
+                 forzar: bool = False,
+                 copiador_estado=None, k_linea: int = K_POR_OMISION) -> None:
         self._servicio = servicio
         self._vista = vista
+        # 004-linea-tiempo: lo que necesita la línea de tiempo de cada partida.
+        self._copiador_estado = copiador_estado
+        self._k_linea = k_linea
         self._gestor_guardado = gestor_guardado
         self._almacen_puntajes = almacen_puntajes
         self._almacen_registros = almacen_registros
@@ -137,6 +142,10 @@ class ControladorMenu:
                     self._mostrar_menu()
             return
         if comando is None:
+            # 002-niebla-guerra (FR-023): con un viaje «ir a» en curso, la
+            # partida recibe los None para dar un paso por vuelta.
+            if self._juego is not None and self._juego.viaje is not None:
+                self._procesar_en_partida(None)
             return
         if self._juego is not None:
             self._procesar_en_partida(comando)
@@ -240,10 +249,13 @@ class ControladorMenu:
             self._vista.mostrar_error(f"No hay ninguna partida guardada de '{id_cripta}'.")
             return
 
+        # 002-niebla-guerra (FR-036): el mismo reloj real que marca el ritmo del
+        # replay marca la pausa entre pasos de «ir a» en la ventana.
         juego = ControladorJuego(
             self._servicio, self._vista, self._almacen_registros.registro_de(id_cripta),
             self._gestor_guardado, self._almacen_puntajes, self._reporte_final,
-            self._nombre_jugador)
+            self._nombre_jugador, reloj_real=self._reloj,
+            copiador_estado=self._copiador_estado, k_linea=self._k_linea)
         try:
             if hay_guardado and modo != MODO_NUEVA:
                 try:

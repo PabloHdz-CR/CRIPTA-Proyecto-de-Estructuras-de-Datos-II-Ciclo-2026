@@ -54,6 +54,21 @@ _VERBOS = (("atacar", "Atacar: elige un enemigo"), ("usar", "Usar: elige un obje
            ("recoger", "Recoger: elige del suelo"))
 
 
+_ALTO_FILA_CONTROLES_MIN = 17   # una tecla dibujada mide 17 px de alto
+_HOLGURA_CONTROL = 6           # aire entre el final de un texto y la columna siguiente
+_ANCHO_LETRA_CONTROL = 6.6     # estimación (fuente de 10 px) para elegir columnas
+
+
+def _ancho_tecla(tecla: str) -> float:
+    return 12 + 6.5 * len(tecla)
+
+
+def _ancho_control(tecla: str, descripcion: str) -> float:
+    """Ancho estimado de una fila de Controles, para elegir cuántas columnas usar.
+    El ancho real se mide con el texto ya armado y, si hace falta, se recorta."""
+    return _ancho_tecla(tecla) + 8 + _ANCHO_LETRA_CONTROL * len(descripcion)
+
+
 def _recortar(texto: str, maximo: int) -> str:
     if len(texto) <= maximo:
         return texto
@@ -120,7 +135,10 @@ class HudJuego:
     def __init__(self, estado, anterior, geometria: Geometria, modo: str = "normal",
                  verbo_objetivo=None, lista_objetivo=None, cursor_objetivo: int = 0,
                  aviso=None, bitacora_completa: bool = False,
-                 panel_resolubilidad: bool = False, desplazamiento_resolubilidad: int = 0):
+                 panel_resolubilidad: bool = False, desplazamiento_resolubilidad: int = 0,
+                 desplazamiento_mapa: int = 0, cursor_mapa=None,
+                 historia_abierta: bool = False, texto_historia: str = "",
+                 desplazamiento_historia: int = 0):
         self._estado = estado
         self._anterior = anterior
         self._g = geometria
@@ -136,6 +154,22 @@ class HudJuego:
         self._filas_resolubilidad = ListaEnlazada()
         self._maximo_resolubilidad = 0
         self._visibles_resolubilidad = 0
+        # 002-niebla-guerra: panel del mapa conocido (M).
+        self._desplazamiento_mapa_pedido = max(0, desplazamiento_mapa)
+        self._cursor_mapa = cursor_mapa
+        self._filas_mapa = ListaEnlazada()
+        self._visibles_mapa = 0
+        # 004-linea-tiempo (FR-017): panel de la consulta (H).
+        self._historia_abierta = historia_abierta
+        self._entrada_historia = texto_historia
+        self._desplazamiento_historia_pedido = max(0, desplazamiento_historia)
+        self._texto_historia = ""
+        self._filas_historia = ListaEnlazada()
+        self._filas_aviso_historia = ListaEnlazada()
+        self._visibles_historia = 0
+        self._cajas_controles = ListaEnlazada()  # (izq, der, abajo, arriba) por fila de Controles
+        self._controles_mostrados = ()
+        self._panel_controles = (0, 0, 0, 0)
         self._superpuestos = ListaEnlazada()  # (izq, der, abajo, arriba): panel sobre el mapa
         self._textos_superpuestos = ListaEnlazada()
         self._paneles = ListaEnlazada()     # (izq, der, abajo, arriba, resaltado)
@@ -180,7 +214,11 @@ class HudJuego:
             y = self._armar_en_la_sala(izq, der, y)
             self._armar_inventario(izq, der, abajo, y)
         self._armar_bitacora_y_controles()
-        if self._panel_resolubilidad and self._estado.resolubilidad is not None:
+        if self._historia_abierta:
+            self._armar_panel_historia()
+        elif getattr(self._estado, "mapa", None) is not None:
+            self._armar_panel_mapa()
+        elif self._panel_resolubilidad and self._estado.resolubilidad is not None:
             self._armar_panel_resolubilidad()
         elif self._bitacora_completa:
             self._armar_bitacora_completa()
@@ -194,8 +232,15 @@ class HudJuego:
         medio = (abajo + arriba) / 2
         self._texto(_recortar(estado.sala.nombre, 30), izq + 16, medio + 10, 19,
                     estilo.DORADO, bold=True)
-        self._texto(f"{estado.id_cripta}   ·   tiempo {estado.reloj}", izq + 16, medio - 16, 11,
-                    estilo.TEXTO_SUAVE)
+        viaje = getattr(estado, "viaje", None)
+        if viaje is not None:
+            # 002-niebla-guerra (FR-025): el viaje en curso y cómo detenerlo.
+            self._texto(_recortar(f"Viajando a {viaje.destino_id} {viaje.destino_nombre} - "
+                                  f"paso {viaje.pasos} (I para detener)", 48),
+                        izq + 16, medio - 16, 11, estilo.DORADO, bold=True)
+        else:
+            self._texto(f"{estado.id_cripta}   ·   tiempo {estado.reloj}", izq + 16, medio - 16,
+                        11, estilo.TEXTO_SUAVE)
 
         # Vida: corazón + barra animada con el número adentro.
         jugador = estado.jugador
@@ -462,7 +507,8 @@ class HudJuego:
 
     def _armar_bitacora_y_controles(self) -> None:
         izq, der, abajo, arriba = self._g.inferior
-        corte = izq + (der - izq) * 0.56
+        # 002-niebla-guerra: 52 % para la bitácora deja tres columnas de Controles a 1024.
+        corte = izq + (der - izq) * 0.52
         if self._panel(izq, corte, abajo, arriba, "Bitácora"):
             mensajes = self._estado.mensajes
             total = len(mensajes)
@@ -570,6 +616,64 @@ class HudJuego:
                 f"Flechas arriba/abajo, RePág/AvPág: desplazar   (filas {desde}-{hasta} de {total})",
                 izq + 22, abajo + 12, 10, estilo.TEXTO_SUAVE, anchor_y="center"))
 
+    def _armar_panel_mapa(self) -> None:
+        """M (002-niebla-guerra, FR-016): el mapa conocido en un panel sobre el
+        mapa de la sala, con el formato de contracts/vista.md. Las filas se
+        parten para que quepan (partir_lineas, sin perder texto) y el panel se
+        desplaza con RePág/AvPág. Solo muestra lo que trae MapaConocidoVisible:
+        la Vista no conoce nada más de la cripta (FR-014)."""
+        izq = self._g.mapa_izq
+        der = izq + self._g.lado_mapa
+        abajo, arriba = self._g.mapa_abajo + 8, self._g.mapa_arriba - 8
+        if not _cabe(izq, der, abajo, arriba):
+            return
+        mapa = self._estado.mapa
+        self._superpuestos.agregar_al_final((izq + 8, der - 8, abajo, arriba))
+        textos = self._textos_superpuestos
+        textos.agregar_al_final(estilo.texto(
+            f"Mapa conocido: {mapa.cantidad_exploradas} exploradas, "
+            f"{mapa.cantidad_avistadas} avistadas", izq + 22, arriba - 18, 12, estilo.DORADO,
+            anchor_y="center", bold=True))
+        textos.agregar_al_final(estilo.texto(
+            "Enter: ir a   M: cerrar", der - 22, arriba - 18, 10, estilo.TEXTO_SUAVE,
+            anchor_x="right", anchor_y="center"))
+        ancho_caracter = estilo.ancho_caracter_mono(_TAMANO_REPORTE)
+        maximo = max(1, int((der - izq - 44) / ancho_caracter))
+        filas = partir_lineas(lineas_mapa(mapa, self._cursor_mapa), maximo)
+        self._filas_mapa = filas
+        primera_y = arriba - 42
+        ultima_y = abajo + 30
+        visibles = int((primera_y - ultima_y) // _ALTO_FILA_REPORTE) + 1
+        if visibles < 1:
+            self._visibles_mapa = 0
+            return
+        total = len(filas)
+        self._visibles_mapa = min(visibles, total)
+        desplazamiento = min(self._desplazamiento_mapa_pedido, max(0, total - visibles))
+        y = primera_y
+        for indice, fila in enumerate(filas):
+            if indice < desplazamiento:
+                continue
+            if indice >= desplazamiento + visibles:
+                break
+            textos.agregar_al_final(estilo.texto_mono(fila, izq + 22, y, _TAMANO_REPORTE))
+            y -= _ALTO_FILA_REPORTE
+        if total > visibles:
+            textos.agregar_al_final(estilo.texto(
+                f"RePág/AvPág: desplazar   (filas {desplazamiento + 1}-"
+                f"{desplazamiento + visibles} de {total})",
+                izq + 22, abajo + 12, 10, estilo.TEXTO_SUAVE, anchor_y="center"))
+
+    @property
+    def filas_mapa(self) -> ListaEnlazada:
+        """Todas las filas del panel del mapa conocido (pruebas y desplazamiento)."""
+        return self._filas_mapa
+
+    @property
+    def visibles_mapa(self) -> int:
+        """Cuántas filas del panel del mapa se ven a la vez (0 si no hay panel)."""
+        return self._visibles_mapa
+
     @property
     def filas_resolubilidad(self) -> ListaEnlazada:
         """Todas las filas del panel de V (para las pruebas y el desplazamiento)."""
@@ -589,7 +693,86 @@ class HudJuego:
     def desplazamiento_resolubilidad(self) -> int:
         return self._desplazamiento_resolubilidad
 
+    def _armar_panel_historia(self) -> None:
+        """H (004-linea-tiempo, FR-017, contracts/vista.md): la línea de
+        entrada y, si ya se consultó, el resumen del instante con el mismo
+        texto que --replay … --hasta, partido para que quepa (partir_lineas)
+        y desplazable con ↑/↓ y RePág/AvPág."""
+        izq = self._g.mapa_izq
+        der = izq + self._g.lado_mapa
+        abajo, arriba = self._g.mapa_abajo + 8, self._g.mapa_arriba - 8
+        if not _cabe(izq, der, abajo, arriba):
+            return
+        self._superpuestos.agregar_al_final((izq + 8, der - 8, abajo, arriba))
+        textos = self._textos_superpuestos
+        self._texto_historia = TITULO_HISTORIA + "\n> " + self._entrada_historia + "_"
+        ancho_caracter = estilo.ancho_caracter_mono(_TAMANO_REPORTE)
+        maximo = max(1, int((der - izq - 44) / ancho_caracter))
+        y = arriba - 18
+        for fila in partir_lineas((TITULO_HISTORIA,), maximo):
+            textos.agregar_al_final(estilo.texto(fila, izq + 22, y, 11, estilo.DORADO,
+                                                 anchor_y="center", bold=True))
+            y -= _ALTO_FILA_REPORTE
+        textos.agregar_al_final(estilo.texto_mono("> " + self._entrada_historia + "_",
+                                                  izq + 22, y, _TAMANO_REPORTE))
+        if self._aviso:
+            # El motivo de un pedido inválido (FR-003) va completo dentro del
+            # panel, partido en filas, y no en el cartel de arriba, que lo
+            # recortaba con "…" y tapaba el título (prueba manual T041).
+            self._filas_aviso_historia = partir_lineas((self._aviso,), maximo)
+            for fila in self._filas_aviso_historia:
+                y -= _ALTO_FILA_REPORTE
+                textos.agregar_al_final(estilo.texto(fila, izq + 22, y, 11, _COLOR_AVISO_HISTORIA,
+                                                     anchor_y="center", bold=True))
+        resumen = getattr(self._estado, "historia", None)
+        if resumen is None:
+            return
+        filas = partir_lineas(resumen.lineas, maximo)    # el aviso, si hay, ya va al final
+        self._filas_historia = filas
+        primera_y = y - 26
+        ultima_y = abajo + 30
+        visibles = int((primera_y - ultima_y) // _ALTO_FILA_REPORTE) + 1
+        if visibles < 1:
+            return
+        total = len(filas)
+        self._visibles_historia = min(visibles, total)
+        desplazamiento = min(self._desplazamiento_historia_pedido, max(0, total - visibles))
+        y = primera_y
+        for indice, fila in enumerate(filas):
+            if indice < desplazamiento:
+                continue
+            if indice >= desplazamiento + visibles:
+                break
+            textos.agregar_al_final(estilo.texto_mono(fila, izq + 22, y, _TAMANO_REPORTE))
+            y -= _ALTO_FILA_REPORTE
+        if total > visibles:
+            textos.agregar_al_final(estilo.texto(
+                f"Flechas arriba/abajo, RePág/AvPág: desplazar   (filas {desplazamiento + 1}-"
+                f"{desplazamiento + visibles} de {total})",
+                izq + 22, abajo + 12, 10, estilo.TEXTO_SUAVE, anchor_y="center"))
+
+    @property
+    def texto_historia(self) -> str:
+        """El título y la línea de entrada del panel (para las pruebas)."""
+        return self._texto_historia
+
+    @property
+    def filas_historia(self) -> ListaEnlazada:
+        return self._filas_historia
+
+    @property
+    def filas_aviso_historia(self) -> ListaEnlazada:
+        """El motivo del último pedido inválido, partido en filas (o vacío)."""
+        return self._filas_aviso_historia
+
+    @property
+    def visibles_historia(self) -> int:
+        return self._visibles_historia
+
     def _controles(self):
+        if self._historia_abierta:
+            return (("0-9 y #", "Escribir"), ("ENTER", "Consultar"),
+                    ("Flechas", "Desplazar"), ("ESC", "Volver"))
         if self._estado.replay is not None:
             return (("Espacio", "Pausa / seguir"), ("Flecha izquierda", "Paso atrás"),
                     ("Flecha derecha", "Paso adelante"), ("Flecha arriba", "Más rápido"),
@@ -597,32 +780,72 @@ class HudJuego:
                     ("ESC", "Salir del replay"))
         if self._modo == "objetivo":
             return (("Flecha arriba/abajo", "Elegir"), ("ENTER", "Confirmar"), ("ESC", "Cancelar"))
-        return (("Flechas", "Moverse"), ("Shift+Flecha", "Abrir puerta"),
+        # Teclas cortas (Shift+Tab sube el inventario: lo dice el README).
+        # Textos cortos para que quepan en tres columnas a 1024 de ancho.
+        return (("Flechas", "Moverse"), ("Shift+Flecha", "Abrir"),
                 ("Espacio", "Esperar"), ("R", "Recoger"), ("A", "Atacar"),
-                ("U / Q / S", "Usar/equipar/soltar"), ("Tab / Shift+Tab", "Bajar / subir inventario"),
-                ("O", "Ordenar inventario"), ("P", "Pergamino"), ("G / C", "Guardar/Cargar"),
-                ("L", "Bitácora (20)"), ("V", "Resolubilidad"), ("ESC", "Volver al menú"))
+                ("U/Q/S", "Usar/equipar"), ("Tab", "Inventario"),
+                ("O", "Ordenar"), ("P", "Pergamino"), ("G/C", "Guardar/cargar"),
+                ("L", "Bitácora"), ("V", "Resolubilidad"), ("M", "Mapa / ir a"),
+                ("I", "Detener viaje"), ("H", "Historia"), ("ESC", "Menú"))
 
     def _armar_controles(self, izq, der, abajo, arriba) -> None:
+        """Reparte los controles en la menor cantidad de columnas (2 a 4) en la
+        que todas las filas caben a lo alto y cada descripción cabe a lo ancho
+        de su columna; si ninguna alcanza, usa 4 y recorta las descripciones al
+        ancho medido de la columna. Ninguna fila se encima con otra (002, FR-017:
+        las teclas nuevas se documentan sin tapar las anteriores)."""
         controles = self._controles()
-        filas = (len(controles) + 1) // 2
-        alto_fila = max(14, min(21, (arriba - abajo - 32) / max(filas, 1)))
-        ancho_columna = (der - izq - 20) / 2
+        cantidad = len(controles)
+        alto_util = arriba - abajo - 32
+        columnas = 4
+        for candidata in (2, 3, 4):
+            filas = (cantidad + candidata - 1) // candidata
+            ancho = (der - izq - 20) / candidata
+            if alto_util / filas >= _ALTO_FILA_CONTROLES_MIN and all(
+                    _ancho_control(t, d) <= ancho - _HOLGURA_CONTROL for t, d in controles):
+                columnas = candidata
+                break
+        filas = (cantidad + columnas - 1) // columnas
+        alto_fila = max(1.0, min(21.0, alto_util / filas))
+        ancho_columna = (der - izq - 20) / columnas
+        self._panel_controles = (izq, der, abajo, arriba)
+        self._controles_mostrados = controles
         for indice, (tecla, descripcion) in enumerate(controles):
             columna = indice // filas
             fila = indice % filas
             x = izq + 12 + columna * ancho_columna
             y = arriba - 36 - fila * alto_fila
-            ancho_tecla = 12 + 6.5 * len(tecla)
+            ancho_tecla = _ancho_tecla(tecla)
             self._figura("tecla", x + ancho_tecla / 2, y, ancho_tecla, 17)
             self._texto(tecla, x + ancho_tecla / 2, y, 9, estilo.TEXTO, anchor_x="center",
                         bold=True)
-            self._texto(_recortar(descripcion, 22), x + ancho_tecla + 8, y, 10,
-                        estilo.TEXTO_SUAVE)
+            disponible = ancho_columna - ancho_tecla - 8 - _HOLGURA_CONTROL
+            texto = self._texto(descripcion, x + ancho_tecla + 8, y, 10, estilo.TEXTO_SUAVE)
+            recorte = len(descripcion)
+            while texto.content_width > disponible and recorte > 1:
+                recorte -= 1
+                texto.text = _recortar(descripcion, recorte)
+            alto_caja = min(17.0, alto_fila - 1)
+            self._cajas_controles.agregar_al_final(
+                (x, x + ancho_tecla + 8 + texto.content_width, y - alto_caja / 2, y + alto_caja / 2))
+
+    @property
+    def cajas_controles(self) -> ListaEnlazada:
+        """(izq, der, abajo, arriba) de cada fila del panel de Controles (pruebas)."""
+        return self._cajas_controles
+
+    @property
+    def controles_mostrados(self) -> tuple:
+        return self._controles_mostrados
+
+    @property
+    def panel_controles(self) -> tuple:
+        return self._panel_controles
 
     def _armar_cartel(self) -> None:
-        if not self._aviso:
-            return
+        if not self._aviso or self._historia_abierta:
+            return            # con la consulta abierta, el aviso va dentro del panel
         centro = self._g.mapa_izq + self._g.lado_mapa / 2
         texto = estilo.texto(_recortar(self._aviso, 70), centro, self._g.mapa_arriba - 26, 12,
                              estilo.TEXTO, anchor_x="center", anchor_y="center", bold=True)
@@ -733,3 +956,28 @@ class HudJuego:
                                            (240, 150, 60, int(255 * alfa)), 2)
         texto.color = (236, 228, 214, int(255 * alfa))
         texto.draw()
+
+
+TITULO_HISTORIA = "Historia: instante (120) o acción (#3) - Enter consulta, ESC vuelve"
+_COLOR_AVISO_HISTORIA = (240, 150, 60)       # el mismo naranja del borde del cartel
+
+
+def lineas_mapa(mapa, cursor_id=None) -> ListaEnlazada:
+    """Las líneas de texto del panel del mapa conocido (contracts/vista.md),
+    una por sala y una por salida de cada sala explorada. Función pura: no
+    dibuja nada. `cursor_id` marca con ">" la sala bajo el cursor de «ir a».
+    Una avistada muestra solo su id (FR-002)."""
+    lineas = ListaEnlazada()
+    for sala in mapa.salas:
+        marca = ">" if cursor_id is not None and sala.id == cursor_id else " "
+        if not sala.explorada:
+            lineas.agregar_al_final(f"{marca} {sala.id:>4}  ?  (avistada)")
+            continue
+        actual = "  (actual)" if sala.actual else ""
+        lineas.agregar_al_final(f"{marca} {sala.id:>4}  {sala.nombre}{actual}")
+        for salida in sala.salidas:
+            if salida is not None:
+                lineas.agregar_al_final(
+                    f"        {salida.direccion} -> {salida.destino:<5} costo {salida.costo:<4}"
+                    f" {salida.estado}")
+    return lineas

@@ -7,6 +7,8 @@ from ..actores.comportamientos import Cazador
 from ..actores.jugador import Jugador
 from ..estructuras.colaAcotada import ColaAcotada
 from ..estructuras.listaEnlazada import ListaEnlazada
+from ..mundo.buscadorRuta import BuscadorRuta
+from ..mundo.conocimiento import DESCONOCIDA, EXPLORADA, ConocimientoJugador, RegistroConocidas
 from ..mundo.mapaDistancias import MapaDistancias
 from ..mundo.mundo import Mundo
 from ..reloj.agenda import Agenda
@@ -20,10 +22,12 @@ from .constantes import (
     ESTADO_DERROTA, ESTADO_VICTORIA, TAMANO_BITACORA, calcular_intervalo,
     reescalar_restante)
 from .fabricaEntidades import FabricaEntidades
+from ..objetos.objeto import crear_objeto
 from .mutador import Mutador
 from .puntajes import RegistroPuntaje
 from .resultadoAccion import ResultadoAccion
 from .validadorAcciones import ValidadorAcciones
+from .viajeIrA import RECHAZO_NO_EXPLORADA, RECHAZO_SALA_ACTUAL, RECHAZO_SIN_RUTA
 
 
 class Partida:
@@ -46,6 +50,10 @@ class Partida:
         self.validador = ValidadorAcciones()
         self.bitacora = ColaAcotada(TAMANO_BITACORA)
         self.diario = None                     # lo conecta conectar_diario()
+        # 004-linea-tiempo: la línea de tiempo, o None (copias, pruebas sin
+        # línea). La alimentan aplicar_accion, _usar_pergamino y
+        # _asegurar_contenido.
+        self.linea = None
         self.reloj = 0
         self.semilla = None
         self.azar = None                       # random.Random(semilla), propio
@@ -56,10 +64,18 @@ class Partida:
         self.fin = None                        # None, "victoria" o "derrota"
         self._fabrica = FabricaEntidades(servicio)
         self._mapa_distancias = None           # lo crea iniciar(), tras enlazar()
+        # 002-niebla-guerra: cambia el conocimiento del jugador por el Mutador.
+        self.conocimiento = None               # lo crea iniciar(), tras enlazar()
+        self._buscador_ruta = None             # BuscadorRuta, se crea al primer uso
         # Cazadores que alguna vez se activaron, para R_activos (P3). Se filtran
         # por activo y vivo al consultar, así deshacer o morir no lo desfasan.
         self._cazadores = ListaEnlazada()
         self._mensajes = ListaEnlazada()
+        # 002-niebla-guerra (FR-024): anotaciones TRANSITORIAS de la acción en
+        # curso, como _mensajes. Se limpian al empezar cada aplicar_accion y
+        # viajan en ResultadoAccion; no se guardan ni se revierten.
+        self._entro_con_enemigos = False
+        self._dano_recibido = False
 
     # ------------------------------------------------------------------
     # Inicio y consultas
@@ -89,6 +105,8 @@ class Partida:
         self.mundo.enlazar()
         self._cazadores = ListaEnlazada()
         self._mapa_distancias = MapaDistancias(self.mundo, self.mayor_rango_activo)
+        self.conocimiento = ConocimientoJugador(self.mundo, self.mutador)
+        self._buscador_ruta = BuscadorRuta(self.mundo)
         self.jugador = Jugador(self.datos.jugador, self.mundo.sala_inicial,
                                self.mundo.inventario_max)
 
@@ -96,6 +114,9 @@ class Partida:
         self._asegurar_contenido(inicial)
         sala = self.mundo.sala(inicial)
         sala.rastro = 0
+        # 002-niebla-guerra (FR-001, FR-003): la inicial explorada desde el
+        # instante 0. El Mutador está en pausa: no es un cambio reversible.
+        self.conocimiento.iniciar(sala)
         # DECISIÓN: el turno del jugador se programa ANTES de activar enemigos: es el
         # evento más antiguo (secuencia 0) y gana cualquier empate de tiempo.
         primer_turno = EventoAccionActor(0, self.jugador)    # primero: secuencia 0
@@ -125,6 +146,19 @@ class Partida:
                     if isinstance(enemigo.comportamiento, Cazador):
                         self._cazadores.agregar_al_final(enemigo)
         self._mapa_distancias = MapaDistancias(self.mundo, self.mayor_rango_activo)
+        # 002-niebla-guerra (T042, FR-012, FR-016): el registro de conocidas no
+        # se guarda; se reconstruye con una pasada O(salas) desde el
+        # conocimiento cargado de cada sala, en un RegistroConocidas NUEVO
+        # (nunca uno compartido) y sin pasar por el Mutador: el Diario de una
+        # partida cargada empieza vacío.
+        self.mundo.conocidas = RegistroConocidas()
+        for sala in self.mundo:
+            if sala.conocimiento != DESCONOCIDA:
+                self.mundo.conocidas.agregar(sala)
+        self.conocimiento = ConocimientoJugador(self.mundo, self.mutador)
+        self._buscador_ruta = BuscadorRuta(self.mundo)
+        self._entro_con_enemigos = False
+        self._dano_recibido = False
 
     def registrar_activacion(self, enemigo) -> None:
         """Lo llama Enemigo.activar(): recuerda a los cazadores (una vez cada
@@ -141,6 +175,12 @@ class Partida:
             if cazador.activo and cazador.vivo and cazador.comportamiento.rango > mayor:
                 mayor = cazador.comportamiento.rango
         return mayor
+
+    def conectar_linea(self, linea) -> None:
+        """Engancha la línea de tiempo (004-linea-tiempo). Registra el
+        contenido de las salas que ya están cargadas."""
+        self.linea = linea
+        linea.conectar(self)
 
     def conectar_diario(self, diario) -> None:
         """Engancha el Diario de retroceso al punto único de mutación."""
@@ -172,18 +212,30 @@ class Partida:
     # Acción del jugador
     # ------------------------------------------------------------------
 
-    def aplicar_accion(self, accion) -> ResultadoAccion:
+    def aplicar_accion(self, accion, limite=None) -> ResultadoAccion:
         """Valida, ejecuta y procesa eventos hasta la próxima decisión. Un
-        rechazo no consume tiempo ni cambia nada (Apéndice B)."""
+        rechazo no consume tiempo ni cambia nada (Apéndice B).
+
+        limite (004-linea-tiempo, R3): si no es None, después de la acción
+        solo se ejecutan los eventos con tiempo ≤ limite. Lo usan únicamente
+        las copias de la línea de tiempo para detenerse en un instante; la
+        partida real nunca lo pasa."""
         if self.fin is not None:
             return ResultadoAccion.rechazada("La partida ya terminó.")
         motivo = self.validador.validar(self, accion)
         if motivo is not None:
             return ResultadoAccion.rechazada(motivo)
         self._mensajes = ListaEnlazada()
+        self._entro_con_enemigos = False
+        self._dano_recibido = False
         if isinstance(accion, UsarPergamino):
             self._usar_pergamino()
             return ResultadoAccion.aceptada_con(self._mensajes)
+        # 004-linea-tiempo (research R1, R3): el instante de decisión y, cada K
+        # acciones, el punto de control con el estado justo antes de decidir.
+        decision = self.jugador.evento_accion.tiempo
+        if self.linea is not None:
+            self.linea.antes_de_accion(self, decision)
         # DECISIÓN: el contenido se asegura ANTES de abrir el intervalo y de cualquier
         # mutación: si la red falla el estado queda intacto, y esperar la red no
         # mueve el reloj virtual (§2.5).
@@ -209,10 +261,15 @@ class Partida:
         self.mutador.asignar(self.jugador, "acciones", self.jugador.acciones + 1)
         if self.fin is None:
             self.programar_accion(self.jugador, costo)
-        self._procesar_eventos()
+        self._procesar_eventos(limite)
         if self.diario is not None:
             self.diario.cerrar_intervalo()
-        return ResultadoAccion.aceptada_con(self._mensajes)
+        if self.linea is not None:
+            self.linea.registrar_accion(accion, decision)
+        resultado = ResultadoAccion.aceptada_con(self._mensajes)
+        resultado.entro_con_enemigos = self._entro_con_enemigos
+        resultado.dano_recibido = self._dano_recibido
+        return resultado
 
     def _ejecutar_accion_jugador(self, accion) -> None:
         if isinstance(accion, Mover):
@@ -248,8 +305,16 @@ class Partida:
         origen = self._sala_actual()
         destino = self.mundo.sala(origen.salida(accion.direccion).destino)
         self.mutador.asignar(self.jugador, "sala", destino.id)
+        # 002-niebla-guerra (FR-004, research R3): el conocimiento cambia al
+        # entrar, antes de trampas y enemigos, dentro del intervalo de la acción.
+        # FR-008: con la antorcha encendida en el momento de entrar.
+        self.conocimiento.entrar(destino, self.jugador.antorcha_encendida)
         self.mutador.asignar(destino, "rastro", self.reloj)
         self.avisar(f"Entras a {destino.nombre}.")
+        # 002-niebla-guerra (FR-024 (b)): ¿había enemigos, activos o dormidos, al
+        # entrar? Se anota ANTES de activarlos; un enemigo que llega después no cuenta.
+        if not destino.activos.esta_vacia() or not destino.dormidos.esta_vacia():
+            self._entro_con_enemigos = True
         # DECISIÓN (SUPUESTO): primero las trampas y luego la activación de enemigos;
         # el enunciado solo dice que la trampa va justo después del movimiento.
         destino.disparar_trampas(self)               # justo después del movimiento
@@ -265,12 +330,30 @@ class Partida:
         salida = self._sala_actual().salida(accion.direccion)
         # DECISIÓN: el cierre automático es un EVENTO (§2.5) contado desde el instante
         # en que se abre; la llave no se consume.
-        self.mutador.asignar(salida, "cerrada", False)
+        self.cambiar_puerta(salida, False)
         if salida.cierre_automatico is not None:
             cierre = EventoCierrePuerta(self.reloj + salida.cierre_automatico, salida)
             self.mutador.agenda_programar(cierre)
             self.mutador.asignar(salida, "evento_cierre", cierre)
         self.avisar(f"Abres la puerta hacia el {accion.direccion}.")
+
+    def cambiar_puerta(self, salida, cerrada: bool) -> None:
+        """ÚNICO lugar del juego que cambia el estado real de una cara de
+        puerta (002-niebla-guerra, FR-005, research R3). Asigna por el Mutador
+        y, si el jugador está en una de las dos salas que conecta, la observa
+        en el acto: así la sala del jugador tiene siempre sus caras observadas.
+        O(1): compara ids, sin buscar salas.
+
+        DECISIÓN: la observación vive aquí y no en el setter de `cerrada`,
+        porque el setter también lo disparan el Diario al deshacer y la carga;
+        deshacer restaura `cerrada` y `recordada` cada uno con su registro."""
+        self.mutador.asignar(salida, "cerrada", cerrada)
+        sala_jugador = self.jugador.sala
+        origen = salida.origen
+        destino = salida.sala_destino
+        if ((origen is not None and origen.id == sala_jugador)
+                or (destino is not None and destino.id == sala_jugador)):
+            self.conocimiento.observar_cara(salida)
 
     def _usar_pergamino(self) -> None:
         """No consume tiempo ni cuenta como acción. El pergamino se gasta DESPUÉS
@@ -284,15 +367,84 @@ class Partida:
             self.mutador.inventario_quitar(self.jugador, pergamino)
         self.mutador.reanudar()
         self.avisar("El pergamino retrocede el tiempo.")
+        if self.linea is not None:
+            self.linea.al_usar_pergamino(self)      # 004-linea-tiempo, FR-007, FR-008
+
+    def aplicar_ajuste_pergamino(self, ajuste) -> None:
+        """Solo para copias de la línea de tiempo (004, research R6): deja el
+        inventario y los pergaminos del suelo iguales a los de la partida real
+        justo después de un pergamino. Re-simular las acciones que quedaron no
+        reproduce el pergamino gastado ni la regla D50, porque no son acciones.
+        Mueve objetos por id o los crea desde su ficha con el mismo id. Fuera
+        del Mutador: la copia no tiene diario."""
+        sueltos = ListaEnlazada()                 # objetos sacados de su lugar
+        inventario = self.jugador.inventario
+        objetivo = ListaEnlazada()
+        for id_objeto, _, _ in ajuste.inventario:
+            objetivo.agregar_al_final(id_objeto)
+        presentes = ListaEnlazada()
+        for objeto in inventario:
+            presentes.agregar_al_final(objeto)
+        for objeto in presentes:
+            if not objetivo.contiene(objeto.id_instancia):
+                self.jugador.equipo.desequipar(objeto)
+                inventario.quitar(objeto)
+                sueltos.agregar_al_final(objeto)
+        en_suelo = ListaEnlazada()
+        for id_sala, id_objeto, _ in ajuste.pergaminos_suelo:
+            en_suelo.agregar_al_final((id_sala, id_objeto))
+        for sala in self.mundo:
+            quitar = ListaEnlazada()
+            for objeto in sala.suelo:
+                if objeto.clase == "pergamino_retroceso" and \
+                        not en_suelo.contiene((sala.id, objeto.id_instancia)):
+                    quitar.agregar_al_final(objeto)
+            for objeto in quitar:
+                sala.suelo.eliminar_nodo(sala.suelo.buscar(objeto))
+                sueltos.agregar_al_final(objeto)
+        for id_sala, id_objeto, id_ficha in ajuste.pergaminos_suelo:
+            sala = self.mundo.sala(id_sala)
+            if sala.buscar_objeto(id_objeto) is None:
+                sala.suelo.agregar_al_final(self._objeto_de_ajuste(sueltos, id_objeto, id_ficha))
+        indice = 0
+        for id_objeto, id_ficha, _ in ajuste.inventario:
+            if inventario.buscar(id_objeto) is None:
+                inventario.insertar_en(indice, self._objeto_de_ajuste(sueltos, id_objeto, id_ficha))
+            indice += 1
+        # Lo que el Diario no revierte: así lo que viene después sortea, ordena
+        # y numera igual que la partida real.
+        self.azar.setstate(ajuste.estado_azar)
+        self.agenda.secuencia = ajuste.secuencia_agenda
+        self._fabrica._siguiente_id_objeto = ajuste.siguiente_id_objeto
+
+    @property
+    def siguiente_id_objeto(self) -> int:
+        """El próximo id de objeto de la fábrica (004, ajuste del pergamino)."""
+        return self._fabrica._siguiente_id_objeto
+
+    def _objeto_de_ajuste(self, sueltos, id_objeto: int, id_ficha: str):
+        """El objeto con ese id entre los sacados, o uno nuevo desde su ficha
+        con el mismo id (por ejemplo, uno que soltó un enemigo en el tramo
+        revertido)."""
+        for objeto in sueltos:
+            if objeto.id_instancia == id_objeto:
+                return objeto
+        ids = ListaEnlazada()
+        ids.agregar_al_final(id_ficha)
+        return crear_objeto(id_objeto, self.servicio.resolver_fichas(ids).ver_primero())
 
     # ------------------------------------------------------------------
     # Bucle de eventos
     # ------------------------------------------------------------------
 
-    def _procesar_eventos(self) -> None:
+    def _procesar_eventos(self, limite=None) -> None:
         """Ejecuta eventos en orden de (tiempo, secuencia) hasta que el turno
         del jugador sea el siguiente (o la partida termine). Nunca usa la hora
-        real ni el orden de llegada de las respuestas HTTP (§2.3)."""
+        real ni el orden de llegada de las respuestas HTTP (§2.3).
+
+        limite (004-linea-tiempo, FR-001, FR-004): si no es None, se detiene
+        antes del primer evento con tiempo > limite; los de un mismo instante
+        ≤ limite se ejecutan todos."""
         # DECISIÓN: el bucle se detiene cuando el turno del jugador es el siguiente
         # (comparación por IDENTIDAD, no por tiempo): así los eventos con igual tiempo
         # y secuencia menor se ejecutan antes de pedirle su decisión.
@@ -300,10 +452,40 @@ class Partida:
             siguiente = self.agenda.ver_siguiente()
             if siguiente is None or siguiente is self.jugador.evento_accion:
                 return
+            if limite is not None and siguiente.tiempo > limite:
+                return
             evento = self.mutador.agenda_extraer()
             if evento.tiempo > self.reloj:
                 self.mutador.asignar(self, "reloj", evento.tiempo)
             evento.ejecutar(self)
+
+    # ------------------------------------------------------------------
+    # «ir a» (002-niebla-guerra, FR-018 a FR-022)
+    # ------------------------------------------------------------------
+
+    def validar_ir_a(self, id_sala: int):
+        """None si la orden «ir a id_sala» se acepta; si no, el motivo del
+        rechazo (FR-018). Solo lee: un rechazo no cambia nada. La única
+        búsqueda por id de la orden; los pasos usan referencias."""
+        if self.fin is not None:
+            return "La partida ya terminó."
+        if not self.mundo.existe(id_sala):
+            return RECHAZO_NO_EXPLORADA
+        destino = self.mundo.sala(id_sala)
+        if destino.conocimiento != EXPLORADA:
+            return RECHAZO_NO_EXPLORADA
+        if destino.id == self.jugador.sala:
+            return RECHAZO_SALA_ACTUAL
+        if self.primer_paso_ir_a(destino) is None:
+            return RECHAZO_SIN_RUTA
+        return None
+
+    def primer_paso_ir_a(self, destino):
+        """La Salida del primer paso de la ruta conocida hasta destino, desde
+        la sala del jugador, o None (FR-019 a FR-021, research R5)."""
+        if self._buscador_ruta is None:
+            self._buscador_ruta = BuscadorRuta(self.mundo)
+        return self._buscador_ruta.primer_paso(self._sala_actual(), destino)
 
     def costo_de(self, actor, accion) -> int:
         """Costo base de una acción de cualquier actor (FR-004, FR-006).
@@ -349,6 +531,8 @@ class Partida:
         if not actor.vivo or cantidad <= 0:
             return
         nueva = actor.vida_tras_dano(cantidad)
+        if actor is self.jugador and nueva < actor.vida:
+            self._dano_recibido = True       # 002-niebla-guerra, FR-024 (c)
         self.mutador.asignar(actor, "vida", nueva)
         if nueva <= 0:
             self.matar(actor)
@@ -435,5 +619,7 @@ class Partida:
         if self.mundo.tiene_contenido(id_sala):
             return
         contenido = self.servicio.asegurar_contenido(id_sala)
+        if self.linea is not None:
+            self.linea.registrar_contenido(id_sala, contenido)     # 004, research R5
         enemigos, objetos, trampas = self._fabrica.construir(contenido, id_sala)
         self.mundo.incorporar_contenido(id_sala, enemigos, objetos, trampas)

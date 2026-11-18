@@ -6,6 +6,7 @@ from ..estructuras.listaDoble import ListaDoble
 from ..estructuras.listaEnlazada import ListaEnlazada
 from ..nucleo.constantes import VIGENCIA_RASTRO
 from ..puertos.dto import DIRECCIONES
+from .conocimiento import DESCONOCIDA
 
 
 class Sala:
@@ -33,6 +34,12 @@ class Sala:
         # para decidir en O(salidas) y ocupa memoria constante por sala (§4.7).
         self.rastro = None                        # instante de la última presencia
         self.contenido_cargado = False
+        # 002-niebla-guerra (FR-001, research R1): estado de la sala PARA EL
+        # JUGADOR (DESCONOCIDA, AVISTADA o EXPLORADA). Atributo simple: lo
+        # cambia el Mutador con asignar() y el Diario lo restaura con setattr.
+        # El esqueleto y el contenido siguen aquí como infraestructura (FR-015):
+        # lo que el jugador "sabe" de la sala lo decide este campo.
+        self.conocimiento = DESCONOCIDA
         # Salidas de otras salas (o de esta) cuyo destino es esta sala. Las
         # llena Mundo.enlazar(), en el orden en que se construyó el esqueleto
         # (determinista). Permiten recorrer el grafo hacia atrás sin buscar
@@ -44,6 +51,14 @@ class Sala:
         # No es estado reversible: es caché derivada (principio V).
         self._sello_mapa = 0
         self._distancia_mapa = 0
+        # Estado de la búsqueda de «ir a» (002-niebla-guerra, research R5): los
+        # mismos sellos que el mapa del cazador, pero en campos PROPIOS, así una
+        # búsqueda nunca ensucia ni invalida la otra. Caché de búsqueda: no es
+        # estado reversible ni se guarda.
+        self._sello_ruta = 0
+        self._costo_ruta = 0
+        self._paso_ruta = -1
+        self._fijada_ruta = False
 
     # ------------------------------------------------------------------
     # Salidas
@@ -76,6 +91,36 @@ class Sala:
         """La usa MapaDistancias: fija el sello y la distancia en O(1)."""
         self._sello_mapa = sello
         self._distancia_mapa = distancia
+
+    @property
+    def sello_ruta(self) -> int:
+        """Número de la última búsqueda de «ir a» que tocó esta sala."""
+        return self._sello_ruta
+
+    @property
+    def costo_ruta(self) -> int:
+        """Costo acumulado anotado por esa búsqueda (vale solo con su sello)."""
+        return self._costo_ruta
+
+    @property
+    def paso_ruta(self) -> int:
+        """Clave del primer paso de esa ruta: id_vecina * 4 + índice de dirección."""
+        return self._paso_ruta
+
+    @property
+    def fijada_ruta(self) -> bool:
+        """True si la búsqueda ya la sacó del heap (su ruta es definitiva)."""
+        return self._fijada_ruta
+
+    def anotar_ruta(self, sello: int, costo: int, paso: int) -> None:
+        """La usa BuscadorRuta: fija sello, costo y primer paso, sin fijar. O(1)."""
+        self._sello_ruta = sello
+        self._costo_ruta = costo
+        self._paso_ruta = paso
+        self._fijada_ruta = False
+
+    def fijar_ruta(self) -> None:
+        self._fijada_ruta = True
 
     def salida(self, direccion: str):
         """La Salida en esa dirección, o None si no existe. O(1)."""

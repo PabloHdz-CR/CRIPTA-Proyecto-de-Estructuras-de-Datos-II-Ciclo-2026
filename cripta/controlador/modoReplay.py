@@ -18,11 +18,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 from ..modelo.nucleo.diario import Diario
+from ..modelo.nucleo.lineaTiempo import K_POR_OMISION, LineaTiempo
 from ..modelo.nucleo.partida import Partida
 from ..modelo.puertos.errores import ErrorCripta
 from ..vista.estadoVista import ResultadoFinVisible
 from .bench.reporte import Reporte
 from .constructorEstadoVista import ConstructorEstadoVista
+from .constructorResumen import ConstructorResumen
 from .mapaEtiquetas import MapaEtiquetas
 
 if TYPE_CHECKING:
@@ -36,7 +38,8 @@ if TYPE_CHECKING:
 class ModoReplay:
 
     def __init__(self, servicio: "ServicioDatos", vista: "VistaJuego",
-                 reporte_final: "ReporteFinal", reporte: Optional[Reporte] = None) -> None:
+                 reporte_final: "ReporteFinal", reporte: Optional[Reporte] = None,
+                 copiador_estado=None, k_linea: int = K_POR_OMISION) -> None:
         self._servicio = servicio
         self._vista = vista
         self._reporte_final = reporte_final
@@ -46,9 +49,17 @@ class ModoReplay:
         self._reporte = reporte if reporte is not None else Reporte()
         self._constructor = ConstructorEstadoVista(MapaEtiquetas())
         self.partida: Optional[Partida] = None
+        # 004-linea-tiempo (research R8): la misma línea de tiempo que en la
+        # partida en vivo, alimentada por las acciones y pergaminos del log.
+        self._copiador_estado = copiador_estado
+        self._k_linea = k_linea
 
-    def ejecutar(self, registro: "RegistroAcciones") -> bool:
-        """True si se reprodujo completa; False si no (ya reportado)."""
+    def ejecutar(self, registro: "RegistroAcciones", hasta: Optional[int] = None) -> bool:
+        """True si se reprodujo completa; False si no (ya reportado).
+
+        hasta (004-linea-tiempo, FR-013, FR-014): al terminar el log imprime el
+        resumen del instante 'hasta' de la historia tal como quedó, el mismo
+        que daría «historia <hasta>» al final de la partida original."""
         try:
             encabezado, acciones = registro.leer()
             datos = self._servicio.iniciar_cripta(encabezado.id_cripta)
@@ -64,6 +75,8 @@ class ModoReplay:
         numero = 0
         try:
             self.partida.iniciar(encabezado.semilla)
+            if self._copiador_estado is not None:
+                self.partida.conectar_linea(LineaTiempo(self._k_linea, self._copiador_estado))
             for accion in acciones:
                 numero += 1
                 if self.partida.terminada():
@@ -87,7 +100,32 @@ class ModoReplay:
         self._reporte.nota(f"Estado final:          {estado}")
         if self.partida.terminada():
             self._vista.mostrar_fin(self._resultado_visible())
+        if hasta is not None and not self._imprimir_hasta(hasta):
+            return False
         self._reporte_final.imprimir(self._servicio)
+        return True
+
+    def _imprimir_hasta(self, t: int) -> bool:
+        """El resumen del instante t (contracts/cli.md). Si t es posterior al
+        final, el estado final y el aviso de que la partida terminó antes."""
+        partida = self.partida
+        linea = partida.linea
+        if linea is None:
+            return self._fallar("Esta reproducción no tiene línea de tiempo.")
+        final = partida.reloj
+        try:
+            if t > final:
+                copia = linea.reconstruir_accion(linea.acciones + 1, partida)
+                resumen = ConstructorResumen().construir(
+                    copia, str(t), final, aviso=f"La partida terminó antes, en el instante {final}.")
+            else:
+                copia = linea.reconstruir_instante(t, partida)
+                resumen = ConstructorResumen().construir(copia, str(t), t)
+        except ErrorCripta as error:
+            return self._fallar(f"No se pudo consultar el instante {t}: {error}")
+        self._reporte.titulo(f"Estado en el instante {t}")
+        for texto in resumen.lineas:
+            self._reporte.nota(texto)
         return True
 
     def _fallar(self, mensaje: str) -> bool:

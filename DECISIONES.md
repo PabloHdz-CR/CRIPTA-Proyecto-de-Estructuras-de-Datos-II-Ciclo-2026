@@ -19,6 +19,7 @@ salieron de Windows 11 con Python 3.14 y cambian con la máquina y su carga.
 | §4.10 Guardado binario de la partida | D68, D48 | benchGuardado (mide JSON) |
 | §4.11 Bitácora de partida y reproducción | D70, D49, D56, D61 | prueba_controlador, prueba_replay_menu |
 | Parte II, resolubilidad (specs/003-resolubilidad) | D75, D76, D77, D78, D79, D80 | benchResolubilidad (referencia, cadenas y cocientes); prueba_resolubilidad_oraculo |
+| Parte II, niebla de guerra e «ir a» (specs/002-niebla-guerra/spec.md, plan.md) | D81, D82, D83, D84, D85, D86, D87, D88 | benchNiebla (5 tablas: paso de «ir a», consultas, exploración con antorcha, registros y panel, cada una con la alternativa descartada); prueba_ir_a_equivalencia, prueba_rendimiento_ir_a, prueba_conteo_niebla |
 
 Otras decisiones: cliente HTTP y presupuesto de red (D2, D9–D14), estructuras
 base (D3, D4, D6, D7, D8, D27), Vista y Controlador (D43–D48, D51–D66).
@@ -761,6 +762,185 @@ Complejidad: verificar al iniciar suma una verificación (D76, D77) y, la primer
 Evidencia: prueba_resolubilidad_inicio (9 casos) cubre H2.E1 a H2.E4, NO_VERIFICADA con y sin --forzar, la partida cargada que no consulta llaves, el replay fiel de una partida resoluble (binario idéntico al original) y el binario idéntico antes y después de V. prueba_vista_resolubilidad cubre la pantalla con y sin --forzar, V con y sin reporte, V en el replay, el menú, el fin y los puntajes, y la fila de V en el README. Crear RegistroArchivo no toca el disco, así que una cripta no resoluble sin --forzar no deja ningún log (revisión U2).
 Límites: las criptas de pruebas/datos/terreno_cazador no son resolubles con FR-001; sus pruebas de la 001 inician con --forzar.
 Agregado (texto largo): el panel de V recortaba cada línea con "…" y perdía el ciclo largo, y PantallaResolubilidad dibujaba la línea entera y se salía de la ventana. Ahora las dos parten cada línea con partirLineas.partir_linea: corta en espacios, sangría de continuación de dos espacios, devuelve ListaEnlazada y no pierde texto. Usan fuente monoespaciada, con el ancho de un carácter medido con arcade. Si el panel no muestra todas las filas, con él abierto flecha arriba/abajo y RePág/AvPág lo desplazan (presentación pura, sin Comando) en lugar de mover al jugador; "…" queda solo si no cabe ni una fila. El texto canónico (contracts/reporte.md) no cambia. Evidencia: prueba_vista_resolubilidad parte líneas cortas, largas y sin espacios, y comprueba que una línea de 200 caracteres sale completa en el panel y en la pantalla (la unión de las filas es la original, ninguna supera el máximo) y que el desplazamiento llega a la última fila sin encolar movimientos. A mano, con el reporte de cripta-05 (11 líneas, la más larga de 186 caracteres): a 1280x720 la pantalla lo muestra en 12 filas de hasta 148 caracteres (texto hasta x=1160, borde 1250) y a 1024x720, la ventana por defecto, en 12 filas de hasta 116 (hasta x=968, borde 994). El panel de V tiene el mismo tamaño en las dos, porque lo limita la altura: 17 filas de hasta 51 caracteres, todas visibles, con el texto hasta x=442 y el borde en 470.
+
+D81. Niebla de guerra: el conocimiento del jugador como campos de Sala y Salida
+
+(specs/002-niebla-guerra/spec.md, FR-001 a FR-007, FR-032; plan.md, "Cambios por capa"; research.md R1.)
+
+Problema: el jugador ve solo lo que conoce (§3.3). Cada sala es explorada, avistada o desconocida y cada cara de puerta tiene un estado recordado (abierta, cerrada, no observada). La vista, la antorcha y cada paso de «ir a» consultan ese conocimiento muchas veces (§5.3), y la consulta no puede crecer con el mapa conocido (FR-032).
+Alternativas: (a) lista de salas exploradas con búsqueda lineal por id: O(k) por consulta. (b) índice propio por id: O(1), pero D32 descartó una tabla de búsqueda propia como sustituto de dict, y los ids no son consecutivos. (c) un grafo "mapa conocido" aparte: duplica el esqueleto y obliga a sincronizar dos grafos.
+Decisión: Sala.conocimiento (DESCONOCIDA, AVISTADA, EXPLORADA) y Salida.recordada (NO_OBSERVADA, ABIERTA, CERRADA), enteros en los objetos que ya existen. Nadie busca salas por id: la vista y «ir a» llegan por referencia (sala_destino, origen, entrantes del enlace de 001). El esqueleto, la precarga y `cerrada` (estado real) siguen siendo infraestructura; la vista y «ir a» solo leen conocimiento (FR-014, FR-015).
+Complejidad: consulta O(1); memoria, un entero por sala y por salida.
+Evidencia: benchNiebla tabla 2: 0,060, 0,063, 0,068 y 0,087 µs por consulta con 25, 100, 300 y 1200 conocidas (crecimiento al multiplicar el mapa por 4: 1,05 y 1,28, criterio de SC-005 ≤ 1,5), frente a 0,47, 1,30, 3,42 y 12,95 µs de la búsqueda lineal. prueba_conteo_niebla reemplaza Mundo.sala y el iterador del registro por versiones que fallan y consulta todas las salas y salidas sin que fallen.
+Límites: la búsqueda por id queda solo para resolver el destino de una orden «ir a», una vez por orden.
+
+D82. Niebla de guerra: todo cambio por el Mutador y observación de puertas
+
+(spec.md FR-005, FR-006, FR-010, FR-011, FR-033, FR-034; research.md R2 y R3.)
+
+Problema: el pergamino debe devolver el conocimiento a su estado anterior sin copias (principio V), la línea de tiempo (004) debe poder verlo cambio por cambio, y explorar debe costar en proporción a lo revelado. El jugador observa una puerta mientras está en una de sus dos salas: al entrar, al iniciar y cada vez que la puerta cambia con él presente.
+Alternativas: (a) copiar el conocimiento por acción: O(salas) y prohibido. (b) un diario propio de la niebla: dos mecanismos de reversión que deben coincidir. (c) observar en el setter de `cerrada`: también lo disparan deshacer y la carga, y el orden de dos reversiones decidiría el resultado.
+Decisión: los cambios pasan por el Mutador (asignar para conocimiento y recordada, y un tipo nuevo CONOCIDA_AGREGAR para el registro de D83, con su inverso en el Diario), y solo si el valor cambia. Las dos escrituras de `cerrada` del juego (abrir con llave y cierre automático) pasan por un único Partida.cambiar_puerta, que observa la cara si el jugador está en una de sus salas. Al entrar se observan las salidas de la sala y sus entrantes (contrapartes y caras de un solo sentido). La antorcha no observa las caras de las vecinas (aclaración 1).
+Complejidad: entrar O(grado de la sala); con antorcha O(salidas de la sala y de sus vecinas).
+Evidencia: benchNiebla tabla 4: una entrada con antorcha deja 4, 8, 12 y 16 registros en el Diario con 1 a 4 salas reveladas, y deshacerla cuesta 1,6 a 3,8 µs. prueba_niebla_retroceso: Apéndice B 5 y 6, 1000 secuencias aplicadas y revertidas con pergaminos (SC-003) y la comprobación de que cada cambio de una acción está en el Diario (FR-034). prueba_niebla_puertas revisa el AST: `cerrada` solo se escribe en el constructor de Salida y en cambiar_puerta.
+Límites: el Diario guarda 5 intervalos (TAMANO_HISTORIAL); la línea de tiempo (004) necesitará su propio observador del Mutador.
+
+D83. Niebla de guerra: registro de conocidas en orden de descubrimiento (cambio respecto de la orientación inicial)
+
+(spec.md FR-016, FR-033, SC-005; research.md R4; tasks.md T007 y T047.)
+
+Problema: el panel del mapa (M) lista salas exploradas y avistadas por id, sin recorrer toda la cripta.
+Orientación inicial del equipo (prompt de /speckit-plan, punto 3): mantener una colección propia ordenada que crezca al explorar, con inserción ordenada en ListaEnlazada.
+Por qué cambió: la inserción ordenada recorre el registro hasta su lugar, O(k) por sala revelada, así que explorar dependería del tamaño del mapa conocido, contra FR-033 y SC-005. Las mediciones previas del plan dieron 18,6 µs frente a 0,9 µs para registrar 4 salas con 300 conocidas.
+Decisión: RegistroConocidas en orden de descubrimiento sobre una ListaDoble: agregar al final O(1) y, como el Diario revierte siempre en orden inverso, el inverso quita la última, O(1), verificando que sea la sala esperada. El orden por id se obtiene solo al armar el panel: copia y ordenamiento.mezcla, O(k log k). Al cargar una partida el registro se reconstruye con una pasada O(salas), en un objeto nuevo (el valor de clase de Mundo es None y nunca un objeto compartido, hallazgo U1 del análisis).
+Complejidad: explorar O(1) por sala revelada; armar el panel O(k log k), solo con el panel abierto.
+Evidencia: benchNiebla tabla 3 (200 entradas por medición): 6,22, 6,09, 6,13 y 6,20 µs por entrada con antorcha con 25, 100, 300 y 1200 conocidas (crecimiento 0,98 y 1,01), frente a 4,81, 15,50, 47,66 y 180,18 µs de la inserción ordenada (incluye quitar las 4 salas para que el registro no crezca entre entradas). Tabla 5: armar el panel cuesta 0,337 ms con 300 conocidas y 1,623 ms con 1200. prueba_conteo_niebla: la entrada con antorcha registra la misma cantidad de cambios con 25, 100, 300 y 1200 conocidas.
+Límites: con pocas conocidas (25) la inserción ordenada es algo más rápida, pero no escala; el panel se arma de nuevo en cada turno mientras está abierto.
+
+D84. Niebla de guerra: ruta de «ir a» con un buscador propio, separado del cazador
+
+(spec.md FR-019 a FR-022, FR-030, FR-031, SC-004, SC-006; research.md R5; plan.md "Summary".)
+
+Problema: cada paso de «ir a» recalcula desde cero la ruta de menor costo sobre el conocimiento (salas exploradas, caras recordadas abiertas) en menos de 5 ms (§6.1), con desempate por el primer paso hacia la vecina de menor id numérico y, hacia la misma vecina, N, S, E, O. El plan pedía decidir con mediciones si compartir la búsqueda del cazador (§5.3).
+Alternativas: (a) reutilizar el patrón del mapa del cazador: Dijkstra completo hacia atrás desde el destino y la fórmula del cazador en el origen. (b) BFS por cantidad de salas: no minimiza costo. (c) A*: sin coordenadas no hay heurística admisible. (d) seguir la ruta del paso anterior: FR-024 pide recalcular y probar que no cambia la decisión.
+Decisión: BuscadorRuta, Dijkstra hacia adelante desde la sala del jugador con el HeapMinimo propio y eliminación perezosa, etiqueta lexicográfica (costo, id de la vecina del primer paso × 4 + dirección) heredada al extender la ruta, y parada al fijar el destino. Campos de búsqueda propios en Sala (_sello_ruta, _costo_ruta, _paso_ruta, _fijada_ruta) y sello propio en Mundo, para no ensuciar ni invalidar el mapa del cazador. Nunca lee `cerrada`.
+Complejidad: O((V + E) log V) sobre lo alcanzado antes de fijar el destino.
+Evidencia: benchNiebla tabla 1 (peor/media, salas fijadas): cripta de referencia de 300 salas con recuerdos reales 0,140/0,102 ms (66) frente a 0,128/0,104 ms hacia atrás (75); con todas las puertas recordadas abiertas 0,674/0,319 ms (148) frente a 0,651/0,590 ms (300); malla de 1024 salas 4,547/1,997 ms (522) frente a 5,677/3,746 ms (1024), donde la alternativa pasa los 5 ms. Mismo primer paso en 299/299 pares en las tres. prueba_rendimiento_ir_a: peor paso 0,136 ms en 200 pares de la referencia. prueba_ir_a_equivalencia: 1002 pares contra un oráculo Bellman-Ford hacia adelante (SC-006), con la búsqueda instrumentada (leer `cerrada` o llamar a Mundo.sala hace fallar la prueba).
+Límites: en la referencia las dos opciones empatan; la separación se justifica por la malla, por la parada temprana y por no arriesgar FR-017 de 001.
+
+D85. Niebla de guerra: el viaje lo dirige el Controlador, un paso por vuelta, con pausa de presentación
+
+(spec.md FR-018, FR-023 a FR-029, FR-036; research.md R6; tasks.md T031, T040 y T055.)
+
+Problema: cada paso es un movimiento ordinario (tiempo y eventos), la ruta se recalcula antes de cada paso, el viaje se detiene por llegada, enemigos, daño, falta de ruta, fin de partida, pergamino o interrupción, y el pergamino revierte solo el último paso (Apéndice B 6).
+Alternativas: (a) el viaje entero dentro de un solo procesar: la vista no se refresca y no hay dónde detectar el pergamino. (b) una acción compuesta IrA con un solo intervalo del Diario: el pergamino revertiría el viaje entero. (c) detectar daño comparando la vida antes y después: una curación en el mismo paso lo ocultaría.
+Decisión: el Modelo valida la orden y elige cada paso (Partida.validar_ir_a, primer_paso_ir_a); ViajeIrA guarda destino, pasos y motivo y no es estado del juego. ControladorJuego da un paso por vuelta del bucle externo con aplicar_accion(Mover), así cada paso tiene su propio intervalo del Diario; ControladorMenu le pasa los None mientras hay un viaje. Las anotaciones entro_con_enemigos (antes de activar) y dano_recibido (en Partida.danar) son transitorias y viajan en ResultadoAccion. Los comandos que cambian la partida (acciones, guardar, cargar, salir) detienen el viaje antes de procesarse; los de presentación (M, Tab, O, V) no (hallazgo A1 del análisis); el pergamino lo detiene con su propio motivo. En la ventana, cada paso espera 0,5 s de tiempo real (FR-036, enmienda 5d32f60; era 0,15 s y se subió en la enmienda c470bae porque con 0,15 s no alcanzaba el tiempo para apretar I o P a mitad de un viaje) medidos con el reloj real que ControladorMenu ya pasa al replay; sin ese reloj (pruebas, --replay, --bench) no hay pausa y el reloj del juego no se entera.
+Complejidad: por paso, una búsqueda (D84) más el ciclo de eventos de un movimiento.
+Evidencia: prueba_ir_a, 25 casos: Apéndice B 1 a 3, escenarios 4 a 9, 11 y 12 de US3, casos borde (sala actual, enemigo que llega sin dañar, victoria, muerte, salir desde una sala con enemigos), las reglas del Controlador y la pausa con un reloj falso, que no cambia el tiempo del juego, los pasos ni el motivo. prueba_niebla_retroceso: el pergamino a mitad de viaje.
+Límites: a 60 vueltas por segundo, sin la pausa el viaje parecía instantáneo; eso motivó FR-036.
+
+D86. Niebla de guerra: comentario «ir a» en partida.log
+
+(spec.md FR-026, FR-027, SC-007; contracts/registro.md; research.md R7.)
+
+Problema: cada paso queda como un movimiento individual y la orden «ir a» además como comentario; --replay debe reproducir la partida igual.
+Alternativas: registrar IR_A como acción y reproducir el viaje: el replay dependería de recalcular rutas y motivos.
+Decisión: RegistroAcciones.registrar_comentario (no abstracto) y RegistroArchivo escribe `# IR_A <id>` en modo anexado antes del primer paso; leer() salta toda línea que empiece con `#`. Una orden rechazada no escribe nada.
+Complejidad: O(1) por línea, como antes.
+Evidencia: prueba_replay_ir_a: el archivo real tiene `# IR_A 4` y tres MOVER, un log sin comentarios se lee igual, y 20 partidas con viajes reproducidas terminan con el mismo estado y el mismo conocimiento.
+Límites: ninguno conocido.
+
+D87. Niebla de guerra: teclas M e I, panel del mapa y panel de Controles
+
+(spec.md FR-016, FR-017, FR-025, FR-035; contracts/vista.md; research.md R8.)
+
+Problema: ver el mapa conocido, elegir el destino de «ir a» y ver por qué se detuvo (§7.3), sin chocar con las teclas existentes.
+Decisión: M abre y cierra el panel (verbo de sesión: el Controlador arma MapaConocidoVisible solo con el panel abierto); con el panel abierto, flecha arriba/abajo mueven un cursor que salta las avistadas, ENTER encola ir_a y RePág/AvPág desplazan, y las flechas no mueven al jugador. I interrumpe el viaje. H queda reservada para la línea de tiempo (004; ahora la usa, D96). El HUD muestra "Viajando a ..." y la bitácora el motivo. La sala actual se dibuja desde el recuerdo. Con las filas nuevas, el panel de Controles se encimaba (ESC tapaba la descripción de Tab): ahora elige entre 2 y 4 columnas según el espacio, usa descripciones cortas, mide cada texto y la bitácora pasa del 56 al 52 % del ancho inferior para dejar tres columnas a 1024 de ancho.
+Evidencia: prueba_vista_mapa: nada de salas no exploradas llega a la vista (SC-002), el orden por id, la tecla M (solo M encola alternar_mapa), el panel dibujado, el cursor y ENTER, y caso_controles_sin_encimarse, que comprueba a 1280x720 y 1024x720 con los anchos reales de los textos que ninguna fila de Controles se encima con otra ni se sale del panel.
+Revisión con Diego (T005, 17/11/2026): a su pedido se revisaron las teclas en los controladores de las ramas del equipo con `git grep -n -E "key\.(M|I|H)\b" origin/main origin/003-resolubilidad origin/004-linea-tiempo -- cripta`, que solo encuentra M, I y H en 004-linea-tiempo (`cripta/vista/pantallaJuego.py` líneas 361, 365 y 368); main y 003-resolubilidad no las usan. Diego está de acuerdo.
+Límites: ninguno conocido; una tecla nueva en 001 o 003 debe evitar M, I y H.
+
+D88. Niebla de guerra: formato de guardado 3
+
+(spec.md FR-012, FR-013; contracts/partida-binaria.md; research.md R9.)
+
+Problema: guardar y cargar conserva el conocimiento, también los recuerdos desactualizados; un archivo anterior se reporta incompatible (aclaración 4).
+Alternativas: migrar un archivo de la versión 2 inventando conocimiento: no puede reconstruirse lo que el jugador vio (principio V).
+Decisión: FORMATO_VERSION = 3: un uentero32 de conocimiento por sala y uno de recuerdo por salida, también en cargar_sala; un valor fuera de rango es un archivo corrupto (ErrorCripta). El registro de conocidas no se guarda: se reconstruye al cargar (D83). La versión 4 queda para la feature 004.
+Complejidad: dos enteros más por sala y por salida.
+Evidencia: prueba_persistencia_niebla: guardar y cargar con un recuerdo desactualizado, cargar_sala, guardar en un punto de cada una de las 1000 secuencias de SC-003, el fixture de la versión 2 (pruebas/datos/niebla/guardado_formato_2.bin) rechazado con "se esperaba 3 y se encontró 2" también desde el Controlador, y valores fuera de rango. prueba_persistencia_cazador (001) acepta ahora la versión vigente ≥ 2.
+Límites: los guardados hechos antes de esta feature ya no se pueden continuar.
+
+D89. Línea de tiempo: puntos de control con el formato de PartidaBinaria, en memoria
+
+([spec.md](specs/004-linea-tiempo/spec.md) FR-019, FR-020; [plan.md](specs/004-linea-tiempo/plan.md); research.md R1.)
+
+Problema: consultar el estado de cualquier instante pasado sin modificar la partida (FR-011), con copias completas como mucho una cada K acciones del jugador, y con el estado del generador aleatorio incluido si se re-simula.
+Alternativas: (a) un serializador propio solo para la línea: duplica lo que PartidaBinaria ya sabe guardar (enemigos, efectos, eventos, conocimiento de 002, estado del Random). (b) copy.deepcopy: prohibido. (c) copias por objeto con métodos clonar(): hay que mantenerlos cada vez que cambia una clase.
+Decisión: el puerto CopiadorEstado (modelo) con el adaptador CopiadorBinario: tomar = PartidaBinaria.a_bytes y restaurar = desde_bytes, los mismos bytes del archivo pero en memoria, sin la línea dentro (bandera con_linea, D95). LineaTiempo guarda bloques de K acciones, cada uno con su punto de control tomado justo antes de la primera acción; el punto queda pendiente hasta que la acción se acepta, así una acción rechazada no deja un bloque vacío. Coincide con el plan.
+Complejidad: tomar O(estado) cada K acciones; las demás acciones agregan una entrada O(1).
+Evidencia: benchLineaTiempo tabla 5 (cripta de referencia, 300 salas, 5000 acciones): un punto de control mide 55 KiB, se toma en 2,2 ms y se restaura en 5,9 ms. prueba_linea_consulta y prueba_linea_pergamino comparan cada consulta con la huella capturada en vivo (oráculo de la spec corregida en 67c1a83).
+Límites: el punto de control es el estado completo; con K = 25 son unos 2,2 KiB por acción (D91).
+
+D90. Línea de tiempo: reconstruir hacia adelante desde el punto de control
+
+([spec.md](specs/004-linea-tiempo/spec.md) FR-001, FR-004, FR-012, FR-021; [plan.md](specs/004-linea-tiempo/plan.md); research.md R2, R3, R5.)
+
+Problema: llegar al estado de un instante t o de la acción #k aplicando o deshaciendo los cambios de como mucho K acciones.
+Alternativas: (a) adelante: restaurar el punto de control y re-simular las acciones que siguen existiendo. (b) aplicar cambios registrados con su instante: un segundo registro de todo lo que hace el Mutador, además del Diario. (c) atrás: copiar el estado actual y deshacer con el Diario, que solo guarda 5 acciones y no revierte el azar.
+Decisión: (a). La copia usa ServicioSoloLectura (D93), sin vista ni red. Para un instante t, Partida.aplicar_accion(accion, limite=t) detiene el ciclo de eventos en el primer evento con tiempo > t (FR-004), y una entrada cuya decisión es ≥ t no se aplica (si a t le toca una decisión, el estado es el de justo antes). Coincide con el plan.
+Complejidad: O(log bloques) para ubicar el bloque (D92) más O(estado) para restaurar y como mucho K acciones re-simuladas.
+Evidencia: benchLineaTiempo tabla 2 (K = 25, 1000 acciones): adelante 13,3 ms; atrás, copiar el estado actual 12,8 ms y deshacer K acciones 13,4 ms en total. Cuestan lo mismo, pero atrás exige guardar todos los cambios de la partida (el Diario guarda 5 acciones) y adelante solo las acciones, unos 100 B cada una. prueba_rendimiento_linea: ninguna consulta re-simula más de K acciones (FR-021).
+Límites: re-simular reproduce el mismo resultado solo porque la partida es determinista y el punto de control trae el estado del Random; D94 cubre lo que el Diario no revierte.
+
+D91. Línea de tiempo: K = 25 por defecto
+
+([spec.md](specs/004-linea-tiempo/spec.md) FR-019, FR-020, FR-022, SC-003, SC-007; [plan.md](specs/004-linea-tiempo/plan.md); research.md R10.)
+
+Problema: K fija el compromiso entre memoria (un punto de control cada K acciones) y tiempo de consulta (hasta K acciones re-simuladas), con el límite de 50 ms de §6.1 en partidas de 5000 acciones.
+Decisión: K = 25, configurable con --checkpoint-cada K. Coincide con el plan; las mediciones finales confirmaron el valor.
+Evidencia: benchLineaTiempo tabla 1 (5000 acciones, cripta de referencia; mediana y peor de 30 instantes al azar, mínimo de 2 repeticiones): K = 10, 500 bloques, 28,7 MiB, 10,2 y 15,4 ms; K = 25, 200 bloques, 12,2 MiB, 12,3 y 19,7 ms; K = 50, 100 bloques, 6,8 MiB, 13,3 y 22,8 ms. Sin puntos de control (un solo punto, 500 acciones) la mediana ya es 68,9 ms y la peor 105,4 ms, fuera del límite. K = 25 deja la consulta peor en 40 % del límite y usa menos de la mitad de la memoria de K = 10; K = 50 ahorra memoria con poco tiempo más. prueba_rendimiento_linea: consulta peor 11,4 ms con 5000 acciones (SC-003), y en 500 acciones K = 25 usa unos 0,55 MiB contra 7,2 MiB con K = 1 (SC-007).
+Límites: la memoria crece unos 2,5 KiB por acción con K = 25, casi todo en puntos de control; una partida mucho más larga que 5000 acciones pediría un K mayor.
+
+D92. Línea de tiempo: bloques en un ArregloArbol y búsqueda binaria
+
+([spec.md](specs/004-linea-tiempo/spec.md) FR-023; [plan.md](specs/004-linea-tiempo/plan.md); research.md R4.)
+
+Problema: ubicar el punto de control más cercano a un instante es la operación más frecuente y su costo importa en partidas largas; no se pueden usar list ni bisect.
+Alternativas: (a) ListaEnlazada recorrida desde el primero, O(n). (b) ListaDoble: acceso por posición O(n). (c) HeapBinario: no está ordenado por posición.
+Decisión: ArregloArbol, un árbol binario completo de nodos al que se llega por los bits de la posición (la misma técnica que HeapBinario._nodo_en): obtener(i) O(log n), agregar y quitar al final O(log n). Como los bloques se agregan en orden de tiempo, la búsqueda binaria por tiempo_inicio ubica el bloque en O(log² n). Coincide con el plan.
+Evidencia: benchLineaTiempo tabla 3 (µs por consulta, 200 instantes al azar): 100 bloques 2,5 contra 2,0 lineal; 1000, 6,4 contra 22,8 (4x); 10 000, 18,6 contra 321,7 (17x); 100 000, 22,3 contra 3367,7 (151x). prueba_arreglo_arbol cubre obtener, agregar, quitar e iterar.
+Límites: con menos de unos 200 bloques la búsqueda lineal es igual de rápida; la ventaja aparece en partidas largas o con K chico.
+
+D93. Línea de tiempo: la copia usa un servicio de solo lectura
+
+([spec.md](specs/004-linea-tiempo/spec.md) FR-011, FR-012; [plan.md](specs/004-linea-tiempo/plan.md); research.md R5.)
+
+Problema: re-simular puede entrar a una sala cuyo contenido la partida real cargó después del punto de control; la consulta no puede usar la red ni gastar presupuesto.
+Decisión: LineaTiempo registra el contenido inicial de cada sala la primera vez que la partida real lo carga (y al conectarse, las ya cargadas). ServicioSoloLectura atiende a la copia: asegurar_contenido toma el registrado o el que está en memoria y, si no hay, lanza ErrorCripta; precargar no hace nada; resolver_fichas usa ServicioDatos.resolver_fichas_sin_red (caché con ver(), sin insertar, y disco). Coincide con el plan.
+Evidencia: prueba_servicio_solo_lectura: una fuente instrumentada falla si la copia la llama, y la estadística de la caché no cambia.
+Límites: el registro de contenidos guarda un ContenidoSalaDTO por sala visitada; se busca en O(salas registradas), solo al re-simular una sala nueva.
+
+D94. Línea de tiempo: el pergamino recorta la línea y deja un ajuste (cambio respecto del plan)
+
+([spec.md](specs/004-linea-tiempo/spec.md) FR-007, FR-008, FR-023, SC-004; [plan.md](specs/004-linea-tiempo/plan.md); research.md R6; tasks.md T021.)
+
+Problema: lo revertido con un pergamino deja de existir en la línea, el recorte no puede recorrer la historia, y los pergaminos no se revierten (D50), así que lo que viene después del pergamino debe re-simularse con el inventario y el suelo reales.
+Decisión: al usar un pergamino se quitan del último bloque las entradas desde la última acción, se quita el bloque si se quedó sin acciones y se agrega un AjustePergamino con el instante al que volvió el reloj, el inventario en orden y los pergaminos en el suelo. Re-simular aplica el ajuste al pasar por su instante.
+Por qué cambió: el plan solo guardaba inventario y suelo. Al implementar, el oráculo en vivo mostró que después de un pergamino la re-simulación daba otros sorteos e ids: el Diario no revierte el estado del Random (los sorteos de lo revertido ya se consumieron), la secuencia de la agenda ni el próximo id de objeto. El ajuste guarda también esos tres valores y Partida.aplicar_ajuste_pergamino los restaura. Está anotado en data-model.md.
+Complejidad: proporcional a lo revertido, más O(inventario + salas) para armar el ajuste; nunca recorre la historia.
+Evidencia: benchLineaTiempo tabla 4: con 100, 1000 y 5000 acciones el recorte toca 1 entrada y cuesta 122, 149 y 149 µs (el costo es armar el ajuste, que no depende del largo). prueba_linea_pergamino: Apéndice B 2, 1000 secuencias con pergaminos contra el oráculo (SC-004) y caso_recorte_constante.
+Límites: la línea guarda inventario, suelo y estado del Random por pergamino usado (unos 5 KiB cada uno).
+
+D95. Línea de tiempo: formato de guardado 4
+
+([spec.md](specs/004-linea-tiempo/spec.md) FR-009, FR-010, SC-005; [plan.md](specs/004-linea-tiempo/plan.md); contracts/partida-binaria.md.)
+
+Problema: guardar y cargar conserva la línea completa; un archivo anterior se reporta incompatible, nunca se carga en silencio; cargar_sala (§4.10) debe seguir leyendo solo su sala.
+Decisión: FORMATO_VERSION = 4. Una bandera con_linea después del encabezado lógico (verdadera en un guardado, falsa en un punto de control, que nunca guarda la línea dentro de sí mismo) y, si está, la sección de la línea (K, acciones, contenidos iniciales, bloques con su punto de control y sus entradas "A" y "P") ANTES del índice de salas, que sigue siendo lo último del archivo. Coincide con el plan, con los campos extra de D94 en las entradas "P".
+Complejidad: el guardado crece con los puntos de control: O(acciones / K × estado).
+Evidencia: benchLineaTiempo tabla 5 (5000 acciones, K = 25): el guardado mide 11 305 KiB, se escribe en 132 ms y se lee en 20 ms. prueba_persistencia_linea: todas las consultas iguales después de cargar, la historia sigue continua, el pergamino no tiene nada que revertir justo después de cargar (como en la primera parte), cargar_sala lee la misma cantidad de bytes con y sin una línea larga, el fixture de la versión 3 rechazado con "se esperaba 4 y se encontró 3" (Apéndice B 6) y 1000 secuencias con un guardar y cargar (SC-005).
+Límites: con partidas muy largas el archivo pesa varios MiB; un guardado de la versión 3 ya no se puede continuar.
+
+D96. Línea de tiempo: «historia», --replay … --hasta y la tecla H
+
+([spec.md](specs/004-linea-tiempo/spec.md) FR-002, FR-003, FR-005, FR-013 a FR-018, SC-006; [plan.md](specs/004-linea-tiempo/plan.md); contracts/cli.md y vista.md.)
+
+Problema: la misma consulta desde la partida, sin interacción y en la ventana, con el mismo resumen (FR-014), sin gastar tiempo ni ir al log (FR-005).
+Decisión: «historia» es un verbo de sesión de ControladorJuego. ConstructorResumen arma un ResumenInstante con el EstadoVista de la copia (el mismo ConstructorEstadoVista del juego, con el mapa abierto) y las líneas de texto; la ventana y --hasta usan esas mismas líneas. ModoReplay conecta la misma línea y, con --hasta, imprime el resumen al terminar el log. FabricaAplicacion valida --hasta y --checkpoint-cada antes que todo (código 2) e inyecta CopiadorBinario, así el Controlador no importa adaptadores (D48). H usa la tecla que D87 reservaba: con un viaje en curso encola interrumpir, con el mapa abierto lo cierra, y en la consulta solo dígitos y # (por on_text), Retroceso, Enter, flechas y ESC hacen algo. Cambio respecto del plan: el resumen lleva el EstadoVista en vez de repetir sus campos (contracts/ al día en e86639d).
+Evidencia: prueba_linea_consulta (Apéndice B 1, 3 y 4), prueba_replay_hasta (Apéndice B 5, uso incorrecto con código 2, versión no disponible y SC-006 con 20 partidas grabadas por 10 instantes), prueba_vista_historia (H, #k, valor inválido, teclas que no hacen nada, H durante un viaje y con el mapa abierto, y la fila H en Controles).
+Límites: --hasta reproduce el log entero antes de consultar, aunque t sea pequeño.
+
+D97. §5.6: el historial del pergamino con la carga de la Parte II
+
+([spec.md](specs/004-linea-tiempo/spec.md) FR-025; [plan.md](specs/004-linea-tiempo/plan.md); D29.)
+
+Problema: repetir las mediciones del historial de retroceso de la primera parte con la carga nueva (costos por salida, cazadores, «ir a», conocimiento de la niebla y la línea conectada) y decir si sigue siendo adecuado.
+Antes (D29): apilar en la PilaAcotada sobre ListaDoble costaba de 0,55 a 0,74 µs según la capacidad, 1,1 veces lo de la lista simple con la capacidad real de 5.
+Después (benchHistorial, mismas tablas y una nueva): apilar cuesta de 0,32 a 0,58 µs (0,44 µs con capacidad 5, contra 0,40 µs con lista simple); con la carga nueva, en la cripta de referencia de 300 salas y la línea conectada con K = 25, cada acción deja unos 57 registros en el Diario, la acción entera cuesta 1324 µs con el Diario y deshacer una acción cuesta 40 µs.
+Decisión: sigue siendo adecuado; no se cambió. La pila sigue en O(1) y deshacer una acción es menos del 0,2 % de los 20 ms de un ciclo (§5.2). La línea de tiempo no usa el Diario (D90), así que no le agrega registros.
+Evidencia: benchHistorial (tabla "Historial del pergamino con la carga nueva") y prueba_4_4, que comprueba que la tabla y el veredicto estén (FR-025).
+Límites: los registros por acción dependen de la partida (enemigos que se mueven, efectos activos); el número es de una partida al azar de 1000 acciones con semilla fija.
 
 Nota sobre veneno y regeneración: el modelo implementa los dos mecanismos (EfectoVeneno con curar_veneno del antídoto, y EfectoRegeneracion en Enemigo), pero el contrato del API no trae hoy ningún campo que los active: Enemigo.regeneracion queda en 0 y ninguna ficha envenena. Se dejaron implementados y probados por si una cripta nueva los usa; con los datos actuales no aparecen en una partida.
 

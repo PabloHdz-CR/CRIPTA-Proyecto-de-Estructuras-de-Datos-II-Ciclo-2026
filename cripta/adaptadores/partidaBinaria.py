@@ -17,17 +17,30 @@ Formato (todo escrito con EscritorBinario/LectorBinario, little-endian):
     siguiente_id_objeto             (entero: FabricaEntidades._siguiente_id_objeto)
     estado de random.Random: version(entero), 625 enteros, gauss_next(flotante opcional)
 
+  CON_LINEA (booleano, desde la versión 4, 004-linea-tiempo): verdadero en un
+  guardado con línea de tiempo; falso en un punto de control de la línea, que
+  nunca guarda la línea dentro de sí mismo (análisis F3).
+
   JUGADOR (un solo bloque, fuera del índice de salas)
 
   SALAS: cantidad(entero), luego cada Sala una tras otra (se recuerda el
   offset y la longitud de cada una para el índice). Cada salida guarda
   destino, cerrada, llave, cierre_automatico y, desde la versión 2, su
-  costo EFECTIVO (entero >= 1, 001-terreno-cazador): al cargar,
+  costo EFECTIVO (entero >= 1, 001-terreno-cazador). Desde la versión 3
+  (002-niebla-guerra), cada sala guarda su conocimiento (uentero32) después
+  del nombre y cada salida su recuerdo (uentero32) después del costo. Al cargar,
   Mundo.enlazar() vuelve a resolver origen, destino y entrantes, y la Partida
   recrea su mapa de distancias (specs/001-terreno-cazador/contracts/
   partida-binaria.md).
 
   EVENTOS PENDIENTES DE LA AGENDA: cantidad(entero), luego cada evento
+
+  LÍNEA DE TIEMPO (solo si con_linea; versión 4, specs/004-linea-tiempo/
+  contracts/partida-binaria.md): k, acciones, contenidos iniciales de las
+  salas, y los bloques con su punto de control (bytes de este mismo formato
+  con con_linea falso) y sus entradas "A" (acción) y "P" (ajuste del
+  pergamino). Va ANTES del índice para que el índice siga siendo lo último y
+  cargar_sala no pase por la línea (análisis F1).
 
   ÍNDICE DE SALAS (al final; su posición es 'offset_indice'):
     cantidad(entero), luego (id_sala:entero, offset:entero, longitud:entero)
@@ -59,6 +72,7 @@ from ..modelo.mundo.registroPuertas import RegistroPuertas
 from ..modelo.mundo.salida import Salida
 from ..modelo.mundo.sala import Sala
 from ..modelo.mundo.trampa import Trampa
+from ..modelo.nucleo.lineaTiempo import AjustePergamino, Bloque, EntradaAccion, LineaTiempo
 from ..modelo.nucleo.partida import Partida
 from ..modelo.nucleo.mutador import Mutador
 from ..modelo.nucleo.validadorAcciones import ValidadorAcciones
@@ -66,8 +80,11 @@ from ..modelo.nucleo.constantes import TAMANO_BITACORA
 from ..modelo.estructuras.colaAcotada import ColaAcotada
 from ..modelo.nucleo.fabricaEntidades import FabricaEntidades
 from ..modelo.objetos.objeto import crear_objeto
-from ..modelo.puertos.dto import DIRECCIONES
-from ..modelo.puertos.errores import VersionIncompatible
+from ..modelo.puertos.dto import (
+    DIRECCIONES, ContenidoSalaDTO, EnemigoInstanciaDTO, TrampaInstanciaDTO)
+from ..modelo.mundo.conocimiento import CERRADA, EXPLORADA
+from ..modelo.puertos.copiadorEstado import CopiadorEstado
+from ..modelo.puertos.errores import ErrorCripta, VersionIncompatible
 from ..modelo.reloj.agenda import Agenda
 from ..modelo.reloj.efecto import (
     EfectoAntorcha, EfectoRegeneracion, EfectoVelocidad, EfectoVeneno)
@@ -75,13 +92,15 @@ from ..modelo.reloj.eventos import (
     EventoAccionActor, EventoApagarAntorcha, EventoCambioVelocidad,
     EventoCierrePuerta, EventoRearmeTrampa, EventoRegeneracion, EventoVeneno)
 from .codificadorBinario import EscritorBinario, LectorBinario
+from .registroArchivo import accion_desde_texto
 
 MAGIC = b"CRPB"
-# 2 desde 001-terreno-cazador (costo por salida). Provisional según el orden
-# de merge a main: si otra feature toma el 2 antes, se ajusta al integrarse
-# (contracts/partida-binaria.md, T048). Un archivo de otra versión se reporta
-# incompatible y no se migra (principio V).
-FORMATO_VERSION = 2
+# 2 desde 001-terreno-cazador (costo por salida); 3 desde 002-niebla-guerra
+# (conocimiento por sala y recuerdo por salida, specs/002-niebla-guerra/
+# contracts/partida-binaria.md); 4 desde 004-linea-tiempo (bandera con_linea y
+# la línea de tiempo antes del índice). Un archivo de otra versión se reporta
+# incompatible y no se migra (principio V, FR-013 de 002, FR-010 de 004).
+FORMATO_VERSION = 4
 
 # Nombres de tipo de evento, para no depender del nombre de la clase de Python
 # (si se refactoriza un nombre de clase, el formato de archivo no se rompe).
@@ -108,6 +127,21 @@ class PartidaBinaria:
 
     @staticmethod
     def guardar(partida: Partida, ruta) -> None:
+        """Escribe el estado completo de la partida en el archivo 'ruta'."""
+        datos = PartidaBinaria.a_bytes(partida, con_linea=True)
+        with open(ruta, "wb") as archivo:
+            archivo.write(datos)
+
+    @staticmethod
+    def a_bytes(partida: Partida, con_linea: bool = False) -> bytes:
+        """El estado completo de la partida en el formato de archivo, en
+        memoria (004-linea-tiempo, R1: también es un punto de control). No
+        modifica la partida: la agenda se extrae y se reinserta igual.
+
+        con_linea: un guardado incluye la línea de tiempo de la partida (si la
+        tiene); un punto de control no (análisis F3)."""
+        # getattr: los bench de la primera parte arman partidas sin línea.
+        linea = getattr(partida, "linea", None) if con_linea else None
         escritor = EscritorBinario()
         escritor.crudo(MAGIC)
         escritor.uentero32(FORMATO_VERSION)
@@ -115,6 +149,7 @@ class PartidaBinaria:
         escritor.entero(0)                     # placeholder: se rellena al final
 
         PartidaBinaria._escribir_encabezado_logico(escritor, partida)
+        escritor.booleano(linea is not None)
         PartidaBinaria._escribir_jugador(escritor, partida.jugador)
 
         # DECISIÓN: se extraen TODOS los eventos pendientes de la agenda para
@@ -142,6 +177,9 @@ class PartidaBinaria:
         for evento in eventos_extraidos:
             partida.agenda.reinsertar(evento)
 
+        if linea is not None:
+            PartidaBinaria._escribir_linea(escritor, linea)
+
         offset_indice = len(escritor)
         escritor.entero(len(salas_con_offset))
         for id_sala, inicio, longitud in salas_con_offset:
@@ -150,9 +188,132 @@ class PartidaBinaria:
             escritor.entero(longitud)
 
         escritor.sobrescribir_entero(posicion_offset_indice, offset_indice)
+        return escritor.bytes()
 
-        with open(ruta, "wb") as archivo:
-            archivo.write(escritor.bytes())
+    # ------------------------------------------------------------------
+    # Línea de tiempo (versión 4, 004-linea-tiempo)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _escribir_linea(escritor, linea) -> None:
+        escritor.entero(linea.k)
+        escritor.entero(linea.acciones)
+        escritor.entero(len(linea.contenidos()))
+        for id_sala, contenido in linea.contenidos():
+            escritor.entero(id_sala)
+            PartidaBinaria._escribir_contenido(escritor, contenido)
+        escritor.entero(len(linea.bloques))
+        for bloque in linea.bloques:
+            escritor.entero(bloque.primera_accion)
+            escritor.entero(bloque.tiempo_inicio)
+            escritor.entero(len(bloque.punto_control))
+            escritor.crudo(bloque.punto_control)
+            escritor.entero(len(bloque.entradas))
+            for entrada in bloque.entradas:
+                if isinstance(entrada, EntradaAccion):
+                    escritor.texto("A")
+                    escritor.texto(entrada.accion.texto())
+                    escritor.entero(entrada.tiempo_decision)
+                else:
+                    PartidaBinaria._escribir_ajuste(escritor, entrada)
+
+    @staticmethod
+    def _escribir_contenido(escritor, contenido) -> None:
+        escritor.entero(contenido.sala)
+        escritor.entero(len(contenido.enemigos))
+        for enemigo in contenido.enemigos:
+            escritor.texto(enemigo.instancia)
+            escritor.texto(enemigo.tipo)
+            escritor.entero_opcional(enemigo.vida)
+        escritor.entero(len(contenido.objetos))
+        for id_ficha in contenido.objetos:
+            escritor.texto(id_ficha)
+        escritor.entero(len(contenido.trampas))
+        for trampa in contenido.trampas:
+            escritor.texto(trampa.instancia)
+            escritor.texto(trampa.tipo)
+
+    @staticmethod
+    def _escribir_ajuste(escritor, ajuste) -> None:
+        escritor.texto("P")
+        escritor.entero(ajuste.tiempo)
+        escritor.entero(len(ajuste.inventario))
+        for id_objeto, id_ficha, equipado in ajuste.inventario:
+            escritor.entero(id_objeto)
+            escritor.texto(id_ficha)
+            escritor.booleano(equipado)
+        escritor.entero(len(ajuste.pergaminos_suelo))
+        for id_sala, id_objeto, id_ficha in ajuste.pergaminos_suelo:
+            escritor.entero(id_sala)
+            escritor.entero(id_objeto)
+            escritor.texto(id_ficha)
+        azar = random.Random()
+        azar.setstate(ajuste.estado_azar)
+        PartidaBinaria._escribir_estado_azar(escritor, azar)
+        escritor.entero(ajuste.secuencia_agenda)
+        escritor.entero(ajuste.siguiente_id_objeto)
+
+    @staticmethod
+    def _leer_linea(lector) -> LineaTiempo:
+        k = lector.entero()
+        acciones = lector.entero()
+        contenidos = ListaEnlazada()
+        for _ in range(lector.entero()):
+            id_sala = lector.entero()
+            contenidos.agregar_al_final((id_sala, PartidaBinaria._leer_contenido(lector)))
+        bloques = ListaEnlazada()
+        for _ in range(lector.entero()):
+            primera_accion = lector.entero()
+            tiempo_inicio = lector.entero()
+            punto_control = lector.crudo(lector.entero())
+            bloque = Bloque(punto_control, primera_accion, tiempo_inicio)
+            for _ in range(lector.entero()):
+                tipo = lector.texto()
+                if tipo == "A":
+                    accion = accion_desde_texto(lector.texto())
+                    bloque.entradas.agregar_al_final(EntradaAccion(accion, lector.entero()))
+                    bloque.acciones += 1
+                elif tipo == "P":
+                    bloque.entradas.agregar_al_final(PartidaBinaria._leer_ajuste(lector))
+                else:
+                    raise ErrorCripta(f"Archivo de partida corrupto: entrada de la línea {tipo!r}")
+            bloques.agregar_al_final(bloque)
+        return LineaTiempo.desde_partes(k, CopiadorBinario(), acciones, contenidos, bloques)
+
+    @staticmethod
+    def _leer_contenido(lector) -> ContenidoSalaDTO:
+        sala = lector.entero()
+        enemigos = ListaEnlazada()
+        for _ in range(lector.entero()):
+            instancia = lector.texto()
+            tipo = lector.texto()
+            enemigos.agregar_al_final(EnemigoInstanciaDTO(instancia, tipo, lector.entero_opcional()))
+        objetos = ListaEnlazada()
+        for _ in range(lector.entero()):
+            objetos.agregar_al_final(lector.texto())
+        trampas = ListaEnlazada()
+        for _ in range(lector.entero()):
+            instancia = lector.texto()
+            trampas.agregar_al_final(TrampaInstanciaDTO(instancia, lector.texto()))
+        return ContenidoSalaDTO(sala, enemigos, objetos, trampas)
+
+    @staticmethod
+    def _leer_ajuste(lector) -> AjustePergamino:
+        tiempo = lector.entero()
+        inventario = ListaEnlazada()
+        for _ in range(lector.entero()):
+            id_objeto = lector.entero()
+            id_ficha = lector.texto()
+            inventario.agregar_al_final((id_objeto, id_ficha, lector.booleano()))
+        suelo = ListaEnlazada()
+        for _ in range(lector.entero()):
+            id_sala = lector.entero()
+            id_objeto = lector.entero()
+            suelo.agregar_al_final((id_sala, id_objeto, lector.texto()))
+        estado_azar = PartidaBinaria._leer_estado_azar(lector).getstate()
+        secuencia_agenda = lector.entero()
+        return AjustePergamino(tiempo, inventario, suelo, estado_azar, secuencia_agenda,
+                               lector.entero())
 
     @staticmethod
     def _escribir_encabezado_logico(escritor, partida) -> None:
@@ -244,6 +405,7 @@ class PartidaBinaria:
     def _escribir_sala(escritor, sala: Sala) -> None:
         escritor.entero(sala.id)
         escritor.texto(sala.nombre)
+        escritor.uentero32(sala.conocimiento)        # versión 3: conocimiento (002)
         for salida in sala.salidas:
             escritor.booleano(salida is not None)
             if salida is not None:
@@ -252,6 +414,7 @@ class PartidaBinaria:
                 escritor.texto(salida.llave)
                 escritor.entero_opcional(salida.cierre_automatico)
                 escritor.entero(salida.costo)          # versión 2: costo efectivo
+                escritor.uentero32(salida.recordada)   # versión 3: recuerdo (002)
         escritor.entero_opcional(sala.rastro)
         escritor.booleano(sala.contenido_cargado)
 
@@ -357,8 +520,15 @@ class PartidaBinaria:
 
     @staticmethod
     def cargar(ruta, servicio) -> Partida:
+        """La partida guardada en el archivo 'ruta'."""
         with open(ruta, "rb") as archivo:
             datos = archivo.read()
+        return PartidaBinaria.desde_bytes(datos, servicio)
+
+    @staticmethod
+    def desde_bytes(datos: bytes, servicio) -> Partida:
+        """Una Partida nueva desde los bytes del formato de archivo
+        (004-linea-tiempo, R1: también restaura un punto de control)."""
         lector = LectorBinario(datos)
         PartidaBinaria._leer_encabezado_fijo(lector)
 
@@ -368,6 +538,7 @@ class PartidaBinaria:
         partida.validador = ValidadorAcciones()
         partida.bitacora = ColaAcotada(TAMANO_BITACORA)
         partida.diario = None
+        partida.linea = None
         partida._mensajes = ListaEnlazada()
 
         id_cripta, version_cripta, version_catalogo, siguiente_id_objeto = \
@@ -376,6 +547,7 @@ class PartidaBinaria:
         partida.version_catalogo = version_catalogo
         partida._fabrica = FabricaEntidades(servicio)
         partida._fabrica._siguiente_id_objeto = siguiente_id_objeto
+        con_linea = lector.booleano()
 
         jugador = PartidaBinaria._leer_jugador(lector, partida.mundo, servicio)
         partida.jugador = jugador
@@ -389,12 +561,15 @@ class PartidaBinaria:
         eventos = PartidaBinaria._leer_eventos(lector, partida)
         for evento in eventos:
             partida.agenda.reinsertar(evento)
+        linea = PartidaBinaria._leer_linea(lector) if con_linea else None
 
         # 001-terreno-cazador: referencias directas, entrantes y registro de
         # puertas (los costos guardados son los efectivos, así que las caras
         # coinciden), y el mapa de distancias y los cazadores de la Partida.
         partida.mundo.enlazar()
         partida.reconstruir_tras_cargar()
+        if linea is not None:
+            partida.conectar_linea(linea)       # FR-009: la historia sigue desde aquí
         return partida
 
     @staticmethod
@@ -548,6 +723,8 @@ class PartidaBinaria:
     def _leer_sala(lector, servicio) -> Sala:
         id_sala = lector.entero()
         nombre = lector.texto()
+        # Versión 3 (002-niebla-guerra, FR-012): conocimiento de la sala.
+        conocimiento = _en_rango(lector.uentero32(), EXPLORADA, "conocimiento", id_sala)
         # DECISIÓN: 4 variables (no una lista de Python) para armar la tupla
         # fija de salidas, igual que Mundo._construir_salidas.
         norte = sur = este = oeste = None
@@ -560,8 +737,11 @@ class PartidaBinaria:
             llave = lector.texto()
             cierre_automatico = lector.entero_opcional()
             costo = lector.entero()                    # versión 2: costo efectivo
+            recordada = _en_rango(lector.uentero32(), CERRADA, "recordada", id_sala,
+                                  DIRECCIONES[indice])      # versión 3 (002)
             salida = Salida(DIRECCIONES[indice], destino, cerrada, llave, cierre_automatico,
                             costo)
+            salida.recordada = recordada
             if indice == 0:
                 norte = salida
             elif indice == 1:
@@ -572,6 +752,7 @@ class PartidaBinaria:
                 oeste = salida
 
         sala = Sala(id_sala, nombre, (norte, sur, este, oeste))
+        sala.conocimiento = conocimiento
         sala.rastro = lector.entero_opcional()
         sala.contenido_cargado = lector.booleano()
 
@@ -763,3 +944,24 @@ class PartidaBinaria:
             bloque = archivo.read(longitud_sala)
 
         return PartidaBinaria._leer_sala(LectorBinario(bloque), servicio)
+
+
+def _en_rango(valor: int, maximo: int, campo: str, id_sala: int, direccion=None) -> int:
+    """002-niebla-guerra (contracts/partida-binaria.md): un conocimiento o un
+    recuerdo fuera de rango es un archivo corrupto; nunca se carga en silencio."""
+    if valor > maximo:
+        donde = f"sala {id_sala}" + (f", salida {direccion}" if direccion else "")
+        raise ErrorCripta(f"Archivo de partida corrupto: {campo} = {valor} en la {donde}")
+    return valor
+
+
+class CopiadorBinario(CopiadorEstado):
+    """Adaptador del puerto CopiadorEstado (004-linea-tiempo, R1): el punto de
+    control son los mismos bytes del formato de archivo, en memoria."""
+
+    def tomar(self, partida) -> bytes:
+        return PartidaBinaria.a_bytes(partida)
+
+    def restaurar(self, datos: bytes, servicio):
+        return PartidaBinaria.desde_bytes(datos, servicio)
+

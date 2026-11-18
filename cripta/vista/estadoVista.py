@@ -117,6 +117,52 @@ class ReporteResolubilidadVisible:
     puede_continuar: bool = False
 
 
+# 002-niebla-guerra: estado recordado de una salida en el mapa conocido
+# (FR-016). Es el RECORDADO, nunca el real.
+RECUERDO_ABIERTA = "abierta"
+RECUERDO_CERRADA = "cerrada"
+RECUERDO_NO_OBSERVADA = "no observada"
+
+
+@dataclass(frozen=True)
+class SalidaConocidaVisible:
+    """Una salida de una sala explorada en el mapa conocido (FR-016): a qué
+    sala lleva (id), su costo y su estado recordado (RECUERDO_*)."""
+    direccion: str
+    destino: int
+    costo: int
+    estado: str
+
+
+@dataclass(frozen=True)
+class SalaConocidaVisible:
+    """Una sala del mapa conocido. Explorada: id, nombre y sus salidas (tupla
+    de 4 en N, S, E, O, con None donde no hay salida). Avistada: solo el id;
+    nombre None y salidas vacías (FR-002)."""
+    id: int
+    nombre: Optional[str]
+    explorada: bool
+    actual: bool
+    salidas: tuple
+
+
+@dataclass(frozen=True)
+class MapaConocidoVisible:
+    """El panel del mapa conocido (tecla M, FR-016): salas ordenadas por id
+    numérico. Lo arma el Controlador solo mientras el panel está abierto."""
+    salas: ListaEnlazada            # de SalaConocidaVisible, por id
+    cantidad_exploradas: int
+    cantidad_avistadas: int
+
+
+@dataclass(frozen=True)
+class ViajeVisible:
+    """El viaje «ir a» en curso, para la línea del HUD (FR-025)."""
+    destino_id: int
+    destino_nombre: str
+    pasos: int
+
+
 @dataclass(frozen=True)
 class EstadoVista:
     """Lo que necesita UNA pantalla de juego para dibujarse completa."""
@@ -138,6 +184,27 @@ class EstadoVista:
     # None en el replay y en una partida cargada (FR-021). Va al final, con
     # nombre y valor por omisión (plan.md, "Posibles choques").
     resolubilidad: Optional[ReporteResolubilidadVisible] = None
+    # 002-niebla-guerra: el mapa conocido, solo con el panel M abierto (FR-016);
+    # None con el panel cerrado, en el replay y en las pruebas viejas.
+    mapa: Optional[MapaConocidoVisible] = None
+    # 002-niebla-guerra: el viaje «ir a» en curso (None si no hay).
+    viaje: Optional[ViajeVisible] = None
+    # 004-linea-tiempo: el resumen de la consulta «historia», solo mientras
+    # está abierta (FR-005, FR-017); None si no hay consulta.
+    historia: Optional["ResumenInstante"] = None
+
+
+@dataclass(frozen=True)
+class ResumenInstante:
+    """El resumen de un instante consultado (004-linea-tiempo, FR-005, FR-006).
+    Se arma una sola vez en el Controlador y se usa igual en el panel de la
+    ventana y en el texto de --replay … --hasta (FR-014)."""
+    pedido: str                     # lo consultado: "120" o "#3"
+    instante: Optional[int]         # t pedido (None si se pidió #k)
+    numero_accion: int              # la próxima acción del jugador en ese estado (k)
+    estado: "EstadoVista"           # el estado de ese instante, con su mapa conocido
+    lineas: ListaEnlazada           # el texto del resumen (contracts/cli.md)
+    aviso: Optional[str] = None     # "La partida terminó antes, en el instante F."
 
 
 @dataclass(frozen=True)
