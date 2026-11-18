@@ -146,6 +146,20 @@ for fila in reporte.tablas.obtener(2)[2]:
 # control; la segunda tabla de historial es la carga nueva de §5.6)
 todo = ejecutar_todo(Reporte(imprimir=False), rapido=True)
 assert len(todo.tablas) == 4 + 2 + 2 + 3 + 3 + 7 + 3 + 1 + 2 + 1 + 3 + 6 + 3 + 5 + 5, len(todo.tablas)
+# FR-024 y SC-007 (004-linea-tiempo, D91): la tabla 1 de benchLineaTiempo trae
+# K = 10, 25 y 50 y la alternativa sin puntos de control con 200, 1000 y 5000
+# acciones (un solo bloque y la partida completa en cada largo).
+tabla_k = None
+for titulo, _columnas, filas in todo.tablas:
+    if titulo.startswith("1. Memoria y consulta según K"):
+        tabla_k = filas
+assert tabla_k is not None, "falta la tabla 1 de benchLineaTiempo"
+etiquetas = tuple(fila[0] for fila in tabla_k)
+assert etiquetas == ("10", "25", "50", "sin puntos (200 acciones)", "sin puntos (1000 acciones)",
+                     "sin puntos (5000 acciones)"), etiquetas
+for fila in tabla_k:
+    if fila[0].startswith("sin puntos"):
+        assert fila[1] == "1", fila
 assert time.perf_counter() - inicio < 150
 
 print("Sección 4.4 OK")

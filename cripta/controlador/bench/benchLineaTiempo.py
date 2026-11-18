@@ -8,7 +8,8 @@ datos_offline/ (elegida por cantidad de salas, sin ids en el código), con el
 jugador sin daño letal para llegar a miles de acciones (solo para medir):
 70 % movimientos y 30 % esperas al azar con random.Random(semilla).
 
-  1. Memoria y tiempo de consulta con K = 10, 25 y 50 y sin puntos de control.
+  1. Memoria y tiempo de consulta con K = 10, 25 y 50 y sin puntos de control
+     (esta, con partidas de 200, 1000 y 5000 acciones).
   2. Adelante contra atrás: re-simular desde el punto de control (decisión)
      contra copiar el estado actual y deshacer K acciones con el Diario.
   3. Ubicar el bloque de un instante: búsqueda binaria en el ArregloArbol
@@ -44,6 +45,10 @@ SEMILLA = 123
 VIDA_SIN_LIMITE = 10 ** 9
 LIMITE_MS = 50                 # §6.1
 VALORES_K = (10, 25, 50)
+# Largos de partida para la alternativa sin puntos de control (tabla 1), los
+# mismos en --rapido: re-simular 5000 acciones suma unos 8 s a la versión
+# rápida, que la suite corre en prueba_4_4.
+ACCIONES_SIN_PUNTOS = (200, 1000, 5000)
 
 
 def _servicio():
@@ -131,11 +136,14 @@ def _tabla_k(reporte, servicio, acciones, rapido):
         filas.agregar_al_final((str(k), str(len(partida.linea.bloques)), f"{memoria // 1024}",
                                 f"{mediana:.1f}", f"{peor:.1f}",
                                 "sí" if peor < LIMITE_MS else "no"))
-    sin, memoria = _partida(servicio, K_SIN_PUNTOS_DE_CONTROL, acciones // (5 if rapido else 10))
-    mediana, peor = _tiempos_de_consulta(sin, 3, 1)
-    filas.agregar_al_final((f"sin puntos ({sin.jugador.acciones} acciones)",
-                            str(len(sin.linea.bloques)), f"{memoria // 1024}",
-                            f"{mediana:.1f}", f"{peor:.1f}", "sí" if peor < LIMITE_MS else "no"))
+    # La alternativa sin puntos de control con partidas de largo creciente:
+    # re-simula desde el instante 0, así que la consulta crece con la partida.
+    for largo in ACCIONES_SIN_PUNTOS:
+        sin, memoria = _partida(servicio, K_SIN_PUNTOS_DE_CONTROL, largo)
+        mediana, peor = _tiempos_de_consulta(sin, 3, 1)
+        filas.agregar_al_final((f"sin puntos ({sin.jugador.acciones} acciones)",
+                                str(len(sin.linea.bloques)), f"{memoria // 1024}",
+                                f"{mediana:.1f}", f"{peor:.1f}", "sí" if peor < LIMITE_MS else "no"))
     reporte.tabla(f"1. Memoria y consulta según K ({acciones} acciones del jugador)",
                   ("K", "bloques", "memoria KiB", "consulta mediana ms", "consulta peor ms",
                    f"< {LIMITE_MS} ms"), filas)
