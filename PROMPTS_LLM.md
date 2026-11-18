@@ -855,7 +855,7 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "Ya lo probe, haz la documentación y el commit"
 - **Uso:** dejar documentado el recorrido del inventario (README, D69 y prompts) y hacer el commit.
-- 
+
 ## Entrada 92
 - **Fecha:** 31/10/2026
 - **Herramienta:** Gemini (3.1 Pro)
@@ -865,14 +865,39 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 ## Entrada 93
 - **Fecha:** 31/10/2026
 - **Herramienta:** Claude
-- **Prompt:** “Actúa como un Arquitecto de Software Principal experto en Spec-Driven Development (SDD). Tu primera tarea es redactar la “Constitución del Proyecto”...”
-- **Nota:** el texto completo de este prompt no se encontró. Quedó registrado cortado desde el commit que lo agregó (08f7829, 31/10/2026 17:53, hora local) y ninguna versión anterior del archivo lo tuvo entero. La conversación fue en Claude (web), no en Claude Code, así que tampoco está en las transcripciones de Claude Code de esta máquina (C:\Users\<usuario>\.claude\projects\*CRIPTA*\*.jsonl), ni en su historial (history.jsonl) ni en las copias de texto pegado (paste-cache). Lo único que se conserva es el comienzo de arriba.
+- **Prompt:** "Actúa como un Arquitecto de Software Principal experto en Spec-Driven Development (SDD) usando GitHub spec-kit.
+Tu primera tarea es redactar la "Constitución del Proyecto" y guardarla o prepararla para el archivo `.specify/memory/constitution.md`. Este documento será la ley suprema para todas nuestras interacciones futuras, planificación (`plan.md`), generación de tareas (`tasks.md`) y código. Su objetivo es garantizar cero desviaciones de nuestros estándares técnicos y estructurales dictados por los requerimientos del proyecto "CRIPTA".
+[Mandatos Innegociables del Proyecto (Reglas de Oro)] Debes redactar la constitución asegurando que incluya y explique explícitamente los siguientes principios:
+
+1. Restricciones de Estructuras de Datos: Las estructuras de los problemas evaluados se implementan a mano. Está estrictamente prohibido el uso de `dict` (como índice o caché), `set`, `heapq`, `bisect`, el módulo `collections` (`deque`, `OrderedDict`, `defaultdict`, `Counter`), `networkx` o cualquier biblioteca de grafos/búsqueda de rutas.
+2. Determinismo Absoluto: La misma cripta, misma semilla (seed) y las mismas acciones deben producir exactamente la misma partida siempre.
+3. Separación MVC Estricta: El Modelo, la Vista y el Controlador están separados. Los modos de ejecución `--replay` y `--bench` jamás deben instanciar la Vista.
+4. Cero Datos Quemados (Hardcoding): Está prohibido escribir datos específicos de una cripta concreta en el código fuente.
+5. Presupuesto de Red: Respeto estricto del contador y límite de `presupuesto_solicitudes` hacia el API.
+6. Evidencia Empírica: Toda afirmación de rendimiento o complejidad algorítmica debe estar respaldada obligatoriamente por mediciones reproducibles usando el comando `--bench`.
+7. Flujo SDD Obligatorio: Ninguna línea de código de implementación puede escribirse sin que antes exista una especificación (`spec.md`), un plan (`plan.md`) y tareas (`tasks.md`) aprobadas. La especificación siempre precede a la implementación.
+8. Trazabilidad y Bitácoras: Toda invocación al agente o prompt utilizado debe documentarse en `PROMPTS_LLM.md`. Todo cambio arquitectónico o elección de estructura de datos debe documentarse en `DECISIONES.md` enlazando directamente al `spec.md` y `plan.md` que lo originó.
+
+[Instrucciones de Generación] Genera un documento Markdown estructurado, profesional y directo. No uses texto de relleno ni saludos. Redacta los principios de forma que cualquier LLM que lea este archivo en el futuro entienda que proponer una solución usando `heapq` o rompiendo el MVC es un error crítico. Genera el texto listo para `.specify/memory/constitution.md`."
 - **Uso:** revisar el prompt de constitución propuesto contra el enunciado, señalar lo que falta y lo que choca con el proyecto, y entregar una versión combinada.
 
 ## Entrada 93-bis
 - **Fecha:** 31/10/2026
 - **Herramienta:** comando de spec-kit `/speckit-constitution` (spec-kit se inicializó para Claude Code en 1d02b67, 31/10/2026 16:36, hora local).
-- **Prompt:** no se encontró la invocación real. Lo que se sabe: la constitución 1.0.0 (ratificada el 2026-10-31) entró en el commit 08f7829 (31/10/2026 17:53, hora local), que reemplazó los marcadores de la plantilla de spec-kit ([CONSTITUTION_VERSION], [RATIFICATION_DATE] y los principios de ejemplo) en .specify/memory/constitution.md. La primera transcripción de Claude Code de esta máquina empieza el 31/10/2026 a las 17:59 (hora local), después de ese commit, y ni ella ni las demás, ni history.jsonl ni paste-cache, tienen un /speckit-constitution con texto. Por eso no se puede confirmar con qué texto se corrió (por ejemplo, si fue la versión combinada de la entrada 93).
+- **Prompt:** "Actúa como un Arquitecto de Software Principal experto en Spec-Driven Development (SDD) usando GitHub spec-kit.
+Tu primera tarea es redactar la "Constitución del Proyecto" y guardarla o prepararla para el archivo `.specify/memory/constitution.md`. Este documento será la ley suprema para todas nuestras interacciones futuras, planificación (`plan.md`), generación de tareas (`tasks.md`) y código. Su objetivo es garantizar cero desviaciones de nuestros estándares técnicos y estructurales dictados por los requerimientos del proyecto "CRIPTA".
+[Mandatos Innegociables del Proyecto (Reglas de Oro)] Debes redactar la constitución asegurando que incluya y explique explícitamente los siguientes principios:
+
+1. Restricciones de Estructuras de Datos: Las estructuras de los problemas evaluados se implementan a mano. Está estrictamente prohibido el uso de `dict` (como índice o caché), `set`, `heapq`, `bisect`, el módulo `collections` (`deque`, `OrderedDict`, `defaultdict`, `Counter`), `networkx` o cualquier biblioteca de grafos/búsqueda de rutas.
+2. Determinismo Absoluto: La misma cripta, misma semilla (seed) y las mismas acciones deben producir exactamente la misma partida siempre.
+3. Separación MVC Estricta: El Modelo, la Vista y el Controlador están separados. Los modos de ejecución `--replay` y `--bench` jamás deben instanciar la Vista.
+4. Cero Datos Quemados (Hardcoding): Está prohibido escribir datos específicos de una cripta concreta en el código fuente.
+5. Presupuesto de Red: Respeto estricto del contador y límite de `presupuesto_solicitudes` hacia el API.
+6. Evidencia Empírica: Toda afirmación de rendimiento o complejidad algorítmica debe estar respaldada obligatoriamente por mediciones reproducibles usando el comando `--bench`.
+7. Flujo SDD Obligatorio: Ninguna línea de código de implementación puede escribirse sin que antes exista una especificación (`spec.md`), un plan (`plan.md`) y tareas (`tasks.md`) aprobadas. La especificación siempre precede a la implementación.
+8. Trazabilidad y Bitácoras: Toda invocación al agente o prompt utilizado debe documentarse en `PROMPTS_LLM.md`. Todo cambio arquitectónico o elección de estructura de datos debe documentarse en `DECISIONES.md` enlazando directamente al `spec.md` y `plan.md` que lo originó.
+
+[Instrucciones de Generación] Genera un documento Markdown estructurado, profesional y directo. No uses texto de relleno ni saludos. Redacta los principios de forma que cualquier LLM que lea este archivo en el futuro entienda que proponer una solución usando `heapq` o rompiendo el MVC es un error crítico. Genera el texto listo para `.specify/memory/constitution.md`."
 - **Uso:** generar .specify/memory/constitution.md 1.0.0 desde la plantilla de spec-kit (commit 08f7829). Se registra con el sufijo -bis para no renumerar: otros documentos citan números de entrada (por ejemplo, specs/002-niebla-guerra/tasks.md cita las entradas 156 a 165).
 
 ## Entrada 94
@@ -1523,8 +1548,29 @@ Uso: revisar el plan de resolubilidad, señalar correcciones previas a las tarea
 ## Entrada 140
 - **Fecha:** 08/11/2026
 - **Herramienta:** Claude
-- **Prompt:** "Commit 1, 254747e (solo spec.md). FR-034 no decía solo 'del mismo recorrido'... Commit 2, 979ad83. Incluye los cuatro archivos que pediste... Lo siguiente es /speckit-tasks."
-- **Nota:** el texto completo no se encontró: la conversación fue en Claude (web), de la que no queda copia en el repositorio ni en esta máquina; las partes con "..." quedan como se registraron.
+- **Prompt:** "Commit 1, 254747e (solo spec.md). FR-034 no decía solo "del mismo recorrido": decía "del mismo recorrido que decide la resolubilidad, sin recorridos adicionales por cada llave". Aun así lo reescribí, porque esa primera parte no se podía cumplir: el recorrido que decide nunca entra a las salas no alcanzadas. Ahora dice que la frontera sale de ese recorrido, y las dependencias y los ciclos, de una sola pasada para todas las llaves, que puede seguir más allá de la frontera. FR-033 no cambió.
+
+SC-003 mide salidas examinadas, no tiempo. El plan ahora lo dice así: el PASA/FALLA de las cadenas se decide con el cociente de salidas examinadas, que es un contador determinista. El tiempo de las cadenas se muestra solo como información. El tiempo cuenta únicamente para los 200 ms de la cripta de referencia.
+
+Commit 2, 979ad83. Incluye los cuatro archivos que pediste, más contracts/ y PROMPTS_LLM.md, que no estaban en tu lista:
+1. Marca entra_por_puerta_salida: se pone al examinar la salida, aunque sala_salida ya esté alcanzada, en los dos momentos (al sacar la sala de la cola y al reexaminar pendientes). Está enlazada a H1.E12.
+2. Paquetes sin llaves: revisé el código y encontré dos cosas.
+   - Las tres criptas de terreno_cazador no son resolubles según FR-001: en terreno-a la puerta de llave_salida lleva a la sala 5 y la salida es la 7; las otras dos no tienen puertas cerradas. Agregarles llaves no cambia eso, así que prueba_datos_costo va a usar forzar=True.
+   - prueba_controlador y prueba_replay_menu reciben un llaves.json y siguen el camino normal.
+   - El camino sin verificación se llama en realidad iniciar_nueva(id, semilla), no iniciar(id). Se conserva con ese nombre.
+   - Regenerar datos_offline/ quedó como tarea explícita del equipo.
+3. Bench: si no hay llaves imprime SIN DATOS y no da PASA. H5.E1 falla a propósito hasta que se regenere datos_offline/.
+4. Prueba de oráculo (research R13): unas 200 criptas generadas con random.Random(semilla), comparando el texto completo del reporte.
+5. Tabla de los 28 escenarios en plan.md, cada uno con su prueba y su marca. Los cuatro del Apéndice B van marcados con (B).
+6. Choques con Pablo:
+   - El encabezado del log ahora usa palabras de marca y no posiciones, así una marca de Pablo puede convivir con FORZADA.
+   - También quedan cubiertos el último campo de EstadoVista (con nombre y valor por omisión), las teclas y la numeración de DECISIONES y PROMPTS.
+7. V en partida cargada: escribe en la bitácora "Esta partida no tiene reporte de resolubilidad." mediante el verbo de sesión ver_resolubilidad. Esa línea no va al log ni gasta reloj.
+8. Nombres verificados en el código:
+   - --offline acepta solo --offline o --offline=CARPETA; --offline CARPETA no funciona. El quickstart ya estaba bien en eso. Le cambié %ERRORLEVEL% por $LASTEXITCODE (PowerShell), y al replay le faltaba el --offline.
+   - ordenamiento.mezcla existe.
+   - HeapMinimo compara con < y usa insertar y extraer_minimo.
+"
 - **Uso:** revisar el reporte de ajustes del plan de resolubilidad y dar el texto para /speckit-tasks.
 
 ## Entrada 141
