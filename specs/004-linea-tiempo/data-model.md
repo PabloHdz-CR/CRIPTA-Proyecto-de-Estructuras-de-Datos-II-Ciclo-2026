@@ -105,18 +105,19 @@ guardado del mismo formato 4 (contracts/partida-binaria.md, análisis F3).
 
 ## ResumenInstante (`vista/estadoVista.py`, DTO inmutable)
 
+Así quedó en el código (T016, T038): en vez de repetir los campos del jugador
+uno por uno, lleva el `EstadoVista` de la copia, armado por el mismo
+`ConstructorEstadoVista` que el juego (con el mapa abierto), y el texto ya
+armado. Así el resumen y el dibujo del juego no pueden diferir.
+
 | Campo | Contenido |
 |---|---|
 | `pedido` | El texto consultado (`"120"` o `"#3"`). |
-| `reloj` | Instante del estado mostrado. |
+| `instante` | Instante consultado (`None` si se pidió `#k`). |
 | `numero_accion` | Próxima acción del jugador en ese estado (k). |
-| `sala` | id y nombre. |
-| `vida`, `vida_max`, `ataque`, `defensa`, `velocidad` | Estadísticas del jugador. |
-| `inventario` | Objetos con su nombre y marca de equipado. |
-| `efectos` | Tipo y tiempo restante. |
-| `enemigos` | Nombre, vida y vida máxima de los enemigos de esa sala. |
-| `mapa` | `MapaConocidoVisible` de ese instante (feature 002). |
-| `aviso` | `None` o "La partida terminó antes, en el instante F" (FR-013). |
+| `estado` | `EstadoVista` de la copia: reloj, sala, estadísticas, inventario, efectos, enemigos y `MapaConocidoVisible` (feature 002). |
+| `lineas` | El texto de contracts/cli.md, el mismo en la ventana y en `--hasta`. |
+| `aviso` | `None` o "La partida terminó antes, en el instante F." (FR-013); también va como última línea. |
 
 Se arma una sola vez en el Controlador (`ConstructorResumen`) y se usa igual en
 el panel de la ventana y en el texto de `--replay … --hasta`.

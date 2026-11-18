@@ -10,10 +10,23 @@
 - Abre el modo **historia**: una línea de entrada en un panel sobre el mapa,
   con el texto `Historia: instante (120) o acción (#3) - Enter consulta, ESC vuelve`.
 - En el modo historia (FR-018): dígitos y `#` se agregan al texto; Retroceso
-  borra; Enter encola `Comando("historia", (texto,))`; ESC cierra el panel. Las
-  demás teclas no hacen nada: no mueven al jugador ni abren otras selecciones.
+  borra; Enter encola `Comando("historia", (texto,))` (sin texto no encola
+  nada); ESC cierra el panel y encola `Comando("cerrar_historia")`, que le dice
+  al Controlador que deje de mandar el resumen. Las demás teclas no hacen nada:
+  no mueven al jugador ni abren otras selecciones.
+- Así quedó en el código (T029, T038): lo escrito, si la consulta está abierta
+  y el desplazamiento del resumen viven en `VistaArcade` (cada `EstadoVista`
+  trae una `PantallaJuego` nueva, como el cursor del mapa de 002); los dígitos
+  y `#` llegan por `on_text`, así `#` sirve con cualquier distribución de
+  teclado, y el eco de la propia H es una letra y no se escribe. Como mucho 12
+  caracteres. Con la consulta abierta, el panel de Controles muestra
+  `0-9 y #`, `ENTER`, `Flechas` y `ESC`; fuera de ella, la fila `H Historia`.
 - Con el panel del mapa abierto, H lo cierra antes de abrir la consulta (igual
-  que FR-037 de la feature 002 para las selecciones).
+  que FR-037 de la feature 002 para las selecciones): encola
+  `Comando("alternar_mapa")`.
+- `caso_tecla_m` de `prueba_vista_mapa` (002) recorre A a Z en la misma
+  ventana; desde 004 cierra la consulta entre tecla y tecla, porque después de
+  H la consulta abierta se traga la M.
 
 ## Verbo `historia`
 
