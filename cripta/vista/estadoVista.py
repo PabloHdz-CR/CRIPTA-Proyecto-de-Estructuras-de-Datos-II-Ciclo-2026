@@ -102,7 +102,7 @@ class InfoReplay:
     total: int
     pausado: bool
     velocidad: int                  # multiplicador: 1, 2, 4...
-    titulo: Optional[str] = None    # qué partida es: "Ana · cripta-02 · victoria · 2890"
+    titulo: Optional[str] = None    # qué partida es: "Ana · cripta-XX · victoria · 2890"
 
 
 @dataclass(frozen=True)
