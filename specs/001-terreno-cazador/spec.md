@@ -39,8 +39,8 @@ max(1, costo_salida × 100 // velocidad), sin que exista ningún cazador.
 
 1. **Given** una salida sin costo declarado, **When** un actor de velocidad 100 la atraviesa, **Then** su próxima acción ocurre 100 unidades de tiempo después (la salida cuesta 100).
 2. **Given** una salida de costo 300 y un jugador de velocidad 100, **When** el jugador la atraviesa, **Then** su próxima acción ocurre 300 unidades después.
-3. **Given** una salida de costo 1 y un actor de velocidad muy alta (por ejemplo 1000), **When** la atraviesa, **Then** el intervalo hasta su próxima acción es 1 (nunca 0).
-4. **Given** un actor que acaba de atravesar una salida de costo 400 con velocidad 100, **When** su velocidad cambia a 200 a mitad del tránsito, **Then** el tiempo restante se reescala con la regla de velocidad existente (restante × velocidad_anterior // velocidad_nueva, mínimo 1).
+3. **Given** una salida de costo 1 y un actor de velocidad muy alta (por ejemplo 1000), **When** la atraviesa, **Then** el intervalo hasta su próxima acción es 1 (nunca 0). (Apéndice B)
+4. **Given** un actor que acaba de atravesar una salida de costo 400 con velocidad 100, **When** su velocidad cambia a 200 a mitad del tránsito, **Then** el tiempo restante se reescala con la regla de velocidad existente (restante × velocidad_anterior // velocidad_nueva, mínimo 1). (Apéndice B)
 5. **Given** un errante y un rastreador, **When** deciden moverse, **Then** eligen la salida exactamente igual que antes de esta capacidad y solo cambia el tiempo que tarda su movimiento.
 6. **Given** cualquier actor, **When** ataca, espera o realiza otra acción que no sea moverse, **Then** su costo es el mismo que antes de esta capacidad.
 7. **Given** un esqueleto en el que las dos caras de una misma puerta declaran costos distintos (por ejemplo, A→B cuesta 300 y B→A cuesta 200), **When** se carga la cripta, **Then** la cripta se rechaza con un error claro que identifica las dos salas y ambos costos, y la partida no comienza.
@@ -68,12 +68,12 @@ hecho desde cero en ese instante.
 **Acceptance Scenarios**:
 
 1. **Given** un cazador en la misma sala que el jugador vivo, **When** le toca actuar, **Then** ataca al jugador y no se mueve.
-2. **Given** un cazador sin ninguna ruta de salidas abiertas hacia la sala del jugador, **When** le toca actuar, **Then** espera con costo 100.
-3. **Given** un cazador de rango 500 cuya ruta más barata al jugador cuesta 600, **When** le toca actuar, **Then** espera con costo 100.
+2. **Given** un cazador sin ninguna ruta de salidas abiertas hacia la sala del jugador, **When** le toca actuar, **Then** espera con costo 100. (Apéndice B)
+3. **Given** un cazador de rango 500 cuya ruta más barata al jugador cuesta 600, **When** le toca actuar, **Then** espera con costo 100. (Apéndice B)
 4. **Given** un cazador de rango 500 cuya ruta más barata cuesta exactamente 500, **When** le toca actuar, **Then** se mueve un paso por esa ruta.
-5. **Given** dos rutas al jugador, una de 1 salida con costo 500 y otra de 3 salidas con costo total 300, **When** el cazador decide (con rango suficiente), **Then** sigue la de 3 salidas (menor costo), y el costo de su acción es el de la primera salida de esa ruta.
-6. **Given** dos vecinas v1 (id menor) y v2 tales que costo(u, v) + dist(v, jugador) = d para ambas, **When** el cazador decide, **Then** se mueve hacia v1, la de menor id.
-7. **Given** un cazador que en su turno anterior avanzó por una ruta, **When** una puerta de esa ruta se cierra antes de su siguiente turno, **Then** en ese turno decide exactamente como si calculara la ruta desde cero con las puertas actuales (puede desviarse por otra ruta o esperar).
+5. **Given** dos rutas al jugador, una de 1 salida con costo 500 y otra de 3 salidas con costo total 300, **When** el cazador decide (con rango suficiente), **Then** sigue la de 3 salidas (menor costo), y el costo de su acción es el de la primera salida de esa ruta. (Apéndice B)
+6. **Given** dos vecinas v1 (id menor) y v2 tales que costo(u, v) + dist(v, jugador) = d para ambas, **When** el cazador decide, **Then** se mueve hacia v1, la de menor id. (Apéndice B)
+7. **Given** un cazador que en su turno anterior avanzó por una ruta, **When** una puerta de esa ruta se cierra antes de su siguiente turno, **Then** en ese turno decide exactamente como si calculara la ruta desde cero con las puertas actuales (puede desviarse por otra ruta o esperar). (Apéndice B)
 8. **Given** un cazador cuya ruta pasa por salas cuyo contenido el jugador nunca descargó ni vio, **When** decide, **Then** la decisión es la misma que si esas salas estuvieran descargadas: solo dependen del esqueleto y del estado de las puertas.
 9. **Given** una puerta cerrada en la única ruta, **When** el cazador decide, **Then** no la abre: la trata como intransitable.
 
