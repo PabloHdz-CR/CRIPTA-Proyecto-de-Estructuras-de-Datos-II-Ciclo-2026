@@ -534,8 +534,55 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 ## Entrada 38
 - **Fecha:** 15/10/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5)
-- **Prompt:** "Necesito que el codigo que acabamos de implementar cumpla con esto y si no lo hace, dime que es lo que vas a cambiar [...] Y tiene que estar comentado en el código pq se toma esa decisión de diseño". Se adjuntaron el prompt de reglas del proyecto (arquitectura MVC + adaptadores, TDA permitidos, sin dict ni listas nativas como almacenamiento, ordenamientos propios, sin lambda, justificación con Big O), Cripta_Guia_MVC.md y el enunciado.
-- **Nota:** el texto completo no se encontró: la sesión de Claude Code del 15/10/2026 no está entre las transcripciones de esta máquina (la primera es del 31/10/2026), así que lo omitido con [...] no se completa.
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-10-16 05:09:48 UTC, 23:09 del 15/10/2026 en hora local):
+
+````text
+Necesito que el codigo que acabamos de implementar cumpla con esto y si no lo hace, dime que es lo que vas a cambiar
+
+[primer texto pegado]
+Actúa como un arquitecto de software experto y desarrollador senior en Python 3.11+, especializado en estructuras de datos avanzadas, análisis de complejidad algorítmica y patrones de diseño. Estamos construyendo el proyecto "Cripta" (un juego de mazmorra dirigido por eventos con un reloj virtual) para un curso de Estructuras de Datos[cite: 1].
+A continuación, te establezco el contexto obligatorio, la arquitectura, las restricciones técnicas y las directrices de eficiencia que DEBES RESPETAR ESTRICTAMENTE en todas tus respuestas y código generado:
+### 1. Arquitectura Obligatoria: MVC + Adaptadores
+El proyecto está estrictamente desacoplado en cuatro capas (separación de incumbencias absoluta):
+- **MODELO:** Contiene las reglas del juego, entidades y estructuras de datos propias. NO conoce la red, ni el disco, ni la interfaz, ni bibliotecas como requests o open(). Solo conoce sus propias clases y puertos.
+- **VISTA:** Presentar el estado y recoge la interacción. NO calcula nada, no importa el modelo. Solo conoce EstadoVista y Comando.
+- **CONTROLADOR:** Traduce las acciones del usuario en operaciones del modelo y coordina el flujo. No contiene lógica de red ni de archivos directamente.
+- **ADAPTADORES:** Implementan los puertos de red (ClienteHttp) y disco. No contienen reglas del juego.
+### 2. Estructuras de Datos (TDA) Permitidas
+Para implementar nuestras propias estructuras y resolver los problemas del sistema, **únicamente** podemos utilizar:
+- Listas enlazadas (simples y dobles)
+- Colas (Queues)
+- Pilas (Stacks)
+- Vectores (arreglos contiguos)
+- Heaps (Min Heap, Max Heap y Heap de prioridad)
+- *Restricción de Diccionarios:* Prohibido usar dict como índice, caché o tabla de búsqueda general (solo se permite estrictamente para parsear o leer las respuestas iniciales del JSON). Para tablas de búsqueda, índices o mapeos, debemos construir nuestros propios TDA basados en las estructuras anteriores.
+- *Restricción de Listas nativas:* Prohibido usar list de Python como almacenamiento general arbitrario (excepto almacenamiento contiguo de bajo nivel para vectores) y queda terminantemente prohibido usar list.pop(0) para simular colas.
+### 3. Algoritmos de Ordenamiento Permitidos
+Cualquier ordenamiento necesario debe implementarse mediante código propio utilizando exclusivamente los siguientes algoritmos:
+- Mergesort
+- Quicksort
+- Selection sort
+- Insertion sort
+- Bubble sort
+- Heapsort
+- **Prohibido:** Quedan totalmente prohibidos los métodos nativos list.sort() y sorted().
+### 4. Restricciones de Código Adicionales
+- **Recursividad:** Está permitido y se puede aplicar el uso de recursividad cuando sea el enfoque adecuado.
+- **Formato de datos:** Trabajar y procesar la persistencia e intercambio empleando json.
+- **Prohibido el uso de funciones lambda:** Todo bloque lógico, función auxiliar o comparador debe definirse explícitamente mediante funciones con nombre (def).
+### 5. Eficiencia y Justificación obligatoria (Big O)
+- **Análisis de Complejidad:** Siempre debes tomar en cuenta la notación **Big O** (tanto en tiempo como en espacio) al proponer soluciones o tomar decisiones de diseño.
+- **Justificación técnica:** Cada estructura elegida para resolver un problema de la guía (como la agenda de eventos, la caché, el inventario, los rastros o el retroceso) debe venir acompañada de su respectiva justificación técnica y análisis de eficiencia frente a alternativas descartadas.
+### 6. Objetivo de esta sesión
+Por favor, confirma que comprendes estas reglas de arquitectura, los TDA permitidos, la prohibición de lambdas y la exigencia de optimización basada en Big O. A partir de ahora, cuando te solicite implementar módulos, clases o resolver problemas específicos de este proyecto, deberás ceñirte estrictamente a estas directrices, escribiendo código limpio, tipado (Type Hints) y rigurosamente documentado en Python.
+[fin del primer texto pegado]
+
+Y tiene que estar comentado en el código pq se toma esa decisión de diseño
+
+[segundo texto pegado: ver la nota]
+````
+
+- **Nota:** el texto se encontró en la transcripción 10a6bec2 de esta máquina (la misma sesión quedó copiada también en 1368dabf); la nota anterior, que decía que la sesión del 15/10/2026 no estaba, era un error. Arriba van completos lo que se escribió y el primer texto pegado (el prompt de reglas del proyecto, 3876 caracteres). El segundo texto pegado (72067 caracteres) no se copia, para no repetir documentos enteros: son los 26249 caracteres de Cripta_Guia_MVC.md, idénticos al archivo del repositorio (comparados carácter por carácter), seguidos de 45818 caracteres del enunciado de la Parte I copiado del PDF, que empieza «CRIPTA / Proyecto de Estructuras de Datos – II Ciclo 2026 / Diseño, implementación y evaluación de estructuras de datos en un juego de mazmorra dirigido por eventos».
 - **Uso:** auditar el Controlador contra las reglas; se encontraron 7 puntos (acceso a disco desde el Controlador, duplicación de pergaminos en el Diario, tipado, comentarios de decisión, print en ReporteFinal, partida nueva o cargada, prueba faltante).
 
 ## Entrada 39
@@ -1728,8 +1775,26 @@ Corrige el texto largo del reporte de resolubilidad en la Vista, sin cambiar spe
 ## Entrada 153
 - **Fecha:** 15/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-specify`
-- **Prompt:** "/speckit-specify Usa el número 002 y el nombre corto niebla-guerra (pasa -Number 002 -ShortName niebla-guerra al script). Capacidad: niebla de guerra y viaje automático «ir a» de la Parte II de Cripta (§3.3, §3.4, §5.3 y §7.3). [...]" (lo omitido, según el resumen que se registró entonces: reglas de sala explorada, avistada y desconocida, memoria de puertas, antorcha, conocimiento como estado del juego, comando de mapa conocido, reglas de «ir a» con costo 100 por defecto, desempate por la vecina de menor id, recálculo por paso, motivos de detención, comentario en partida.log y pergamino; los 6 escenarios obligatorios del Apéndice B; requisitos de rendimiento con 5 ms por paso; guardado con versión de formato; sin nombrar estructuras, clases ni módulos).
-- **Nota:** el texto completo no se encontró. Esta sesión la hizo el otro integrante en su máquina y no hay transcripción de ella en esta (las transcripciones de Claude Code de esta máquina son del 31/10 y 01/11, del 08/11 y del 17 y 18/11/2026, hora local, y ninguna es de esta sesión). Lo que queda arriba es lo que se registró en su momento; las partes omitidas están marcadas con [...] y no se completan para no inventar texto.
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-11-16 01:34:14 UTC):
+
+````text
+/speckit-specify Usa el número 002 y el nombre corto niebla-guerra (pasa -Number 002 -ShortName niebla-guerra al script). Capacidad: niebla de guerra y viaje automático «ir a» de la Parte II de Cripta (§3.3, §3.4, §5.3 y §7.3).
+
+Reglas del juego:
+- Para el jugador cada sala está explorada (entró al menos una vez; la sala inicial desde el instante 0), avistada (no explorada pero destino de una salida de una sala explorada) o desconocida. De una explorada conoce nombre, salidas, costo de cada salida y el estado de sus puertas según la última observación; de una avistada solo que existe; de una desconocida nada.
+- Memoria de puertas: el jugador observa una puerta cuando está en cualquiera de las dos salas que conecta, y el mapa recuerda su estado de la última observación aunque haya cambiado después (una puerta con cierre automático puede figurar abierta y estar cerrada).
+- Antorcha encendida: al entrar a una sala también quedan exploradas todas sus vecinas, por cualquier salida abierta o cerrada; se revela nombre y salidas, no contenido, y no se activan sus enemigos ni trampas.
+- Todo lo que la vista muestra y lo que usa «ir a» sale solo del conocimiento del jugador; el esqueleto completo y la precarga siguen siendo infraestructura.
+- El conocimiento del jugador es estado del juego: se guarda en el archivo de partida, se revierte con el pergamino de retroceso y forma parte de la línea de tiempo.
+- La interfaz ofrece un comando para ver el mapa conocido: salas exploradas, sus salidas con costo y estado recordado, y las avistadas.
+- «ir a <sala>» lleva al jugador a una sala explorada con movimientos ordinarios. La ruta usa solo salas exploradas y salidas que el mapa recuerda abiertas, minimiza la suma de costos (sin costo declarado vale 100) y desempata con el primer paso hacia la vecina de menor id. Cada paso es una acción completa del jugador (consume tiempo y entre pasos ocurren los eventos) y la ruta se recalcula antes de cada paso con el conocimiento vigente. Se detiene al llegar, al entrar a una sala con enemigos activos o dormidos, al recibir daño o si deja de haber ruta conocida, y la interfaz muestra el motivo. No abre puertas aunque tenga la llave. En partida.log cada paso es un movimiento individual y la orden «ir a» queda además como comentario. El pergamino revierte solo el último paso y el viaje no continúa.
+
+Escenarios de aceptación obligatorios (Apéndice B): ir a hacia una sala no explorada se rechaza y no consume tiempo; el mapa recuerda abierta una puerta cerrada: al observarla se actualiza y la ruta se recalcula, y si no queda ruta el viaje se detiene sin consumir tiempo adicional; ir a entra a una sala con enemigos dormidos: se activan según P1 §2.4 y el viaje se detiene; con la antorcha encendida, entrar a una sala explora sus vecinas sin activar enemigos ni trampas; un pergamino revierte una entrada con antorcha: las salas exploradas por ella vuelven a su estado anterior; un pergamino durante un viaje revierte solo el último paso y el viaje no continúa.
+
+Requisitos de rendimiento: consultar el estado de una sala y el estado recordado de una puerta es frecuente (cada vista, cada paso de «ir a», cada antorcha); explorar cuesta proporcional a las salas reveladas, no al tamaño del mapa conocido; registrar e invertir cambios del mapa es barato; cada paso de «ir a» se calcula en menos de 5 ms con el mapa conocido completo de la cripta de referencia. Guardar y cargar conserva el mapa conocido, y un archivo de la primera parte se reporta incompatible o se migra explícitamente. No nombres estructuras de datos, clases ni módulos: eso va en el plan.
+````
+
+- **Nota:** una versión anterior de esta entrada decía que el texto no estaba en esta máquina y que la sesión la hizo el otro integrante; las dos cosas eran un error: la sesión de la terminal de la 002 es la transcripción e45b3d1e de esta máquina, de donde se copió el texto, sin cambios salvo las marcas de texto pegado.
 - **Uso:** rama 002-niebla-guerra y specs/002-niebla-guerra/ con create-new-feature.ps1 (-Number 002 -ShortName niebla-guerra). spec.md con 6 historias (niebla y mapa conocido, memoria de puertas, «ir a», antorcha, pergamino/guardado/replay y rendimiento), 29 escenarios, FR-001 a FR-034 y SC-001 a SC-007, sin marcas NEEDS CLARIFICATION; supuestos propios: puertas de vecinas exploradas con antorcha "no observada", interrupción del viaje entre pasos, veneno detiene el viaje, formato anterior se reporta incompatible. checklists/requirements.md completo. Sin commit.
 
 ## Entrada 154
@@ -1747,8 +1812,22 @@ Corrige el texto largo del reporte de resolubilidad en la Vista, sin cambiar spe
 ## Entrada 156
 - **Fecha:** 15/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-plan`
-- **Prompt:** "/speckit-plan Plan de la spec 002 niebla de guerra e «ir a». Sigue la constitución y sé coherente con lo que ya hizo la feature 001 (lee specs/001-terreno-cazador/plan.md y research.md). Orientación del equipo, a evaluar y justificar en research.md con alternativas: 1. Conocimiento del jugador como campos en los objetos que ya existen [...] 2. Todo cambio de conocimiento pasa por el Mutador [...] 3. Para el panel del mapa conocido, salas exploradas y avistadas en orden de id sin recorrer toda la cripta: mantener una colección propia ordenada que crece al explorar [...] 4. Ruta de «ir a»: Dijkstra desde la sala del jugador sobre el subgrafo conocido, con el HeapMinimo propio [...] Decide y justifica con mediciones si se comparte implementación con la búsqueda del cazador o se separa (§5.3) [...] 5. Ejecución del viaje: el Controlador da un paso por vuelta de su bucle [...] 6. Vista: un DTO inmutable del mapa conocido; panel con la letra M (libre) [...] Reserva H para la feature 004 (historia). Elige una letra libre para la interrupción manual. 7. Guardado: subir FORMATO_VERSION (hoy 2) [...] 8. Mediciones para --bench (§6.3 y §5.3) [...] Prohibido: dict, set, list de Python en cripta/, heapq, bisect, collections y bibliotecas de grafos. Registra este prompt en PROMPTS_LLM.md."
-- **Nota:** el texto completo no se encontró. Esta sesión la hizo el otro integrante en su máquina y no hay transcripción de ella en esta (las transcripciones de Claude Code de esta máquina son del 31/10 y 01/11, del 08/11 y del 17 y 18/11/2026, hora local, y ninguna es de esta sesión). Lo que queda arriba es lo que se registró en su momento; las partes omitidas están marcadas con [...] y no se completan para no inventar texto.
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-11-16 02:12:30 UTC):
+
+````text
+/speckit-plan Plan de la spec 002 niebla de guerra e «ir a». Sigue la constitución y sé coherente con lo que ya hizo la feature 001 (lee specs/001-terreno-cazador/plan.md y research.md). Orientación del equipo, a evaluar y justificar en research.md con alternativas:
+1. Conocimiento del jugador como campos en los objetos que ya existen: estado de conocimiento en cada sala (explorada, avistada, desconocida) y estado recordado en cada cara de salida (abierta, cerrada, no observada). Así consultar es O(1) teniendo la sala o la salida, sin dict ni set, y como no se busca por id, no se usa mundo.sala(id), que es O(salas). Alternativas a medir o descartar: lista de salas exploradas con búsqueda lineal; índice propio por id.
+2. Todo cambio de conocimiento pasa por el Mutador, para que el Diario lo registre: así el pergamino lo revierte sin copias (constitución V) y la línea de tiempo de la feature 004 puede reconstruirlo. Una entrada con antorcha registra solo las salas y caras que realmente cambiaron (proporcional a lo revelado, §5.3).
+3. Para el panel del mapa conocido, salas exploradas y avistadas en orden de id sin recorrer toda la cripta: mantener una colección propia ordenada que crece al explorar (por ejemplo, inserción ordenada en ListaEnlazada), también revertible con el Mutador.
+4. Ruta de «ir a»: Dijkstra desde la sala del jugador sobre el subgrafo conocido, con el HeapMinimo propio, estado de búsqueda en campos de la sala con sello (como la 001) y el desempate de FR-020 (primer paso hacia la vecina de menor id numérico, salidas en N, S, E, O). Decide y justifica con mediciones si se comparte implementación con la búsqueda del cazador o se separa (§5.3): el cazador busca hacia atrás desde el jugador sobre el esqueleto real; «ir a» busca sobre el conocimiento.
+5. Ejecución del viaje: el Controlador da un paso por vuelta de su bucle, como una acción del jugador normal, y antes de cada paso revisa la cola de comandos para detectar el pergamino (FR-029) o la interrupción (FR-028). Comentario «ir a» en partida.log con un prefijo que --replay ignore.
+6. Vista: un DTO inmutable del mapa conocido; panel con la letra M (libre), con flechas y Enter para «ir a» (FR-035) y el motivo de detención como aviso. Reserva H para la feature 004 (historia). Elige una letra libre para la interrupción manual.
+7. Guardado: subir FORMATO_VERSION (hoy 2, de la feature 001) y guardar el conocimiento; un archivo de versión anterior se reporta incompatible (FR-013).
+8. Mediciones para --bench (§6.3 y §5.3): consultas de estado de sala y de puerta según el tamaño del mapa conocido, exploración con antorcha según las salas reveladas, un paso de «ir a» con el mapa completo de la cripta más grande (< 5 ms), y la alternativa descartada de cada decisión.
+Prohibido: dict, set, list de Python en cripta/, heapq, bisect, collections y bibliotecas de grafos. Registra este prompt en PROMPTS_LLM.md.
+````
+
+- **Nota:** una versión anterior de esta entrada decía que el texto no estaba en esta máquina y que la sesión la hizo el otro integrante; las dos cosas eran un error: la sesión de la terminal de la 002 es la transcripción e45b3d1e de esta máquina, de donde se copió el texto, sin cambios salvo las marcas de texto pegado.
 - **Uso:** plan.md, research.md (R1 a R11), data-model.md, quickstart.md y contracts/ (partida-binaria.md, registro.md, vista.md) de 002-niebla-guerra. Mediciones previas con un script fuera del proyecto (Python 3.14.5, cripta de referencia de 300 salas y malla de 1024): consulta por campo 0,02 µs sin crecer frente a 0,38 a 10,9 µs de la búsqueda lineal; paso de «ir a» hacia adelante con parada, peor 0,65 ms en la referencia y 3,99 ms en la malla, frente a 0,65 y 7,47 ms hacia atrás con la fórmula del cazador, con el mismo primer paso en 899/899 pares. Decisiones: se aceptan los puntos 1, 2, 4 (buscador separado del cazador), 5, 6 (I para interrumpir), 7 (versión 3) y 8; se cambia el 3: la inserción ordenada cuesta O(conocidas) por sala revelada (18,6 µs con 300 frente a 0,9 µs) y contradice FR-033, así que el registro de conocidas es en orden de descubrimiento (agregar y quitar al final, O(1)) y se ordena con la mezcla propia solo al abrir el panel (0,33 ms con 300). Gate de la constitución en verde, sin enmiendas a la spec. Sin commit.
 
 ## Entrada 157
@@ -1778,8 +1857,23 @@ Corrige el texto largo del reporte de resolubilidad en la Vista, sin cambiar spe
 ## Entrada 161
 - **Fecha:** 15/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5)
-- **Prompt:** "Ahora corrige tasks.md (y el contrato o research si hace falta) con estos hallazgos del análisis, y haz un commit llamado "Tareas 002: correcciones del análisis": - U1: en T009 el valor por defecto de la clase para conocidas es None, y T042 asigna un RegistroConocidas() nuevo antes de reconstruir. - O1: las viñetas de T034 que prueban el controlador [...] pasan a una tarea de prueba antes de T031; T034 se queda con el cursor del panel, saltar avistadas y Enter. - U2: T002 agrega un modo propio para el guardado de versión 2, con su propia comprobación, sin tocar el camino de versión 1. - C1: T024 también comprueba que la búsqueda de «ir a» no lee nada fuera del conocimiento (instrumentada, como dice R10). - I1: T039 usa las 1000 secuencias de T038 y en cada una guarda y carga en un punto elegido con la semilla [...]. - A1: decide que solo los comandos que cambian la partida (acciones, guardar, cargar, salir) detienen el viaje; los de presentación (M, Tab, O, L) no. Déjalo igual en T031, research R6 y contracts/vista.md. - A2: T044 reemplaza Mundo.sala y el iterador de conocidas por versiones que fallan si se llaman, y después consulta estado y recuerdo. - C2 y C3: agrega las viñetas que propone el análisis en T038, T012 y T019. - D1: los escenarios 4 y 11 de US3 se prueban en T023 con un mismo armado. Registra este prompt en PROMPTS_LLM.md."
-- **Nota:** el texto completo no se encontró. Esta sesión la hizo el otro integrante en su máquina y no hay transcripción de ella en esta (las transcripciones de Claude Code de esta máquina son del 31/10 y 01/11, del 08/11 y del 17 y 18/11/2026, hora local, y ninguna es de esta sesión). Lo que queda arriba es lo que se registró en su momento; las partes omitidas están marcadas con [...] y no se completan para no inventar texto.
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-11-16 02:48:16 UTC):
+
+````text
+Ahora corrige tasks.md (y el contrato o research si hace falta) con estos hallazgos del análisis, y haz un commit llamado "Tareas 002: correcciones del análisis":
+- U1: en T009 el valor por defecto de la clase para conocidas es None, y T042 asigna un RegistroConocidas() nuevo antes de reconstruir.
+- O1: las viñetas de T034 que prueban el controlador (mensaje de detención, interrumpir, otros comandos que detienen el viaje, None hacia la partida) pasan a una tarea de prueba antes de T031; T034 se queda con el cursor del panel, saltar avistadas y Enter.
+- U2: T002 agrega un modo propio para el guardado de versión 2, con su propia comprobación, sin tocar el camino de versión 1.
+- C1: T024 también comprueba que la búsqueda de «ir a» no lee nada fuera del conocimiento (instrumentada, como dice R10).
+- I1: T039 usa las 1000 secuencias de T038 y en cada una guarda y carga en un punto elegido con la semilla, para cumplir SC-003 sin cambiar la spec.
+- A1: decide que solo los comandos que cambian la partida (acciones, guardar, cargar, salir) detienen el viaje; los de presentación (M, Tab, O, L) no. Déjalo igual en T031, research R6 y contracts/vista.md.
+- A2: T044 reemplaza Mundo.sala y el iterador de conocidas por versiones que fallan si se llaman, y después consulta estado y recuerdo.
+- C2 y C3: agrega las viñetas que propone el análisis en T038, T012 y T019.
+- D1: los escenarios 4 y 11 de US3 se prueban en T023 con un mismo armado.
+Registra este prompt en PROMPTS_LLM.md.
+````
+
+- **Nota:** una versión anterior de esta entrada decía que el texto no estaba en esta máquina y que la sesión la hizo el otro integrante; las dos cosas eran un error: la sesión de la terminal de la 002 es la transcripción e45b3d1e de esta máquina, de donde se copió el texto, sin cambios salvo las marcas de texto pegado.
 - **Uso:** tasks.md sin renumerar (siguen 54 tareas): T009 y T042 (U1); las pruebas del Controlador pasan a una sección "Controlador" de T023, antes de T031, y T034 queda con el cursor, las avistadas y Enter (O1); T002 con modo propio de la versión 2 (U2); T024 instrumentada (C1); T039 con las 1000 secuencias de T038 a través de `secuencias_sc003` en T003 (I1); T031 con la regla de A1, que incluye también `ver_resolubilidad` (V) entre los de presentación; T044 con `Mundo.sala` y `__iter__` que fallan (A2); viñetas de FR-010 en T038, FR-017 en T012 y FR-014 de la sala actual en T019 (C2, C3); escenarios 4 y 11 juntos en T023 (D1); tablas de escenarios y cobertura al día. research.md R6, contracts/vista.md y plan.md (Controlador y riesgo de guardar/cargar) con la misma regla de A1.
 
 ## Entrada 162
@@ -1827,8 +1921,27 @@ Corrige el texto largo del reporte de resolubilidad en la Vista, sin cambiar spe
 ## Entrada 169
 - **Fecha:** 17/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-specify`
-- **Prompt:** "/speckit-specify Usa el número 004 y el nombre corto linea-tiempo (pasa -Number 004 -ShortName linea-tiempo al script). Crea la rama desde 002-niebla-guerra, porque la línea de tiempo muestra el mapa conocido de la feature 002. Capacidad: línea de tiempo de la Parte II de Cripta (§3.6, §5.5, §6.1, §6.3 y §7.3). [...]" (lo omitido, según el resumen que se registró entonces: estado en el instante t, historia <t> e historia #k con su resumen, consulta sin efectos, --replay --hasta, acciones revertidas fuera de la línea, puntos de control cada K con --checkpoint-cada, guardado con formato 4, tecla H; los 6 escenarios obligatorios del Apéndice B; 50 ms con 5000 acciones, memoria, ubicar el punto de control, recorte con el pergamino, --bench con tres valores de K y la alternativa sin puntos de control, y §5.6; sin nombrar estructuras, clases ni módulos).
-- **Nota:** el texto completo no se encontró. Esta sesión la hizo el otro integrante en su máquina y no hay transcripción de ella en esta (las transcripciones de Claude Code de esta máquina son del 31/10 y 01/11, del 08/11 y del 17 y 18/11/2026, hora local, y ninguna es de esta sesión). Lo que queda arriba es lo que se registró en su momento; las partes omitidas están marcadas con [...] y no se completan para no inventar texto.
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-11-17 20:14:16 UTC):
+
+````text
+/speckit-specify Usa el número 004 y el nombre corto linea-tiempo (pasa -Number 004 -ShortName linea-tiempo al script). Crea la rama desde 002-niebla-guerra, porque la línea de tiempo muestra el mapa conocido de la feature 002. Capacidad: línea de tiempo de la Parte II de Cripta (§3.6, §5.5, §6.1, §6.3 y §7.3).
+
+Reglas del juego:
+- El pergamino de retroceso sigue limitado a 5 acciones; la línea de tiempo es independiente y solo permite consultar, sin modificar la partida, el estado en cualquier instante desde el inicio.
+- Estado en el instante t: el estado después de ejecutar todos los eventos con tiempo menor o igual que t; si a t le corresponde una decisión del jugador, el estado justo antes de tomarla.
+- En la partida, «historia <t>» o «historia #k» (estado justo antes de la acción número k del jugador; cada paso de «ir a» cuenta como una acción) muestra como mínimo: reloj, sala del jugador, vida y estadísticas, inventario, efectos activos, enemigos de esa sala con su vida y el mapa conocido en ese momento. La consulta no consume tiempo virtual, no se registra en partida.log y no altera ningún estado del juego ni el historial del pergamino.
+- Sin interacción: --replay partida.log --hasta <t> reproduce la partida hasta t e imprime el mismo resumen sin abrir la vista.
+- Las acciones revertidas con un pergamino dejan de existir en la línea de tiempo: la línea describe la historia tal como quedó. Consultar un instante posterior al reloj actual se rechaza.
+- Memoria: se permiten copias completas del estado (puntos de control), pero no más de una cada K acciones del jugador; K se configura con --checkpoint-cada K y su valor por defecto se justifica con mediciones. Una consulta no puede requerir aplicar o deshacer cambios de más de K acciones del jugador. Fuera de los puntos de control solo se guarda lo necesario para reconstruir los cambios. Si se reconstruye re-simulando, el punto de control incluye el estado del generador aleatorio.
+- Guardar y cargar conserva la línea de tiempo completa; el formato binario cambia de versión (la 002 usa la 3, esta la 4) y un archivo anterior se reporta incompatible, nunca se carga en silencio.
+- En la ventana, la tecla H (reservada por la feature 002) abre la consulta: el jugador escribe t o #k, ve el resumen y vuelve con ESC.
+
+Escenarios de aceptación obligatorios (Apéndice B): historia <t> con t mayor que el reloj actual se rechaza; historia después de usar un pergamino no muestra las acciones revertidas; varios eventos en el mismo instante t: historia <t> muestra el estado después de todos ellos; historia no consume tiempo virtual, no se registra en partida.log y no modifica el historial de retroceso; --replay partida.log --hasta t con t posterior al final de la partida muestra el estado final e indica que la partida terminó antes; se carga un archivo de partida anterior: se reporta la incompatibilidad, nunca se carga en silencio.
+
+Requisitos de rendimiento y medición: una consulta historia tarda menos de 50 ms en una partida de al menos 5000 acciones del jugador con el K por defecto (§6.1); la memoria crece con la cantidad de cambios más un punto de control cada K acciones, nunca con acciones por tamaño del estado; ubicar el punto de control más cercano a un instante es frecuente y su costo importa en partidas largas; al usar un pergamino la línea se recorta sin recorrer toda la historia; --bench mide memoria y tiempo de consulta para al menos tres valores de K y la alternativa sin puntos de control (§5.5, §6.3); y se repiten las mediciones del historial de retroceso de la primera parte con la carga nueva (§5.6). No nombres estructuras de datos, clases ni módulos: eso va en el plan. Registra este prompt en PROMPTS_LLM.md.
+````
+
+- **Nota:** una versión anterior de esta entrada decía que el texto no estaba en esta máquina y que la sesión la hizo el otro integrante; era un error. El texto está en la transcripción bcafc20a (la conversación de Claude Code en la app de escritorio). Se pegó dos veces, idéntico: a las 20:13:18 UTC Claude no lo ejecutó y pidió pegarlo en la terminal; a las 20:14:16 UTC se pegó otra vez y esa conversación corrió /speckit-specify. Se registra una sola vez, sin cambios salvo las marcas de texto pegado.
 - **Uso:** rama 004-linea-tiempo creada desde 002-niebla-guerra y specs/004-linea-tiempo/ con spec.md: 6 historias (consultar un instante, pergamino, --replay --hasta, guardado, tecla H, memoria y rendimiento), 27 escenarios, FR-001 a FR-026 y SC-001 a SC-007, sin marcas NEEDS CLARIFICATION. Supuestos propios: el pergamino gastado figura en los instantes anteriores; --replay --hasta muestra la historia tal como quedó con los pergaminos aplicados; H detiene un viaje «ir a» en curso; formato 4 y la versión 3 o anterior se reporta incompatible. checklists/requirements.md completo. Sin commit.
 
 ## Entrada 170
@@ -1846,8 +1959,23 @@ Corrige el texto largo del reporte de resolubilidad en la Vista, sin cambiar spe
 ## Entrada 172
 - **Fecha:** 17/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-plan`
-- **Prompt:** "/speckit-plan Plan de la spec 004 línea de tiempo. Sigue la constitución y sé coherente con 001, 002 y lo que ya existe: el Mutador y el Diario (pergamino de 5 acciones), PartidaBinaria (formato 3 de la 002) y ModoReplay. Orientación del equipo, a evaluar con alternativas y mediciones en research.md: 1. Puntos de control [...] con el mismo escritor de PartidaBinaria pero en memoria [...] 2. Reconstrucción: comparar (a) re-simular hacia adelante [...] (b) aplicar cambios registrados [...] (c) deshacer hacia atrás [...] preferir la opción con menos código nuevo, porque la entrega es el 18 de noviembre. 3. Instante t dentro de los eventos [...] 4. Ubicar el punto de control más cercano: estructura propia con costo sublineal [...] 5. Pergamino: recortar la cola [...] 6. Persistencia: FORMATO_VERSION 4 [...] 7. --replay … --hasta t y --checkpoint-cada K [...] 8. Ventana: tecla H [...] 9. Mediciones para --bench (benchLineaTiempo) [...] Prohibido: dict, set, list de Python en cripta/, heapq, bisect, collections, pickle y copy.deepcopy como sustituto de la estructura. Registra este prompt en PROMPTS_LLM.md."
-- **Nota:** el texto completo no se encontró. Esta sesión la hizo el otro integrante en su máquina y no hay transcripción de ella en esta (las transcripciones de Claude Code de esta máquina son del 31/10 y 01/11, del 08/11 y del 17 y 18/11/2026, hora local, y ninguna es de esta sesión). Lo que queda arriba es lo que se registró en su momento; las partes omitidas están marcadas con [...] y no se completan para no inventar texto.
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-11-17 20:37:27 UTC):
+
+````text
+/speckit-plan Plan de la spec 004 línea de tiempo. Sigue la constitución y sé coherente con 001, 002 y lo que ya existe: el Mutador y el Diario (pergamino de 5 acciones), PartidaBinaria (formato 3 de la 002) y ModoReplay. Orientación del equipo, a evaluar con alternativas y mediciones en research.md:
+1. Puntos de control: una copia completa cada K acciones del jugador, hecha con el mismo escritor de PartidaBinaria pero en memoria (bytes), así incluye el estado del Random y el conocimiento de la 002. Medir el costo de tomar y restaurar uno.
+2. Reconstrucción: comparar (a) re-simular hacia adelante desde el punto de control más cercano con las acciones de la historia que quedó, contra (b) aplicar cambios registrados con su instante, y contra (c) deshacer hacia atrás desde el estado actual. La consulta nunca modifica la partida real: trabaja sobre una copia aparte, sin vista, sin red y sin presupuesto (FR-011, FR-012); si re-simular pudiera necesitar datos que no estén en memoria o en disco, decir cómo se evita. Elegir con mediciones (§5.5) y, si las mediciones cumplen los límites, preferir la opción con menos código nuevo, porque la entrega es el 18 de noviembre.
+3. Instante t dentro de los eventos entre dos acciones: definir cómo se detiene la reconstrucción en "todos los eventos con tiempo ≤ t" (FR-001, FR-004).
+4. Ubicar el punto de control más cercano: estructura propia con costo sublineal (FR-023), por ejemplo árbol o arreglo propio, medida contra la búsqueda lineal.
+5. Pergamino: recortar la cola de la historia (acciones y puntos de control posteriores) en proporción a lo revertido (FR-023), coherente con el Diario.
+6. Persistencia: FORMATO_VERSION 4 con la línea de tiempo; un archivo 3 o anterior se reporta incompatible (FR-010).
+7. --replay … --hasta t y --checkpoint-cada K en main.py, sin vista; el resumen se arma una sola vez y se usa igual en la ventana y en el texto (FR-014).
+8. Ventana: tecla H con entrada de texto para t o #k, ESC para volver, y H detiene un viaje con "interrumpido" (FR-017, FR-018).
+9. Mediciones para --bench (benchLineaTiempo): memoria y tiempo de consulta con al menos tres valores de K y sin puntos de control, en partidas sintéticas deterministas de 5000 acciones o más, la decisión adelante/atrás, la búsqueda del punto de control, y repetir benchHistorial con la carga nueva (§5.6).
+Prohibido: dict, set, list de Python en cripta/, heapq, bisect, collections, pickle y copy.deepcopy como sustituto de la estructura. Registra este prompt en PROMPTS_LLM.md.
+````
+
+- **Nota:** una versión anterior de esta entrada decía que el texto no estaba en esta máquina y que la sesión la hizo el otro integrante; era un error: el texto se copió de la transcripción bcafc20a de esta máquina (la conversación de Claude Code en la app de escritorio, donde se ejecutó), sin cambios salvo las marcas de texto pegado.
 - **Uso:** plan.md, research.md (R1 a R10), data-model.md, quickstart.md y contracts/ (cli.md, vista.md, partida-binaria.md) de 004-linea-tiempo. Mediciones previas con scripts fuera del proyecto (cripta de referencia de 300 salas, 5000 acciones): acción 1,17 ms de mediana; punto de control de 57 KB, tomarlo 2,4 ms y restaurarlo 13 ms; restaurar + re-simular K acciones: 12 ms (K=10), 24 ms (K=25), 42,5 ms (K=50) y 88 ms (K=100); deshacer con el Diario 0,03 ms por acción con unos 70 cambios por acción. Decisiones: re-simular hacia adelante (menos código, exacto por determinismo), K = 25 por omisión, bloques en un arreglo por árbol propio, servicio de solo lectura con contenidos iniciales registrados, ajuste del pergamino para FR-008 y D50, formato 4. Hallazgo: la referencia de SC-002 y de las pruebas independientes de US1 y US3 no reproduce el pergamino gastado ni la regla D50; hay que corregir la spec en su propio commit antes de /speckit-tasks. Sin commit.
 
 ## Entrada 173
@@ -1871,8 +1999,24 @@ Corrige el texto largo del reporte de resolubilidad en la Vista, sin cambiar spe
 ## Entrada 176
 - **Fecha:** 17/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5)
-- **Prompt:** "Sí, corrige todo en tasks.md y los contratos, sin tocar la spec, en un solo commit "Tareas 004: correcciones del análisis": - C1: T035 (o T031) agrega a prueba_4_4 la comprobación de que benchHistorial trae la tabla con la carga nueva y su veredicto, citando FR-025. - F1: en T026 la sección de la línea se escribe ANTES del índice de salas [...]; T025 agrega una prueba que verifica cuántos bytes lee cargar_sala con una línea grande. Actualiza contracts/partida-binaria.md. - F2: en T003 el oráculo en vivo también captura el estado después de cada instante de evento distinto [...]. - G1: agrega a T019 o T025 el caso SC-004 [...]. - F3: el punto de control lleva una bandera explícita con_linea (falso) [...]. - G2: en la prueba, K = 1 contra K = 25 en una partida de 500 acciones [...]. - G3: mantén las 1000 consultas de SC-002 y SC-004 [...]. - I1: anota en T031 [...]. - T1: anota en research R2 [...]. - G4: agrega a T025 el caso del pergamino justo después de cargar. Registra este prompt en PROMPTS_LLM.md."
-- **Nota:** el texto completo no se encontró. Esta sesión la hizo el otro integrante en su máquina y no hay transcripción de ella en esta (las transcripciones de Claude Code de esta máquina son del 31/10 y 01/11, del 08/11 y del 17 y 18/11/2026, hora local, y ninguna es de esta sesión). Lo que queda arriba es lo que se registró en su momento; las partes omitidas están marcadas con [...] y no se completan para no inventar texto.
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-11-17 21:17:26 UTC):
+
+````text
+Sí, corrige todo en tasks.md y los contratos, sin tocar la spec, en un solo commit "Tareas 004: correcciones del análisis":
+- C1: T035 (o T031) agrega a prueba_4_4 la comprobación de que benchHistorial trae la tabla con la carga nueva y su veredicto, citando FR-025.
+- F1: en T026 la sección de la línea se escribe ANTES del índice de salas, para que el índice siga siendo lo último del archivo y cargar_sala lea solo el índice y su sala; T025 agrega una prueba que verifica cuántos bytes lee cargar_sala con una línea grande. Actualiza contracts/partida-binaria.md.
+- F2: en T003 el oráculo en vivo también captura el estado después de cada instante de evento distinto, enganchado al bucle de eventos de la partida real solo en pruebas, para comparar instantes entre dos decisiones (FR-001, SC-002).
+- G1: agrega a T019 o T025 el caso SC-004: la misma secuencia con y sin consultas intercaladas, comparando reloj, huella del estado, partida.log y lo que revierte el siguiente pergamino, en 1000 secuencias.
+- F3: el punto de control lleva una bandera explícita con_linea (falso) para que desde_bytes lo distinga de un guardado; anótalo en el contrato y en data-model.
+- G2: en la prueba, K = 1 contra K = 25 en una partida de 500 acciones; K = 1 con 5000 acciones queda solo para el bench.
+- G3: mantén las 1000 consultas de SC-002 y SC-004; si esas pruebas pasan de 120 s, dales un tope propio más alto en ejecutar_pruebas, en vez de reducir el número.
+- I1: anota en T031 que las pruebas de US6 miden código de historias anteriores y pueden pasar al escribirse, como T047 de la 002.
+- T1: anota en research R2 que "lo necesario para reconstruir los cambios" son las acciones y los ajustes del pergamino.
+- G4: agrega a T025 el caso del pergamino justo después de cargar.
+Registra este prompt en PROMPTS_LLM.md.
+````
+
+- **Nota:** una versión anterior de esta entrada decía que el texto no estaba en esta máquina y que la sesión la hizo el otro integrante; era un error: el texto se copió de la transcripción bcafc20a de esta máquina (la conversación de Claude Code en la app de escritorio, donde se ejecutó), sin cambios salvo las marcas de texto pegado.
 - **Uso:** tasks.md: T003 (oráculo también en cada instante de evento, F2), T019 (SC-004 con 1000 secuencias y tope propio si pasa de 120 s, G1 y G3), T025 (bytes que lee cargar_sala con una línea grande y pergamino justo después de cargar, F1 y G4), T026 (línea antes del índice y bandera con_linea, F1 y F3), T031 (K = 1 contra 25 en 500 acciones y nota de I1, G2), T035 (prueba de FR-025 en prueba_4_4, C1), T040 (topes propios, G3) y tablas de cobertura (FR-025 y SC-004). contracts/partida-binaria.md reescrito con la línea antes del índice y con_linea; data-model.md (con_linea en CopiadorEstado y Bloque); research.md R2 (T1) y R7 (orden del archivo). La spec no cambia.
 
 ## Entrada 177
@@ -1971,3 +2115,37 @@ Al final muestra git status, git log --oneline -20 y el resultado de la suite y 
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "donde pongo esto?" (sobre el comando de instalación de specify CLI encontrado en el historial de PowerShell: uv tool install specify-cli --force --from git+https://github.com/github/spec-kit.git@v1.2.6), seguido de "hazlo tu".
 - **Uso:** README, sección Spec Kit: el comando de instalación con la versión fijada por tag (§2.1), la aclaración de que specify version informa 1.2.6 y de que el 1.2.6.dev0 de .specify/init-options.json lo escribió el specify init, y la nota de que los FR y SC se citan con su spec (por ejemplo 002/FR-012). Commit en main, sin push.
+
+## Entrada 188
+- **Fecha:** 18/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-11-18 22:37:01 UTC):
+
+````text
+Trabaja directamente en la rama main, sin crear ninguna rama nueva. Antes de empezar corre git status y git pull para confirmar que main está limpia y al día con origin. Cada punto lleva su propio commit en main y no hagas push. Después de cada punto corre py pruebas/ejecutar_pruebas.py y py pruebas/prueba_reglas.py; si alguna falla, arréglalo antes de pasar al siguiente punto. No cambies ninguna decisión ni ninguna regla del juego; solo documentación, trazabilidad, mediciones y las pruebas de los benchmarks que toques. Si un punto obliga a cambiar código del juego, para y avísame antes. Antes de cada punto revisa con git log y git show si los commits 439df7f a 391f604 ya lo hicieron; si ya está hecho, no lo repitas y dímelo. Registra este prompt, con el texto completo, en PROMPTS_LLM.md como entrada 188, dentro del commit del punto 1.
+
+1) PROMPTS_LLM.md, mis entradas (002, 004 y el cierre, de la 153 en adelante, y la 38 de la Parte I). En las que todavía digan "[...]", "texto completo en..." o 'Seguido de "y agrega" con el texto de la entrada N', reemplaza el resumen por el prompt real. Búscalo en mis transcripciones (C:\Users\XSF\.claude\projects\*CRIPTA*\*.jsonl). Deja cada entrada autocontenida y no renumeres nada; si falta una entrada, agrégala como "Entrada N-bis". No inventes texto: si no aparece, dilo dentro de la entrada.
+
+2) Trabajo sin tarea. Agrega tareas marcadas como hechas, cada una con la nota "agregada en el cierre de la Parte II" y con los FR, SC y § que cubre:
+   - en specs/004-linea-tiempo/tasks.md, una para D97 (benchHistorial con la carga nueva, research R10 punto 5) y otra para D98 (agenda, §5.6);
+   - en specs/001-terreno-cazador/tasks.md, una para D99 (invalidación del mapa, §5.2 y §6.3).
+   Revisa también specs/002-niebla-guerra/tasks.md y specs/004-linea-tiempo/tasks.md: a cada tarea sin FR, SC ni principio agrégale el que la sostiene. Si es de soporte, el principio de la constitución y el FR al que sirve. Dime la lista de lo que agregaste.
+
+3) Cambio de comportamiento sin spec, feature 004. Enmienda specs/004-linea-tiempo/spec.md, y contracts/vista.md si hace falta, con lo que introdujo 59dcbc5: el motivo de un pedido inválido se lee completo dentro del panel de Historia, partido en líneas, sin "…" y sin tapar el título. Commit solo de la spec, con un mensaje que diga que la spec se actualiza después del código y por qué: lo encontró la prueba manual de T041. Revisa también T058 de la 002: si la enmienda de FR-035 (dc54119) quedó antes que el código, solo dímelo; si quedó después, haz lo mismo.
+
+4) benchLineaTiempo: la alternativa sin puntos de control hoy solo se mide con 200 acciones. Mídela también con 1000 y 5000 acciones, en la misma tabla. Actualiza la evidencia de D91 con los números nuevos y ajusta la prueba que revisa esa tabla. Si con 5000 acciones tarda demasiado para la suite, deja ese tamaño solo en --bench y que la prueba use el modo rápido.
+
+5) benchNiebla tabla 2 (SC-005, ≤ 1,5x al multiplicar el mapa por 4). En otra máquina dio 2,16x con 1200 salas conocidas e imprimió NO PASA, porque la medición es de microsegundos; en esta dio 1,02x y 1,03x. Haz la medición estable sin cambiar el criterio: más repeticiones por medición y el mínimo de más corridas. Corre benchNiebla 5 veces y dime los cocientes. Actualiza la evidencia de la decisión que cita benchNiebla tabla 2. Si aun así alguna corrida no pasa, no cambies el criterio: escríbelo en Límites con los números.
+
+6) py main.py --bench > archivo.txt falla en Windows con UnicodeEncodeError (el carácter "≤", porque la salida redirigida usa cp1252). Haz que la salida de main.py sea UTF-8 aunque se redirija (por ejemplo, sys.stdout.reconfigure(encoding="utf-8") y lo mismo para stderr al inicio de main.py), sin tocar el modelo. Comprueba que py main.py --bench --rapido > salida.txt termina con código 0, y que --verificar y --replay redirigidos también funcionan.
+
+7) D98: en Límites ya dice que el umbral del veredicto se fijó después de una primera corrida. Agrega con qué regla se habría decidido sin esa corrida, qué daba, y por qué la regla final (comparar en la carga más grande) es la que pide §5.6. No cambies el veredicto ni el umbral.
+
+8) README.md: agrega una sección "Entrega" con el comando para armar el zip solo con lo versionado (git archive --format=zip -o cripta.zip HEAD). Aclara que .venv, __pycache__, .idea, partidas, logs y puntajes no van en la entrega. Agrega también que --replay sin --offline usa el API real y gasta presupuesto, y que para revisar sin red se usa py main.py --offline --replay ...
+
+Cuando termines del 1 al 8, muestra git status, git log --oneline -20 y el resultado de la suite y de prueba_reglas, y para. No hagas push; lo haré yo.
+
+9) OPCIONAL: hazlo solo si te lo pido después de ver el resultado del 1 al 8. §5.6 y §6.3 de la Parte II piden repetir las mediciones de la Parte I con la carga nueva; hoy solo están la agenda (D98) y el historial (D97). Revisa qué benchmarks de la Parte I existen (caché, rastro, guardado y los que haya en cripta/controlador/bench). Para cada uno que dependa de la carga nueva (cazadores, mapa de distancias, línea de tiempo, niebla), agrega una tabla con esa carga y la conclusión, siguiendo el formato de benchAgenda sección 5. Para los que no dependan de la carga nueva, escribe en Límites de D98 por qué no cambian, con evidencia del código. Un commit por benchmark, sin push.
+````
+
+- **Uso:** ocho puntos de documentación, trazabilidad y mediciones en main, cada uno con su commit y sin push: (1) PROMPTS_LLM.md con el texto real de las entradas 38, 153, 156, 161, 169, 172 y 176 (estaban en las transcripciones de esta máquina) y esta entrada; (2) tareas agregadas en el cierre (D97, D98 y D99) y el requisito que sostiene cada tarea de 002 y 004 que no lo citaba; (3) enmienda de la spec 004 por 59dcbc5; (4) benchLineaTiempo sin puntos de control con 1000 y 5000 acciones; (5) benchNiebla tabla 2 estable; (6) salida UTF-8 de main.py aunque se redirija; (7) Límites de D98; (8) sección Entrega del README. El punto 9 es opcional y queda para después.
