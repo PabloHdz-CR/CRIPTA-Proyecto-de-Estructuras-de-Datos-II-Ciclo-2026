@@ -23,6 +23,7 @@ Uso: py -m cripta.controlador.bench.benchNiebla [--rapido]
 """
 from __future__ import annotations
 
+import gc
 import random
 import sys
 import time
@@ -133,8 +134,65 @@ def _salas_sueltas(cantidad: int) -> ListaEnlazada:
     return salas
 
 
-def medir_consultas(cantidad: int, consultas: int):
-    """(µs por consulta con el campo, µs por consulta con búsqueda lineal)."""
+# Una consulta por campo dura décimas de µs: una sola pasada mide ruido (en
+# otra máquina una corrida dio 2,16x de 300 a 1200 conocidas). Cada medición
+# recorre los objetivos REPETICIONES_CONSULTA veces con el recolector apagado,
+# y se toma el MÍNIMO de CORRIDAS_CONSULTA mediciones, como en Medidor.
+REPETICIONES_CONSULTA = 5
+CORRIDAS_CONSULTA = 9
+CORRIDAS_CONSULTA_RAPIDO = 5
+CORRIDAS_LINEAL = 3
+
+
+def _minimo_por_consulta(trabajo, operaciones: int, corridas: int) -> float:
+    """µs por operación: el mínimo de `corridas` ejecuciones de trabajo()."""
+    mejor = None
+    for _ in range(corridas):
+        gc.collect()
+        gc.disable()
+        try:
+            inicio = time.perf_counter()
+            trabajo()
+            duracion = time.perf_counter() - inicio
+        finally:
+            gc.enable()
+        if mejor is None or duracion < mejor:
+            mejor = duracion
+    return mejor / operaciones * 1e6
+
+
+class _ConsultasCampo:
+    """REPETICIONES_CONSULTA pasadas por los objetivos: estado de la sala y
+    recuerdo de su primera salida, leyendo los campos (la decisión, R1)."""
+
+    def __init__(self, objetivos: ListaEnlazada) -> None:
+        self._objetivos = objetivos
+
+    def __call__(self) -> None:
+        for _ in range(REPETICIONES_CONSULTA):
+            for sala in self._objetivos:
+                ConocimientoJugador.estado(sala)
+                ConocimientoJugador.recuerdo(sala.salidas[0])
+
+
+class _ConsultasLineales:
+    """Las primeras `muestra` consultas con la búsqueda lineal por id."""
+
+    def __init__(self, lineal: ConsultaLineal, objetivos: ListaEnlazada, muestra: int) -> None:
+        self._lineal = lineal
+        self._objetivos = objetivos
+        self._muestra = muestra
+
+    def __call__(self) -> None:
+        for indice, sala in enumerate(self._objetivos):
+            if indice >= self._muestra:
+                break
+            self._lineal.estado(sala.id)
+
+
+def medir_consultas(cantidad: int, consultas: int, corridas: int = CORRIDAS_CONSULTA):
+    """(µs por consulta con el campo, µs por consulta con búsqueda lineal),
+    cada uno el mínimo de varias corridas."""
     salas = _salas_sueltas(cantidad)
     registro = RegistroConocidas()
     for sala in salas:
@@ -144,18 +202,10 @@ def medir_consultas(cantidad: int, consultas: int):
     objetivos = ListaEnlazada()
     for _ in range(consultas):
         objetivos.agregar_al_final(salas.obtener(azar.randrange(cantidad)))
-    inicio = time.perf_counter()
-    for sala in objetivos:
-        ConocimientoJugador.estado(sala)
-        ConocimientoJugador.recuerdo(sala.salidas[0])
-    campo = (time.perf_counter() - inicio) / consultas * 1e6
+    campo = _minimo_por_consulta(_ConsultasCampo(objetivos), consultas * REPETICIONES_CONSULTA, corridas)
     muestra = consultas if consultas <= 2000 else 2000
-    inicio = time.perf_counter()
-    for indice, sala in enumerate(objetivos):
-        if indice >= muestra:
-            break
-        lineal.estado(sala.id)
-    busqueda = (time.perf_counter() - inicio) / muestra * 1e6
+    busqueda = _minimo_por_consulta(_ConsultasLineales(lineal, objetivos, muestra), muestra,
+                                    CORRIDAS_LINEAL)
     return campo, busqueda
 
 
@@ -302,11 +352,14 @@ def ejecutar(reporte: Reporte, rapido: bool = False) -> Reporte:
     filas = ListaEnlazada()
     anteriores = ListaEnlazada()
     for n in TAMANOS_MAPA:
-        campo, lineal = medir_consultas(n, consultas)
+        campo, lineal = medir_consultas(n, consultas,
+                                        CORRIDAS_CONSULTA_RAPIDO if rapido else CORRIDAS_CONSULTA)
         anteriores.agregar_al_final((n, campo, lineal))
         filas.agregar_al_final((f"{n}", f"{campo:.4f}", f"{lineal:.3f}", "-", "-"))
     filas = _con_crecimiento(anteriores, filas)
-    reporte.tabla("2. Consultar estado de sala y recuerdo de puerta (µs por consulta, FR-032, SC-005)",
+    reporte.tabla("2. Consultar estado de sala y recuerdo de puerta (µs por consulta, mínimo de "
+                  f"{CORRIDAS_CONSULTA_RAPIDO if rapido else CORRIDAS_CONSULTA} corridas de "
+                  f"{REPETICIONES_CONSULTA} pasadas, FR-032, SC-005)",
                   ("conocidas", "campo", "búsqueda lineal", "crec. x4 campo", "<= 1,5"), filas)
 
     filas = ListaEnlazada()
