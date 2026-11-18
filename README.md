@@ -21,7 +21,7 @@ py -m pip install -r requirements.txt
 |---|---|
 | `py main.py --offline` | Juega con los datos de `datos_offline/` (sin red). |
 | `py main.py` | Juega contra el API real (gasta solicitudes del presupuesto). |
-| `py main.py --replay partidas/<cripta>.log` | Reproduce un log en la terminal y verifica que sea fiel. |
+| `py main.py --replay partidas/<cripta>.log` | Reproduce un log en la terminal y verifica que sea fiel. Sin `--offline` usa el API real y gasta presupuesto; para revisar sin red: `py main.py --offline --replay partidas/<cripta>.log`. |
 | `py main.py --replay partidas/<cripta>.log --hasta T` | Reproduce el log y además imprime el estado del instante T (el mismo resumen que la tecla H). Si la partida terminó antes de T, muestra el estado final y lo dice. `--hasta` sin `--replay` o con un T que no es un entero ≥ 0 termina con código 2. |
 | `py main.py --checkpoint-cada K` | Acciones entre puntos de control de la línea de tiempo (entero ≥ 1; 25 por defecto). También sirve con `--replay`. |
 | `py main.py --verificar <cripta>` (con `--offline` o `--offline=CARPETA`) | Solo verifica si la cripta se puede ganar: imprime el reporte y sale con 0 (resoluble), 1 (no resoluble) o 2 (no se pudo verificar). No abre la ventana ni crea partida. |
@@ -221,6 +221,21 @@ No se suben al repositorio (están en `.gitignore`):
 - `partidas/<cripta>.log`: el log de la partida en curso; `partidas/historial/`: un log archivado por partida terminada, para el replay.
 - `puntajes.jsonl`: la tabla de puntajes.
 - `fichas_guardadas/`: copia en disco de las fichas del catálogo, para no volver a pedirlas a la red, y en `fichas_guardadas/llaves/` la ubicación de llaves de cada cripta con su versión.
+
+## Entrega
+
+El zip de la entrega se arma solo con lo versionado en git, desde la raíz del repositorio:
+
+```bash
+git archive --format=zip -o cripta.zip HEAD
+```
+
+Así el zip trae exactamente lo que está en el último commit. No van en la entrega, aunque estén en la carpeta: `.venv/`, `__pycache__/`, `.idea/`, ni lo que el juego genera al correr (`guardados/`, `partidas/` con sus logs, `puntajes.jsonl` y `fichas_guardadas/`). Todo eso está en `.gitignore`, así que `git archive` no lo incluye. Los cambios sin commit tampoco entran: hay que hacer commit antes de armar el zip.
+
+Para revisar la entrega:
+
+- `py main.py --replay partidas/<cripta>.log` **sin `--offline` usa el API real**: pide al servidor los datos de la cripta y **gasta solicitudes del presupuesto**.
+- Para revisar sin red se usa `py main.py --offline --replay partidas/<cripta>.log` (también con `--hasta T`), que lee los datos de `datos_offline/` y no gasta presupuesto.
 
 ## Créditos de gráficos
 
