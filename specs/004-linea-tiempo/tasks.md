@@ -27,9 +27,9 @@ description: "Tareas de la feature 004: línea de tiempo"
 
 **Purpose**: línea base, fixture del formato anterior y apoyo de pruebas.
 
-- [X] T001 Confirmar la línea base en la rama `004-linea-tiempo`: `py pruebas/ejecutar_pruebas.py` completa y en verde, anotando el total en esta tarea (se espera 67), y `py pruebas/prueba_reglas.py` limpia. Cubre: SC-001.
+- [X] T001 Confirmar la línea base en la rama `004-linea-tiempo`: `py pruebas/ejecutar_pruebas.py` completa y en verde, anotando el total en esta tarea (se espera 67), y `py pruebas/prueba_reglas.py` limpia. Cubre: SC-001 (base sin regresiones); soporte del constitución, "Flujo de desarrollo y definición de hecho".
   **Hecho:** 67 pruebas en verde y prueba_reglas limpia (140 archivos) en la rama 004-linea-tiempo antes de cambiar código.
-- [X] T002 Con el código **actual** (`FORMATO_VERSION = 3`), antes de T026, agregar a `pruebas/generar_guardado_formato_anterior.py` un modo propio `--formato-3` con su propia comprobación (`FORMATO_VERSION == 3`), sin tocar los modos de las versiones 1 y 2, que genere `pruebas/datos/linea/guardado_formato_3.bin` desde una partida sin conexión con algunas acciones. Correrlo y versionar el archivo. Cubre: FR-010 (Apéndice B 6).
+- [X] T002 Con el código **actual** (`FORMATO_VERSION = 3`), antes de T026, agregar a `pruebas/generar_guardado_formato_anterior.py` un modo propio `--formato-3` con su propia comprobación (`FORMATO_VERSION == 3`), sin tocar los modos de las versiones 1 y 2, que genere `pruebas/datos/linea/guardado_formato_3.bin` desde una partida sin conexión con algunas acciones. Correrlo y versionar el archivo. Cubre: FR-010 (Apéndice B 6); soporte del principio V (persistencia versionada), al que sirve el fixture.
   **Hecho:** pruebas/datos/linea/guardado_formato_3.bin (8287 bytes, 20 salas, 2 movimientos, semilla 20261117), generado con el modo --formato-3 y el código del formato 3.
 - [X] T003 [P] Crear `pruebas/apoyo_linea.py` sobre `pruebas/apoyo_niebla.py`:
   - `partida_con_linea(descripcion, k, semilla)`: Partida sintética con `LineaTiempo` conectada (cuando exista, T012).
@@ -37,7 +37,7 @@ description: "Tareas de la feature 004: línea de tiempo"
   - `huella(resumen)`: la misma huella desde un `ResumenInstante`, para comparar.
   - `secuencia_al_azar(partida, azar, n, con_pergaminos, con_viajes)`: acciones deterministas por semilla (movimientos, esperas, recoger, viajes «ir a», pergaminos).
   - `partida_referencia_inmortal(semilla)`: la cripta de más salas de `datos_offline/` con el jugador sin daño letal (solo para medir), elegida por cantidad de salas sin ids en el código.
-  Cubre: FR-001, SC-002, SC-004, SC-005, SC-006.
+  Cubre: FR-001, SC-002, SC-004, SC-005, SC-006; soporte del principio VII y de "pruebas antes del código" (constitución, "Flujo de desarrollo y definición de hecho").
 
 **Checkpoint**: línea base en verde y fixture del formato 3 versionado.
 
@@ -230,7 +230,7 @@ description: "Tareas de la feature 004: línea de tiempo"
 - [X] T033 [US6] Crear `cripta/controlador/bench/benchLineaTiempo.py` con `ejecutar(reporte, rapido)`, determinista por semilla, sobre la cripta de referencia y 5000 acciones (menos en `--rapido`): (1) memoria y tiempo de consulta (peor y mediana) con K = 10, 25 y 50 y sin puntos de control; (2) adelante contra atrás: tomar y restaurar una copia y deshacer K acciones con el Diario, junto a la reconstrucción hacia adelante medida; (3) búsqueda del bloque, arreglo por árbol contra lineal, con 10² a 10⁵ bloques; (4) recorte del pergamino según el largo de la historia; (5) tamaño y tiempo de guardar y cargar el formato 4. Cubre: FR-019 a FR-024, SC-003, SC-007. Depende de: T026, T032.
   **Hecho:** La alternativa sin puntos de control es la misma línea con K mayor que la partida (un solo punto de control): no hizo falta código aparte. --bench --rapido: K = 10, 25 y 50 con 9 a 11 ms de consulta peor en 1000 acciones; árbol contra lineal 18x con 10 000 bloques; recorte de 1 entrada con 100 y 1000 acciones.
 - [X] T034 [US6] En `cripta/controlador/bench/benchHistorial.py`: tabla nueva que repite las mediciones de la primera parte con la carga nueva (cazadores, viajes «ir a» y la línea conectada) y las compara con las anteriores, con el veredicto "sigue siendo adecuado" o "se cambió" (§5.6). Cubre: FR-025.
-  **Hecho:** Con la carga nueva: unos 28 registros por acción y 12 µs para deshacer una acción en la cripta de referencia; veredicto: sigue siendo adecuado.
+  **Hecho:** Con la carga nueva: unos 28 registros por acción y 12 µs para deshacer una acción en la cripta de referencia; veredicto: sigue siendo adecuado. Quedó documentada como D97 en DECISIONES.md (T037), con las cifras del bench completo.
 - [X] T035 [US6] Registrar `benchLineaTiempo` en `cripta/controlador/bench/benchTodo.py` y actualizar el total de tablas en `pruebas/prueba_4_4.py`; además, `prueba_4_4` comprueba que `benchHistorial` trae la tabla con la carga nueva y su veredicto ("sigue siendo adecuado" o "se cambió"), citando FR-025 (análisis C1); correr `py main.py --bench --rapido`. Cubre: FR-024, FR-025. Depende de: T033, T034. T031 pasa.
 
 **Checkpoint**: todas las historias en verde.
@@ -241,16 +241,18 @@ description: "Tareas de la feature 004: línea de tiempo"
 
 - [X] T036 [P] Actualizar `README.md`: tecla **H** (consultar la línea de tiempo), `--replay partida.log --hasta t`, `--checkpoint-cada K` (25 por omisión), formato de guardado 4 (los guardados anteriores se rechazan) y el total de pruebas. Cubre: FR-010, FR-013, FR-018, FR-022.
   **Hecho:** README: --hasta, --checkpoint-cada, tecla H, sección Línea de tiempo, formato 4 y 76 pruebas.
-- [X] T037 Agregar al Documento de Decisiones (`DECISIONES.md`) las secciones nuevas de la línea de tiempo con el siguiente número D libre (estructura de P1 §8): puntos de control con `PartidaBinaria` en memoria; reconstrucción hacia adelante (con la evidencia de adelante contra atrás); K por defecto con la tabla de los tres valores y sin puntos de control; arreglo por árbol contra búsqueda lineal; servicio de solo lectura; ajuste del pergamino; formato 4; y §5.6 con el antes y el después del historial del pergamino. Cada sección enlaza a `specs/004-linea-tiempo/spec.md` y `plan.md` y dice si la decisión final coincide con el plan y qué medición la cambió (§7.1). Usar las cifras de `benchLineaTiempo`, no las previas. Cubre: FR-024, FR-025.
+- [X] T037 Agregar al Documento de Decisiones (`DECISIONES.md`) las secciones nuevas de la línea de tiempo con el siguiente número D libre (estructura de P1 §8): puntos de control con `PartidaBinaria` en memoria; reconstrucción hacia adelante (con la evidencia de adelante contra atrás); K por defecto con la tabla de los tres valores y sin puntos de control; arreglo por árbol contra búsqueda lineal; servicio de solo lectura; ajuste del pergamino; formato 4; y §5.6 con el antes y el después del historial del pergamino. Cada sección enlaza a `specs/004-linea-tiempo/spec.md` y `plan.md` y dice si la decisión final coincide con el plan y qué medición la cambió (§7.1). Usar las cifras de `benchLineaTiempo`, no las previas. Cubre: FR-024, FR-025 (principio VI, medir antes de afirmar).
   **Hecho:** D89 a D97 en DECISIONES.md con las cifras de benchLineaTiempo completo (5000 acciones). D94 (ajuste del pergamino con azar, agenda e id) y D96 (ResumenInstante con EstadoVista) dicen qué cambió respecto del plan. benchLineaTiempo tabla 5 ahora mide también el guardado del formato 4 (T033 punto 5).
 - [X] T038 Poner al día `specs/004-linea-tiempo/contracts/` (cli.md, vista.md, partida-binaria.md) con lo que quedó en el código, en un commit propio. Cubre: FR-013 a FR-018, FR-009.
   **Hecho:** cli.md (título y reporte de --replay, encabezado de #k, mensaje de uso), vista.md (estado en VistaArcade, on_text, cerrar_historia, Controles, caso_tecla_m), partida-binaria.md (codificación del contenido inicial y los tres campos extra de las entradas P) y data-model.md (ResumenInstante lleva el EstadoVista y las líneas).
 - [X] T039 [P] Correr `py pruebas/prueba_reglas.py` y `py pruebas/prueba_sin_datos_concretos.py` (si existe) sobre `cripta/`: sin dict, set, list, heapq, bisect, collections, pickle ni deepcopy, y sin datos de criptas concretas. Cubre: FR-026 (constitución I, II y IV).
   **Hecho:** prueba_reglas OK (147 archivos) y prueba_sin_datos_concretos OK (18 ids y versiones).
-- [X] T040 Registrar las pruebas nuevas en `pruebas/ejecutar_pruebas.py` (con un tope de tiempo propio más alto para las que lo necesiten, como las de SC-002 y SC-004, sin reducir su número; análisis G3) y correr la suite completa tres veces seguidas, todas en verde, anotando el total. Cubre: SC-001.
+- [X] T040 Registrar las pruebas nuevas en `pruebas/ejecutar_pruebas.py` (con un tope de tiempo propio más alto para las que lo necesiten, como las de SC-002 y SC-004, sin reducir su número; análisis G3) y correr la suite completa tres veces seguidas, todas en verde, anotando el total. Cubre: SC-001; soporte del constitución, "Flujo de desarrollo y definición de hecho".
   **Hecho:** Suite completa tres veces seguidas: 76 de 76 en verde las tres veces.
 - [X] T041 Validación a mano según `quickstart.md` §2 y §3 a 1024×720 (H, `#k`, valor inválido, pergamino, H durante un viaje, guardar y cargar), anotando el resultado en esta tarea. Cubre: FR-017, FR-018, SC-001.
   **Hecha (2026-11-17, Pablo en la ventana, `py main.py --offline`):** a 1280×720 (la ventana no cambia de tamaño; el caso 1024×720 lo cubre caso_controles_sin_encimarse). H con número (20, 200, 5100) y con #3; #99999 y #57 dan error con la consulta abierta; flechas, M y R no hacen nada con la consulta abierta; H con el mapa abierto lo cierra; H durante un viaje lo detiene con "interrumpido"; después de dos pergaminos #57 ya no existe (hay 55 acciones) y 5100 muestra la historia como quedó; guardar y cargar da el mismo resumen en 200; Controles muestra "H Historia" sin encimarse. Todo funciona. Se vio que el mensaje de error largo se cortaba con "…" y tapaba el título del panel (corregido aparte).
+- [X] T042 [P] §5.6 para la agenda de eventos (D98), **agregada en el cierre de la Parte II** (no estaba en esta lista; se hizo en 5282f5e): en `cripta/controlador/bench/benchAgenda.py`, tabla 4 "Agenda con la carga de la Parte II": grabar la agenda real de un ciclo del escenario de `benchCazador` (cripta de referencia, costos variables, 20, 50 y 100 cazadores) y repetir esas operaciones sobre las cuatro estructuras de la tabla 1, en µs por ciclo y como parte de los 20 ms (§5.2), con el veredicto "sigue siendo adecuada" o "se cambia"; sección D98 en `DECISIONES.md` con el antes (D23) y el después, y la fila de §5.6 en la tabla del inicio; `pruebas/prueba_2_3.py` comprueba que la tabla y el veredicto estén. Cubre: FR-025 de esta spec (repetir las mediciones de la primera parte con la carga nueva, §5.6, que aquí se extiende de la pila del pergamino a la agenda), FR-025 y SC-003 de `specs/001-terreno-cazador/spec.md` (la carga de 20, 50 y 100 cazadores en el ciclo de 20 ms), §5.2 y §5.6 del enunciado; principio VI (medir antes de afirmar).
+  **Hecho:** veredicto "sigue siendo adecuada": con 100 cazadores la agenda usa el 2,039 % de los 20 ms y ninguna alternativa es más rápida (cifras y límites en D98).
 
 ---
 
@@ -287,7 +289,7 @@ description: "Tareas de la feature 004: línea de tiempo"
 | FR-022 | T022 | T023 |
 | FR-023 | T004, T019, T031 | T005, T015, T020, T032 |
 | FR-024 | T031 | T033, T035, T037 |
-| FR-025 | T035 (`prueba_4_4`) | T034, T037 |
+| FR-025 | T035 (`prueba_4_4`), T042 (`prueba_2_3`) | T034, T037, T042 |
 | FR-026 | T014, T039 | T015 |
 | SC-001 | T040 | todas |
 | SC-002 | T014, T019 | T003, T015, T021 |
@@ -309,6 +311,7 @@ description: "Tareas de la feature 004: línea de tiempo"
 - **US5 (T028 a T030)**: tras US1 (T017); puede ir en paralelo con US2 a US4.
 - **US6 (T031 a T035)**: tras US4 (mide guardar y cargar el formato 4).
 - **Polish (T036 a T041)**: al final.
+- **Cierre de la Parte II (T042)**: agregada después, en main; no depende de ninguna tarea de esta lista.
 
 ## Parallel Opportunities
 

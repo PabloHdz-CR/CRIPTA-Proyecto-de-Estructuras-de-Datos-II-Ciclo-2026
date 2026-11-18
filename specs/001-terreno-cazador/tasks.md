@@ -381,6 +381,8 @@ heapq ni sorted (`prueba_reglas`).
   - Commits separados donde la constitución lo exige.
 
   Después, hacer push de `001-terreno-cazador` y abrir el PR hacia `main`.
+- [X] T060 [P] Medición de la invalidación del mapa de distancias (D99), **agregada en el cierre de la Parte II** (no estaba en esta lista; se hizo en 978a279, en main): en `cripta/controlador/bench/benchCazador.py`, sección 6 "Invalidación del mapa", en la cripta de referencia y la malla, con 20 y 100 cazadores y dos escenarios deterministas por semilla (puertas estables e inestables), comparar la decisión (reutilizar el mapa mientras la clave de validez coincida, D73) contra recalcular siempre (`MapaDistanciasSinReuso` en `alternativasCazador.py`): ms por ciclo, recálculos, salas examinadas y que las dos políticas den la misma decisión; sección D99 en `DECISIONES.md` (qué invalida el mapa, evidencia, ahorro y límites); `pruebas/prueba_invalidacion_mapa.py` comprueba la tabla. Cubre: FR-017 (reutilizar solo si nunca cambia la decisión), FR-025 y FR-026 (el trabajo del ciclo con 20 y 100 cazadores), SC-003; §5.2 y §6.3 de la Parte II; principio VI (medir antes de afirmar).
+  **Hecho:** reutilizar gana en los ocho escenarios (de 90 % a 99 % menos salas examinadas) con las mismas decisiones; no se cambió nada (cifras y límites en D99).
 
 ---
 
@@ -426,14 +428,14 @@ Cada escenario tiene una verificación automatizada que lleva su marca en el nom
 | FR-009 | T021, T023 | T008, T025, T029, T030 |
 | FR-010, FR-012, FR-013, FR-014, FR-016 | T021, T022 | T029 |
 | FR-011, FR-015 | T021, T022 | T015, T027, T028, T031 |
-| FR-017 | T021, T022, T051 | T009, T014, T028 |
+| FR-017 | T021, T022, T051, T060 (`prueba_invalidacion_mapa`) | T009, T014, T028 |
 | FR-018 | T022 | T029, T031 |
 | FR-019 | T011, T012 | T008, T013 |
 | FR-020 | T023, T024 | T008, T025, T026 |
 | FR-021 | T012, T024 | T013, T025 |
 | FR-022 | T003 (fixture), T047, T051 | T048, T049 |
 | FR-023, FR-024 | T033 | T034 a T037 |
-| FR-025 | T040 | T041 a T044 |
+| FR-025 | T040, T060 | T041 a T044, T060 |
 | FR-026 | T039 | T028, T041 a T045 |
 | FR-027 | T011, T047 | T007, T016, T019, T050 |
 | FR-028 | T010 | T017 |
@@ -453,7 +455,7 @@ Fuera de los FR: T002 hace cumplir el principio I de la constitución (`prueba_r
 - **US3 (Phase 5)**: depende de US1 para el costo de las salidas y de US2 para `es_cazador`. Puede ir en paralelo con US4.
 - **US4 (Phase 6)**: depende de US2 (`MapaDistancias`).
 - **Persistencia (Phase 7)**: depende de US1, de US2 y del fixture T003. T049 está **bloqueada por T048** (coordinación con Pablo). T047, T050 y T051 pueden avanzar antes, con `VERSION_NUEVA` todavía sin número.
-- **Polish (Phase 8)**: depende de todo lo anterior. **T059 va última.**
+- **Polish (Phase 8)**: depende de todo lo anterior. **T059 va última.** T060 se agregó después, en el cierre de la Parte II, ya con la feature en main.
 
 ### Within Each Phase
 
