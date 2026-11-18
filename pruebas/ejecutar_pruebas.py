@@ -31,6 +31,7 @@ PRUEBAS = (
     "prueba_4_2",               # Pila y PilaAcotada
     "prueba_4_3",               # ColaAcotada
     "prueba_4_4",               # mediciones de ListaDoble, PilaAcotada y ColaAcotada
+    "prueba_invalidacion_mapa",  # D99: tabla "Invalidación del mapa" de benchCazador
     "prueba_4_5",
     "prueba_cursor_inventario",  # Tab / Shift+Tab: da la vuelta y sigue la vista
     "prueba_5_2",               # CacheFichas (LRU)

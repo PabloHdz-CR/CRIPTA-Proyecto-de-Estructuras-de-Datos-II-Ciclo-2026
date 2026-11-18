@@ -136,16 +136,16 @@ for fila in reporte.tablas.obtener(2)[2]:
     if "decisión" in fila[1]:
         assert fila[2] == "20"                              # nodos de la ColaAcotada
 
-# 7. benchTodo reúne todas las mediciones (agenda=3, listaDoble=2, historial=2,
+# 7. benchTodo reúne todas las mediciones (agenda=4, listaDoble=2, historial=2,
 # bitácora=3, cache=3, ordenamiento=7, guardado=3, etiquetas=1, rastro=2,
-# precarga=1, datos=3, cazador=5 de 001-terreno-cazador: ciclo, cota, conteos,
-# comparación y enlace; resolubilidad=3 de 003-resolubilidad: referencia,
+# precarga=1, datos=3, cazador=6 de 001-terreno-cazador: ciclo, cota, conteos,
+# comparación, enlace e invalidación del mapa (D99); resolubilidad=3 de 003-resolubilidad: referencia,
 # cadenas y cocientes; niebla=5 de 002-niebla-guerra: paso de «ir a»,
 # consultas, exploración, registros y panel; línea de tiempo=5 de 004: memoria
 # y consulta según K, adelante y atrás, búsqueda del bloque, recorte y punto de
 # control; la segunda tabla de historial es la carga nueva de §5.6)
 todo = ejecutar_todo(Reporte(imprimir=False), rapido=True)
-assert len(todo.tablas) == 3 + 2 + 2 + 3 + 3 + 7 + 3 + 1 + 2 + 1 + 3 + 5 + 3 + 5 + 5, len(todo.tablas)
+assert len(todo.tablas) == 4 + 2 + 2 + 3 + 3 + 7 + 3 + 1 + 2 + 1 + 3 + 6 + 3 + 5 + 5, len(todo.tablas)
 assert time.perf_counter() - inicio < 150
 
 print("Sección 4.4 OK")

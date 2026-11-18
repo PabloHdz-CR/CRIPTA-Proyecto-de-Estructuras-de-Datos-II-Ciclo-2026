@@ -256,7 +256,7 @@ for linea in tabla:
 inicio = time.perf_counter()
 reporte = ejecutar(Reporte(imprimir=False), rapido=True)
 assert time.perf_counter() - inicio < 60
-assert len(reporte.tablas) == 3
+assert len(reporte.tablas) == 4
 assert len(reporte.tablas.obtener(0)[2]) == 2 * 4        # 2 tamaños x 4 estructuras
 assert len(reporte.tablas.obtener(1)[2]) == 2 * 4
 assert len(reporte.tablas.obtener(2)[2]) == 3 * 2        # 3 fracciones x 2 estrategias
@@ -264,5 +264,18 @@ for fila in reporte.tablas.obtener(0)[2]:
     if "decisión" in fila[1]:
         assert fila[4] == "1.0x"                 # contra sí misma
 assert "mismo orden" in reporte.notas.obtener(0)
+
+# 11. §5.6 (D98, FR-025 de 001): la tabla de la agenda con la carga de la
+# Parte II (20, 50 y 100 cazadores x 4 estructuras) y su veredicto.
+tabla = reporte.tablas.obtener(3)
+assert "Agenda con la carga de la Parte II" in tabla[0], tabla[0]
+assert len(tabla[2]) == 3 * 4, len(tabla[2])
+assert sorted({fila[0] for fila in tabla[2]}) == ["100", "20", "50"]
+for fila in tabla[2]:
+    if "decisión" in fila[3]:
+        assert fila[7] == "1.0x"                 # contra sí misma
+assert any(nota.startswith("Veredicto §5.6 (agenda): ") and
+           ("sigue siendo adecuada" in nota or "se cambia" in nota)
+           for nota in reporte.notas), "§5.6: falta el veredicto de la agenda"
 
 print("Sección 2.3 OK")

@@ -12,6 +12,12 @@ dict, set, sorted ni heapq; se usan ListaEnlazada y HeapMinimo.
   adelante desde la sala de cada cazador, acotado por su rango. Es otro
   algoritmo y no reutiliza MapaDistancias, para que la comparación no
   comparta errores.
+- MapaDistanciasSinReuso: recalcular siempre (§5.2, §6.3 de la Parte II): el
+  mismo cálculo del juego, pero cada consulta lo rehace desde cero, sin mirar
+  la clave de validez (sala del jugador, versión de puertas, sello, cota).
+- EventoCambioPuertaBench: abre o cierra una cara de puerta a mitad de un
+  ciclo, por Partida.cambiar_puerta (el único camino del juego), para el
+  escenario de puertas inestables.
 """
 from __future__ import annotations
 
@@ -19,6 +25,7 @@ from ...modelo.estructuras.heapMinimo import HeapMinimo
 from ...modelo.mundo.mapaDistancias import EntradaMapa, MapaDistancias
 from ...modelo.nucleo.accion import Atacar, Esperar, Mover
 from ...modelo.puertos.dto import DIRECCIONES
+from ...modelo.reloj.evento import Evento
 
 
 class MapaDistanciasP1(MapaDistancias):
@@ -52,6 +59,26 @@ class MapaDistanciasP3(MapaDistancias):
         else:
             tope = self._mayor_rango_activo()
         return max(cota_minima, min(duplicada, tope))
+
+
+class MapaDistanciasSinReuso(MapaDistancias):
+    """Recalcular siempre: cada asegurar() calcula el mapa desde cero con la
+    misma cota del juego (P4), aunque la clave de validez coincida. Da las
+    mismas distancias, así que los cazadores deciden lo mismo; solo cambia el
+    trabajo."""
+
+    def asegurar(self, id_objetivo: int, cota_minima: int) -> None:
+        self._cota_reutilizable = 0
+        self._calcular(self._mundo.sala(id_objetivo), self._registro.version,
+                       self._cota_nueva(cota_minima))
+
+
+class EventoCambioPuertaBench(Evento):
+    """Invierte el estado de una cara de puerta (duenio) por
+    Partida.cambiar_puerta. Solo lo programa el bench de invalidación."""
+
+    def ejecutar(self, partida) -> None:
+        partida.cambiar_puerta(self.duenio, not self.duenio.cerrada)
 
 
 class BusquedaPorCazador:

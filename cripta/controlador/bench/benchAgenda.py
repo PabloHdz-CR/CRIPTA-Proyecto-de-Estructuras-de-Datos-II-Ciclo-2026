@@ -7,12 +7,17 @@ Se puede ejecutar directamente (desde la carpeta que contiene 'cripta'):
 
 Más adelante el modo --bench del programa llamará a ejecutar().
 
-Mide cuatro cosas:
+Mide cinco cosas:
   1. Que todas las agendas entreguen los eventos en el MISMO orden.
   2. Cuánto cuesta un ciclo "sacar el próximo evento y programar otro" con
      100 a 10 000 eventos pendientes (comparando la decisión y las alternativas).
   3. Cuántas comparaciones hace cada estructura por ciclo.
   4. Cancelación perezosa (la decisión) contra cancelación inmediata.
+  5. §5.6 (Parte II): la agenda con la carga de la Parte II. Se graba la
+     agenda REAL durante un ciclo completo entre dos decisiones del jugador
+     en la cripta de referencia con costos variables y 20, 50 y 100
+     cazadores activos (el escenario de benchCazador, 001-terreno-cazador),
+     y esas mismas operaciones se repiten sobre cada estructura de la tabla 1.
 """
 import random
 import sys
@@ -20,11 +25,21 @@ import sys
 from ...modelo.estructuras.listaEnlazada import ListaEnlazada
 from .alternativasAgenda import (CLAVES_AGENDA, EventoBench, EventoContado,
                                  crear_agenda)
+from .benchCazador import CANTIDADES, RANGO_GRANDE, EscenarioCiclo, _iguales, cripta_de_referencia
 from .medidor import Medidor
 from .reporte import Reporte
 
 SEMILLA = 2026
 LIMITE_CICLO_MS = 20   # §5.2: un ciclo completo entre decisiones < 20 ms
+
+# §5.6: la agenda sigue siendo adecuada si, con la carga mayor (100 cazadores),
+# su parte del ciclo es una fracción chica de los 20 ms y ninguna alternativa
+# la supera. Con pocos eventos una alternativa lineal puede ganar por unos µs
+# (inserción O(n) con n chico): se informa, pero no decide (D98).
+UMBRAL_AGENDA_PORCENTAJE = 5.0
+COPIAS_TRAZA = 20      # repeticiones de la traza por medición (un ciclo dura µs)
+PROGRAMAR, EXTRAER, CANCELAR = "P", "X", "C"
+TITULO_CARGA_NUEVA = "Agenda con la carga de la Parte II"
 
 
 def listas_iguales(a, b):
@@ -189,6 +204,199 @@ def comparaciones_por_ciclo(clave, n, ciclos):
     return EventoContado.comparaciones / ciclos
 
 
+# ----------------------------------------------------------------------
+# 4. §5.6: la agenda con la carga de la Parte II
+# ----------------------------------------------------------------------
+
+def grabar_traza(escenario):
+    """Un ciclo real del EscenarioCiclo (benchCazador) con la agenda grabada.
+
+    Devuelve (pendientes, operaciones): los eventos que había al empezar el
+    ciclo como (tiempo, secuencia, cancelado), y lo que el juego le pidió a la
+    agenda durante el ciclo como (tipo, tiempo, secuencia), con tipo
+    PROGRAMAR, EXTRAER o CANCELAR. reprogramar() usa cancelar() y
+    programar() de la misma agenda, así que también queda grabado."""
+    escenario.preparar(escenario.cantidad)
+    agenda = escenario.partida.agenda
+    pendientes = ListaEnlazada()
+    for evento in agenda._monticulo:
+        pendientes.agregar_al_final((evento.tiempo, evento.secuencia, evento.cancelado))
+    operaciones = ListaEnlazada()
+    programar = agenda.programar
+    extraer = agenda.extraer_siguiente
+    cancelar = agenda.cancelar
+
+    def programar_grabado(evento):
+        programar(evento)
+        operaciones.agregar_al_final((PROGRAMAR, evento.tiempo, evento.secuencia))
+
+    def extraer_grabado():
+        evento = extraer()
+        if evento is not None:
+            operaciones.agregar_al_final((EXTRAER, evento.tiempo, evento.secuencia))
+        return evento
+
+    def cancelar_grabado(evento):
+        cancelar(evento)
+        operaciones.agregar_al_final((CANCELAR, evento.tiempo, evento.secuencia))
+
+    agenda.programar = programar_grabado
+    agenda.extraer_siguiente = extraer_grabado
+    agenda.cancelar = cancelar_grabado
+    try:
+        escenario.ejecutar()
+    finally:
+        del agenda.programar
+        del agenda.extraer_siguiente
+        del agenda.cancelar
+    return pendientes, operaciones
+
+
+def _contar(operaciones, tipo):
+    cantidad = 0
+    for operacion in operaciones:
+        if operacion[0] == tipo:
+            cantidad += 1
+    return cantidad
+
+
+def _buscar(eventos, tiempo, secuencia):
+    """El EventoBench con esa clave (se usa al preparar, no se cronometra)."""
+    for evento in eventos:
+        if evento.tiempo == tiempo and evento.secuencia == secuencia:
+            return evento
+    return None
+
+
+class EscenarioTraza:
+    """Repite la traza grabada sobre la estructura 'clave'. preparar() arma
+    COPIAS_TRAZA agendas con los mismos pendientes y resuelve de antemano a
+    qué evento apunta cada cancelación (no se cronometra); ejecutar() repite
+    las operaciones en todas las copias."""
+
+    def __init__(self, clave, pendientes, operaciones, copias=COPIAS_TRAZA):
+        self._clave = clave
+        self._pendientes = pendientes
+        self._operaciones = operaciones
+        self.copias = copias
+        self._armadas = ListaEnlazada()
+
+    def _armar_una(self):
+        agenda = crear_agenda(self._clave)
+        eventos = ListaEnlazada()
+        for tiempo, secuencia, cancelado in self._pendientes:
+            evento = EventoBench(tiempo, secuencia)
+            agenda.programar(evento)
+            if cancelado:
+                agenda.cancelar(evento)
+            eventos.agregar_al_final(evento)
+        pasos = ListaEnlazada()
+        for tipo, tiempo, secuencia in self._operaciones:
+            if tipo == PROGRAMAR:
+                evento = EventoBench(tiempo, secuencia)
+                eventos.agregar_al_final(evento)
+                pasos.agregar_al_final((PROGRAMAR, evento))
+            elif tipo == CANCELAR:
+                pasos.agregar_al_final((CANCELAR, _buscar(eventos, tiempo, secuencia)))
+            else:
+                pasos.agregar_al_final((EXTRAER, None))
+        return agenda, pasos
+
+    def preparar(self, n):
+        self._armadas = ListaEnlazada()
+        for _ in range(self.copias):
+            self._armadas.agregar_al_final(self._armar_una())
+
+    def ejecutar(self):
+        for agenda, pasos in self._armadas:
+            for tipo, evento in pasos:
+                if tipo == PROGRAMAR:
+                    agenda.programar(evento)
+                elif tipo == EXTRAER:
+                    agenda.siguiente()
+                elif evento is not None:
+                    agenda.cancelar(evento)
+
+    def orden_extraido(self):
+        """(tiempo, secuencia) de lo que sale, en orden, con una sola copia."""
+        agenda, pasos = self._armar_una()
+        orden = ListaEnlazada()
+        for tipo, evento in pasos:
+            if tipo == PROGRAMAR:
+                agenda.programar(evento)
+            elif tipo == EXTRAER:
+                sacado = agenda.siguiente()
+                orden.agregar_al_final((sacado.tiempo, sacado.secuencia))
+            elif evento is not None:
+                agenda.cancelar(evento)
+        return orden
+
+
+def carga_parte_2(reporte, medidor, rapido=False):
+    """§5.6: la tabla "Agenda con la carga de la Parte II" y su veredicto.
+
+    Por cada cantidad de cazadores: un ciclo real grabado (pendientes y
+    operaciones) y el tiempo de esas operaciones en cada estructura, en µs
+    por ciclo y como porcentaje de los 20 ms de §5.2; además, el ciclo
+    completo medido con la partida real, para ver qué parte es la agenda."""
+    cripta = cripta_de_referencia()
+    filas = ListaEnlazada()
+    porcentaje_100 = 0.0
+    mayor = CANTIDADES[len(CANTIDADES) - 1]
+    mas_rapida_en_la_mayor = ""
+    mas_rapidas_con_menos = ListaEnlazada()
+    for cantidad in CANTIDADES:
+        escenario = EscenarioCiclo(cripta, _iguales(cantidad, RANGO_GRANDE))
+        ciclo = medidor.medir(escenario, cantidad).minimo * 1e6           # µs del ciclo entero
+        pendientes, operaciones = grabar_traza(escenario)
+        extraidos_reales = ListaEnlazada()
+        for tipo, tiempo, secuencia in operaciones:
+            if tipo == EXTRAER:
+                extraidos_reales.agregar_al_final((tiempo, secuencia))
+        resumen_ops = (f"{_contar(operaciones, PROGRAMAR)}/{_contar(operaciones, EXTRAER)}/"
+                       f"{_contar(operaciones, CANCELAR)}")
+        tiempo_decision = None
+        for clave in CLAVES_AGENDA:
+            traza = EscenarioTraza(clave, pendientes, operaciones)
+            if not listas_iguales(traza.orden_extraido(), extraidos_reales):
+                raise AssertionError(f"§5.6: {clave} no saca los eventos en el orden del juego")
+            por_ciclo = medidor.medir(traza, cantidad).minimo / traza.copias * 1e6
+            if clave == "monticulo_enlazado":
+                tiempo_decision = por_ciclo
+            elif por_ciclo < tiempo_decision:
+                texto = (f"{crear_agenda(clave).nombre} con {cantidad} cazadores "
+                         f"({por_ciclo:.1f} contra {tiempo_decision:.1f} µs)")
+                if cantidad == mayor:
+                    mas_rapida_en_la_mayor = texto
+                else:
+                    mas_rapidas_con_menos.agregar_al_final(texto)
+            porcentaje = por_ciclo / (LIMITE_CICLO_MS * 1000) * 100
+            if clave == "monticulo_enlazado" and cantidad == mayor:
+                porcentaje_100 = porcentaje
+            filas.agregar_al_final((str(cantidad), str(len(pendientes)), resumen_ops,
+                                    crear_agenda(clave).nombre, f"{por_ciclo:.1f}",
+                                    f"{porcentaje:.3f} %", f"{por_ciclo / ciclo * 100:.1f} %",
+                                    f"{por_ciclo / tiempo_decision:.1f}x"))
+        reporte.nota(f"  {cantidad} cazadores: ciclo completo {ciclo / 1000:.2f} ms, "
+                     f"{len(pendientes)} eventos pendientes al empezar.")
+    reporte.tabla(f"4. {TITULO_CARGA_NUEVA} (§5.6): cripta de referencia ({cripta.nombre}) con "
+                  f"costos variables, un ciclo real entre dos decisiones, en microsegundos",
+                  ("cazadores", "pendientes", "programar/extraer/cancelar", "estructura",
+                   "mínimo µs", f"de {LIMITE_CICLO_MS} ms", "del ciclo", "vs decisión"), filas)
+    adecuada = porcentaje_100 < UMBRAL_AGENDA_PORCENTAJE and not mas_rapida_en_la_mayor
+    veredicto = "sigue siendo adecuada" if adecuada else "se cambia"
+    detalle = (f"con {mayor} cazadores la agenda usa el {porcentaje_100:.3f} % de los "
+               f"{LIMITE_CICLO_MS} ms")
+    if mas_rapida_en_la_mayor:
+        detalle += f" y la supera {mas_rapida_en_la_mayor}"
+    else:
+        detalle += " y ninguna alternativa la supera"
+    if not mas_rapidas_con_menos.esta_vacia():
+        detalle += "; con menos cazadores es más rápida " + ", ".join(
+            texto for texto in mas_rapidas_con_menos)
+    reporte.nota(f"Veredicto §5.6 (agenda): {veredicto} ({detalle}).")
+
+
 def ejecutar(reporte=None, rapido=False):
     """Corre todas las mediciones. Devuelve el Reporte con las tablas."""
     if reporte is None:
@@ -257,6 +465,9 @@ def ejecutar(reporte=None, rapido=False):
                  f"pendientes, un evento cuesta ~{ultimo_tiempo_decision:.1f} µs: en "
                  f"{LIMITE_CICLO_MS} ms caben ~{int(LIMITE_CICLO_MS * 1000 / ultimo_tiempo_decision)} "
                  f"eventos (§5.2).")
+
+    # 5. §5.6: la misma comparación con la carga de la Parte II
+    carga_parte_2(reporte, medidor, rapido)
     return reporte
 
 
