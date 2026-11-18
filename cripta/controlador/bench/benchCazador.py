@@ -18,6 +18,11 @@ Mide cinco cosas:
   4. El mapa compartido contra la búsqueda por cazador (R1): mismas
      decisiones y su costo.
   5. El costo de Mundo.enlazar() (R4).
+  6. Invalidación del mapa (§5.2 y §6.3 de la Parte II): con 20 y 100
+     cazadores y puertas estables (casi nunca cambian) o inestables (cambian
+     a mitad de casi todos los ciclos), la decisión (reutilizar el mapa
+     mientras la clave de validez coincida) contra recalcular siempre:
+     ms por ciclo, recálculos, salas examinadas y la misma decisión.
 
 La cripta de referencia es la de más salas que lista la fuente sin conexión
 sobre datos_offline/: se elige en ejecución, sin ids en el código (principio
@@ -44,6 +49,7 @@ from ...modelo.puertos.dto import (
     DIRECCIONES, ContenidoSalaDTO, DatosCriptaDTO, FichaEnemigoDTO, JugadorDTO, SalaDTO,
     SalidaDTO)
 from .alternativasCazador import (
+    EventoCambioPuertaBench, MapaDistanciasSinReuso,
     BusquedaPorCazador, MapaDistanciasP1, MapaDistanciasP2, MapaDistanciasP3)
 from .medidor import Medidor
 from .reporte import Reporte
@@ -264,7 +270,10 @@ class EscenarioCiclo:
         return sala_jugador
 
     def _crear_mapa(self, partida):
-        """P4 es la del juego (MapaDistancias con el R_activos de la partida)."""
+        """P4 es la del juego (MapaDistancias con el R_activos de la partida);
+        SIEMPRE, la alternativa de recalcular en cada consulta (sección 6)."""
+        if self._politica == "SIEMPRE":
+            return MapaDistanciasSinReuso(partida.mundo, partida.mayor_rango_activo)
         if self._politica == "P1":
             return MapaDistanciasP1(partida.mundo)
         if self._politica == "P2":
@@ -309,6 +318,118 @@ class EscenarioCiclo:
         examinadas = self.mapa.salas_examinadas
         self.ejecutar()
         return self.mapa.calculos - calculos, self.mapa.salas_examinadas - examinadas
+
+
+PROBABILIDAD_CAMBIO = (("estables", 0.02), ("inestables", 0.9))
+CICLOS_INVALIDACION = 20         # ciclos seguidos por escenario (--rapido: 4)
+TITULO_INVALIDACION = "Invalidación del mapa"
+
+
+class EscenarioInvalidacion(EscenarioCiclo):
+    """EscenarioCiclo con cambios de puertas a mitad del ciclo (sección 6).
+
+    En cada preparar(), con la probabilidad del escenario (sorteo con
+    random.Random(SEMILLA), igual para las dos políticas), se programa un
+    EventoCambioPuertaBench en el instante de los turnos de los cazadores y
+    se reprograma la segunda mitad de ellos DESPUÉS de ese evento: la mitad
+    decide con la puerta como estaba y la otra mitad con la puerta cambiada.
+    Nunca se tocan las puertas de las dos salas del jugador (va y viene entre
+    ellas). El jugador se mueve en cada ciclo, como en la sección 1."""
+
+    def __init__(self, cripta, cantidad: int, politica: str, probabilidad: float) -> None:
+        super().__init__(cripta, _iguales(cantidad, RANGO_GRANDE), politica)
+        self._probabilidad = probabilidad
+        self._azar = random.Random(SEMILLA)
+        self.cambios = 0
+        otra = self.partida.mundo.sala(self._sala_jugador).salida(self._ida).destino
+        self._puertas = ListaEnlazada()
+        for sala in self.partida.mundo:
+            for salida in sala.salidas:
+                if (salida is not None and salida.origen.id not in (self._sala_jugador, otra)
+                        and salida.destino not in (self._sala_jugador, otra)):
+                    self._puertas.agregar_al_final(salida)
+
+    def preparar(self, n) -> None:
+        super().preparar(n)
+        if self._azar.random() >= self._probabilidad:
+            return
+        puerta = self._puertas.obtener(self._azar.randrange(len(self._puertas)))
+        partida = self.partida
+        turno = partida.reloj + calcular_intervalo(100, 100)
+        partida.mutador.pausar()
+        partida.mutador.agenda_programar(EventoCambioPuertaBench(turno, puerta))
+        mitad = self.cantidad // 2
+        numero = 0
+        for enemigo, _ in self._cazadores:
+            numero += 1
+            if numero > mitad:
+                nuevo = partida.mutador.agenda_reprogramar(enemigo.evento_accion, turno)
+                partida.mutador.asignar(enemigo, "evento_accion", nuevo)
+        partida.mutador.reanudar()
+        self.cambios += 1
+
+    def salas_de_los_cazadores(self) -> tuple:
+        return tuple(enemigo.sala for enemigo, _ in self._cazadores)
+
+
+def medir_invalidacion(cripta, cantidad: int, politica: str, probabilidad: float, ciclos: int):
+    """(ms promedio por ciclo, recálculos por ciclo, salas examinadas por
+    ciclo, cambios de puerta, decisiones) de 'ciclos' ciclos seguidos.
+    decisiones: ListaEnlazada con la sala de cada cazador al terminar cada
+    ciclo (preparar() los devuelve a su sala inicial, así que es la decisión
+    de ese ciclo)."""
+    escenario = EscenarioInvalidacion(cripta, cantidad, politica, probabilidad)
+    mapa = escenario.mapa
+    calculos = mapa.calculos
+    examinadas = mapa.salas_examinadas
+    total = 0.0
+    decisiones = ListaEnlazada()
+    for _ in range(ciclos):
+        escenario.preparar(cantidad)
+        inicio = time.perf_counter()
+        escenario.ejecutar()
+        total += time.perf_counter() - inicio
+        decisiones.agregar_al_final(escenario.salas_de_los_cazadores())
+    return (total / ciclos * 1000, (mapa.calculos - calculos) / ciclos,
+            (mapa.salas_examinadas - examinadas) / ciclos, escenario.cambios, decisiones)
+
+
+def _mismas(a: ListaEnlazada, b: ListaEnlazada) -> bool:
+    if len(a) != len(b):
+        return False
+    otra = iter(b)
+    for elemento in a:
+        if elemento != next(otra):
+            return False
+    return True
+
+
+def seccion_invalidacion(reporte, criptas, cantidades=(20, 100), rapido: bool = False) -> None:
+    """Sección 6: la tabla "Invalidación del mapa" y lo que ahorra reutilizar."""
+    ciclos = 4 if rapido else CICLOS_INVALIDACION
+    filas = ListaEnlazada()
+    for cripta in criptas:
+        for cantidad in cantidades:
+            for nombre, probabilidad in PROBABILIDAD_CAMBIO:
+                ms_d, calc_d, exam_d, cambios, dec_d = medir_invalidacion(
+                    cripta, cantidad, "P4", probabilidad, ciclos)
+                ms_s, calc_s, exam_s, _, dec_s = medir_invalidacion(
+                    cripta, cantidad, "SIEMPRE", probabilidad, ciclos)
+                misma = "sí" if _mismas(dec_d, dec_s) else "NO"
+                if misma != "sí":
+                    raise AssertionError(f"{TITULO_INVALIDACION}: {cripta.nombre}, {cantidad} "
+                                         f"cazadores, puertas {nombre}: decisiones distintas")
+                ahorro = 100 - (exam_d / exam_s * 100) if exam_s else 0.0
+                filas.agregar_al_final((cripta.nombre, str(cantidad), f"{nombre} ({cambios}/{ciclos})",
+                                        f"{ms_d:.2f}", f"{ms_s:.2f}", f"{calc_d:.2f}", f"{calc_s:.2f}",
+                                        f"{exam_d:.0f}", f"{exam_s:.0f}", f"{ahorro:.1f} %", misma))
+    reporte.tabla(f"6. {TITULO_INVALIDACION}: reutilizar mientras la clave coincida (decisión) "
+                  f"contra recalcular siempre; promedio de {ciclos} ciclos seguidos, el jugador se "
+                  f"mueve en cada uno",
+                  ("cripta", "cazadores", "puertas (ciclos con cambio)", "decisión ms",
+                   "siempre ms", "recálculos decisión", "recálculos siempre",
+                   "examinadas decisión", "examinadas siempre", "trabajo ahorrado",
+                   "misma decisión"), filas)
 
 
 def _iguales(cantidad: int, rango: int) -> ListaEnlazada:
@@ -533,6 +654,7 @@ def ejecutar(reporte=None, rapido=False):
     _seccion_conteos(reporte)
     _seccion_comparacion(reporte, medidor, criptas)
     _seccion_enlace(reporte, medidor, criptas)
+    seccion_invalidacion(reporte, criptas, rapido=rapido)
     reporte.nota("")
     reporte.nota(f"Las cifras de salas examinadas no dependen de la máquina; los tiempos son "
                  f"el mínimo de {3 if rapido else 7} repeticiones (Medidor). Duración del bench: "
