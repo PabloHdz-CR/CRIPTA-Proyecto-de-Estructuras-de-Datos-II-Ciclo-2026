@@ -7,7 +7,8 @@ La Vista sigue sin conocer el Modelo (principio III): recibe solo los DTOs de
 
 **Revisión (T005, 15/11/2026):** en `cripta/vista`, M, I y H no se usan en ninguna
 pantalla (la partida usa A, C, G, L, O, P, Q, R, S, U y V; el menú, B, N y X).
-Falta la confirmación de Diego (autor de 001 y 003) de que no planea usarlas.
+**Confirmada (T005, 17/11/2026):** `git grep -n -E "key\.(M|I|H)\b" origin/main origin/003-resolubilidad origin/004-linea-tiempo -- cripta` solo encuentra M, I y H en 004-linea-tiempo (`cripta/vista/pantallaJuego.py` líneas 361, 365 y 368); main y 003-resolubilidad no las usan. Diego (autor de
+001 y 003) está de acuerdo.
 
 | Tecla | Contexto | Comando | Notas |
 |---|---|---|---|

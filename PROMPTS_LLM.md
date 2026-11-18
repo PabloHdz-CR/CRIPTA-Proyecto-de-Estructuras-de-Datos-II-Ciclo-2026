@@ -1372,3 +1372,9 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "Agrega al README, en la sección de Spec Kit, la versión exacta usada: Spec Kit (specify CLI) 1.2.6.dev0, la misma del proyecto (.specify/init-options.json), con el agente Claude Code. Si Diego confirmó que no usa las teclas M, I ni H, marca T005 de specs/002-niebla-guerra/tasks.md con esa nota; si no, déjala pendiente. Commit "Docs: versión de Spec Kit y agente en el README", registra el prompt en PROMPTS_LLM.md, muéstrame git log --oneline -3. Sin push."
 - **Uso:** el README no tenía sección de Spec Kit (tampoco en main): se agregó "## Spec Kit" con la versión 1.2.6.dev0 (verificada en .specify/init-options.json), el agente Claude Code, el flujo de comandos y dónde están los artefactos. T005 de la 002 sigue pendiente: no hay confirmación de Diego en el repositorio. Sin push.
+
+## Entrada 180
+- **Fecha:** 17/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "Diego pidió revisar las teclas en los controladores y lo hicimos: git grep -n -E 'key\.(M|I|H)\b' origin/main origin/003-resolubilidad origin/004-linea-tiempo -- cripta solo encuentra M, I y H en 004-linea-tiempo (cripta/vista/pantallaJuego.py líneas 361, 365 y 368); main y 003-resolubilidad no las usan. Diego está de acuerdo. Marca T005 de specs/002-niebla-guerra/tasks.md con esa nota (el comando y el resultado) y agrégala en D87 de DECISIONES.md quitando lo de 'pendiente'. Commit 'Niebla: teclas M, I y H revisadas con Diego (T005)', registra el prompt en PROMPTS_LLM.md, muéstrame git log --oneline -3. Sin push."
+- **Uso:** se volvió a correr el git grep (mismo resultado). T005 de la 002 marcada con el comando y el resultado; D87 dice la revisión con Diego en vez de "pendiente"; contracts/vista.md de la 002 también, como pide T005. Sin push.

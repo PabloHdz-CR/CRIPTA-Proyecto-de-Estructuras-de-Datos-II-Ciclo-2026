@@ -837,7 +837,8 @@ D87. Niebla de guerra: teclas M e I, panel del mapa y panel de Controles
 Problema: ver el mapa conocido, elegir el destino de «ir a» y ver por qué se detuvo (§7.3), sin chocar con las teclas existentes.
 Decisión: M abre y cierra el panel (verbo de sesión: el Controlador arma MapaConocidoVisible solo con el panel abierto); con el panel abierto, flecha arriba/abajo mueven un cursor que salta las avistadas, ENTER encola ir_a y RePág/AvPág desplazan, y las flechas no mueven al jugador. I interrumpe el viaje. H queda reservada para la línea de tiempo (004; ahora la usa, D96). El HUD muestra "Viajando a ..." y la bitácora el motivo. La sala actual se dibuja desde el recuerdo. Con las filas nuevas, el panel de Controles se encimaba (ESC tapaba la descripción de Tab): ahora elige entre 2 y 4 columnas según el espacio, usa descripciones cortas, mide cada texto y la bitácora pasa del 56 al 52 % del ancho inferior para dejar tres columnas a 1024 de ancho.
 Evidencia: prueba_vista_mapa: nada de salas no exploradas llega a la vista (SC-002), el orden por id, la tecla M (solo M encola alternar_mapa), el panel dibujado, el cursor y ENTER, y caso_controles_sin_encimarse, que comprueba a 1280x720 y 1024x720 con los anchos reales de los textos que ninguna fila de Controles se encima con otra ni se sale del panel.
-Límites: la confirmación de Diego de que no planea usar M, I ni H (T005) sigue pendiente; en el código no se usaban.
+Revisión con Diego (T005, 17/11/2026): a su pedido se revisaron las teclas en los controladores de las ramas del equipo con `git grep -n -E "key\.(M|I|H)\b" origin/main origin/003-resolubilidad origin/004-linea-tiempo -- cripta`, que solo encuentra M, I y H en 004-linea-tiempo (`cripta/vista/pantallaJuego.py` líneas 361, 365 y 368); main y 003-resolubilidad no las usan. Diego está de acuerdo.
+Límites: ninguno conocido; una tecla nueva en 001 o 003 debe evitar M, I y H.
 
 D88. Niebla de guerra: formato de guardado 3
 
