@@ -106,6 +106,19 @@ investigación, contratos y tareas) están en `specs/001-terreno-cazador/`,
 `specs/002-niebla-guerra/`, `specs/003-resolubilidad/` y
 `specs/004-linea-tiempo/`, y cada prompt usado está en `PROMPTS_LLM.md`.
 
+Instalación, con la versión fijada por tag:
+
+```powershell
+uv tool install specify-cli --force --from git+https://github.com/github/spec-kit.git@v1.2.6
+```
+
+Con esa instalación, `specify version` informa `CLI Version 1.2.6`. El
+`1.2.6.dev0` de `.specify/init-options.json` lo escribió el `specify init`
+que creó el proyecto.
+
+Los números FR-xxx y SC-xxx se repiten entre specs, así que se citan con su
+spec (por ejemplo, 002/FR-012).
+
 ## Terreno y cazador
 
 Especificación, plan y tareas en `specs/001-terreno-cazador/`.

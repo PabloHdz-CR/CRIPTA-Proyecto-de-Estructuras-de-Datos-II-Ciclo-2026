@@ -1965,3 +1965,9 @@ Al final muestra git status, git log --oneline -20 y el resultado de la suite y 
 ````
 
 - **Uso:** doce correcciones de documentación y trazabilidad en main, sin cambiar decisiones ni reglas, con un commit por punto y sin push: PROMPTS_LLM.md (entrada 93 con nota, 93-bis de /speckit-constitution, textos reales desde las transcripciones de Claude Code, entradas autocontenidas, la entrada 1 repetida y los saltos de numeración), citas de FR, SC o principio en las tareas de 003 y 001, enmienda de la spec 003 por 7ca2ab3, cifras de la cripta de referencia en D71 a D99, número de pruebas del README, prueba_vista_resolubilidad sin depender de la fuente, nota de 33a4db8 en D78 o D79, comentario de estadoVista.py, marcas del Apéndice B en la spec 001, límites de D80 y la nota de veneno y regeneración en su lugar.
+
+## Entrada 187
+- **Fecha:** 18/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** "donde pongo esto?" (sobre el comando de instalación de specify CLI encontrado en el historial de PowerShell: uv tool install specify-cli --force --from git+https://github.com/github/spec-kit.git@v1.2.6), seguido de "hazlo tu".
+- **Uso:** README, sección Spec Kit: el comando de instalación con la versión fijada por tag (§2.1), la aclaración de que specify version informa 1.2.6 y de que el 1.2.6.dev0 de .specify/init-options.json lo escribió el specify init, y la nota de que los FR y SC se citan con su spec (por ejemplo 002/FR-012). Commit en main, sin push.
