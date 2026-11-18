@@ -49,7 +49,7 @@ heapq ni sorted (`prueba_reglas`).
   - Actualizar el docstring del módulo con las reglas nuevas.
   - `py pruebas/prueba_reglas.py` sigue en verde sobre el código actual de `cripta/`. Si marca algo, se corrige en el mismo commit o se documenta por qué queda.
 
-  No cubre ningún FR: hace cumplir el principio I de la constitución, que es el control que usan T041, T042 y T058.
+  No cubre ningún FR: hace cumplir el principio I de la constitución, que es el control que usan T041, T042 y T058. Sirve a FR-011, FR-015 y FR-017 (el MapaDistancias de T028 y el Cazador de T029, que los cumplen) y a FR-025 y FR-026 (alternativasCazador y benchCazador de T041 y T042): ese código queda revisado por esta regla.
 - [X] T003 Con el código **actual**, antes de T049, generar el fixture `pruebas/datos/terreno_cazador/guardado_formato_anterior.bin`: un archivo de partida guardada con el formato vigente (`FORMATO_VERSION = 1`).
   - Hacerlo con un script reproducible, `pruebas/generar_guardado_formato_anterior.py`, que inicia una partida sin conexión sobre `datos_offline/` y la guarda con `PartidaBinaria.guardar`.
   - La cripta se elige en el script por cantidad de salas (la más chica). No usa `terreno-a`, porque el código actual no reconoce el comportamiento "cazador".
@@ -364,7 +364,7 @@ heapq ni sorted (`prueba_reglas`).
   - Formato de guardado con el número acordado.
 
   Cubre FR-017, FR-025 y FR-026.
-- [X] T056 [P] Registro en `PROMPTS_LLM.md`: **cada commit de fase incluye** la entrada de los prompts usados en esa fase (constitución, "Flujo y definición de hecho"), con el siguiente número libre de `## Entrada N` tal como está en el archivo en ese momento. Esta tarea verifica al final que ningún commit de fase quedó sin su entrada y que la numeración es continua. No cubre ningún FR: es un requisito de proceso de la constitución, no del producto.
+- [X] T056 [P] Registro en `PROMPTS_LLM.md`: **cada commit de fase incluye** la entrada de los prompts usados en esa fase (constitución, "Flujo y definición de hecho"), con el siguiente número libre de `## Entrada N` tal como está en el archivo en ese momento. Esta tarea verifica al final que ningún commit de fase quedó sin su entrada y que la numeración es continua. No cubre ningún FR: es un requisito de proceso de la constitución, no del producto. Ningún FR ni SC de la spec lo pide; sirve a la trazabilidad de FR-001 a FR-028 y SC-001 a SC-006 en conjunto, porque registra los prompts de los commits que los implementan.
 - [X] T057 Comprobar la tabla de escenarios (SC-001): buscar en `pruebas/` las 21 marcas `H<historia>.E<escenario>` de la sección "Escenarios de aceptación → pruebas" y confirmar que cada una aparece en la prueba asignada. Cubre SC-001.
 - [X] T058 Validación completa con `.venv` activado:
   - `py pruebas/ejecutar_pruebas.py`: todas pasan, **46/46**.

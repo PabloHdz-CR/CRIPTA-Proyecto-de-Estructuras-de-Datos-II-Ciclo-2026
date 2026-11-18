@@ -37,9 +37,9 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
 
 **Purpose**: dejar la línea base verde, la descarga de llaves y el paquete sin conexión que usan las pruebas.
 
-- [X] T001 Confirmar la línea base antes de cambiar código: `py pruebas/ejecutar_pruebas.py` completa y en verde con las **46** pruebas de `main`, y `py -m pruebas.prueba_reglas` sin hallazgos. Si algo falla, se corrige o se documenta en este mismo commit antes de seguir.
+- [X] T001 Confirmar la línea base antes de cambiar código: `py pruebas/ejecutar_pruebas.py` completa y en verde con las **46** pruebas de `main`, y `py -m pruebas.prueba_reglas` sin hallazgos. Si algo falla, se corrige o se documenta en este mismo commit antes de seguir. Cubre: soporte de la línea base (constitución, "Flujo de desarrollo y definición de hecho": la suite y las reglas en verde antes de cambiar código); es la base de SC-001 y protege FR-021 (partidas guardadas y --replay que ya existían).
 - [X] T002 [P] Extender `guardar_respuestas.py` para descargar `GET /criptas/<id>/llaves` y guardarlo tal cual en `datos_offline/criptas/<id>/llaves.json` (contracts/datos-llaves.md, "Paquete sin conexión"). Actualizar el docstring con el archivo nuevo. Contar la solicitud igual que las demás y respetar 429. FR-025, FR-029.
-- [X] T003 [EQUIPO] Regenerar `datos_offline/` con las versiones de la segunda parte ejecutando `python guardar_respuestas.py` (necesita red y que el servicio ya publique `/llaves`; depende de T002). Comprobar que cada `criptas/<id>/version.json` cambió respecto de la Parte I y que cada cripta tiene `llaves.json`. Commit propio: "Datos sin conexión de la Parte II con ubicación de llaves". **No bloquea** las fases 2 a 7; **sí bloquea** T063 (H5.E1 obligatorio). Mientras no se haga, H5.E1 salta con "SIN DATOS" y el juego con `datos_offline/` exige `--forzar` (research.md R12). **Después de regenerar**: correr la suite completa y `py main.py --bench --rapido`, y documentar en el commit lo que cambie respecto de la Parte I (pruebas o tablas que dependan de `datos_offline/`, como la cripta de referencia de `benchCazador`, y cifras distintas). Si una prueba falla por los datos nuevos, se investiga antes de seguir. **Hecho el 08/11/2026 a pedido del usuario**: 73 solicitudes; ahora son cripta-02 a cripta-06 (cripta-01 ya no se publica), con versiones nuevas y llaves.json; suite 55/55 y --bench --rapido en verde.
+- [X] T003 [EQUIPO] Regenerar `datos_offline/` con las versiones de la segunda parte ejecutando `python guardar_respuestas.py` (necesita red y que el servicio ya publique `/llaves`; depende de T002). Comprobar que cada `criptas/<id>/version.json` cambió respecto de la Parte I y que cada cripta tiene `llaves.json`. Commit propio: "Datos sin conexión de la Parte II con ubicación de llaves". **No bloquea** las fases 2 a 7; **sí bloquea** T063 (H5.E1 obligatorio). Mientras no se haga, H5.E1 salta con "SIN DATOS" y el juego con `datos_offline/` exige `--forzar` (research.md R12). **Después de regenerar**: correr la suite completa y `py main.py --bench --rapido`, y documentar en el commit lo que cambie respecto de la Parte I (pruebas o tablas que dependan de `datos_offline/`, como la cripta de referencia de `benchCazador`, y cifras distintas). Si una prueba falla por los datos nuevos, se investiga antes de seguir. **Hecho el 08/11/2026 a pedido del usuario**: 73 solicitudes; ahora son cripta-02 a cripta-06 (cripta-01 ya no se publica), con versiones nuevas y llaves.json; suite 55/55 y --bench --rapido en verde. Cubre: FR-028 (versiones nuevas que invalidan lo de la Parte I por la validación de versión), FR-029 (la fuente sin conexión entrega la ubicación de llaves) y FR-032 y SC-002 (la cripta publicada más grande para medir), con el principio IV (presupuesto de red).
 - [X] T004 [P] Crear el paquete sin conexión `pruebas/datos/resolubilidad/` con el formato de FuenteOffline (`criptas.json`, `catalogo/version.json`, fichas de llave y de enemigo, y por cripta `general.json`, `version.json`, `esqueleto/pagina_1.json`, `contenido/<sala>.json`, `llaves.json`). Ids sintéticos (`res-...`), nunca de criptas publicadas (FR-036). Criptas:
   - `res-cadena`: llave A abre la zona de B y B la de llave_salida; la puerta de llave_salida lleva a sala_salida (H1.E4, resoluble).
   - `res-autociclo`: llave_salida detrás de la única puerta que ella abre (H1.E1).
@@ -135,7 +135,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - el texto es idéntico carácter por carácter con las entradas desordenadas (FR-010, SC-004);
   - "Llaves no obtenibles (0):" y "Frontera bloqueada (0):" con conteo 0.
 - [X] T013 [P] [US1] Escribir `pruebas/prueba_resolubilidad_oraculo.py` (FR-001, FR-007, FR-009, FR-011 a FR-016; research.md R13): 200 criptas de `apoyo_resolubilidad` con semillas fijas 0 a 199, y para cada una, `a_tuplas(resultado del programa) == resultado del oráculo` (T010), campo por campo. Ante una diferencia, imprime la semilla, la descripción de la cripta, el primer campo distinto y los dos valores, y sale con 1. Compara el resultado estructurado, **no el texto**: no depende de T018. Depende de T009 y T010.
-- [X] T014 [US1] Registrar T011 a T013 en `PRUEBAS` de `pruebas/ejecutar_pruebas.py` bajo el comentario `# 003-resolubilidad`, con los FR y las marcas de cada una, correr la suite y **confirmar que las tres fallan** (no existen el grafo ni el verificador). Anotar el motivo en el commit de la fase.
+- [X] T014 [US1] Registrar T011 a T013 en `PRUEBAS` de `pruebas/ejecutar_pruebas.py` bajo el comentario `# 003-resolubilidad`, con los FR y las marcas de cada una, correr la suite y **confirmar que las tres fallan** (no existen el grafo ni el verificador). Anotar el motivo en el commit de la fase. Cubre: soporte del principio VII y de "pruebas antes del código" (constitución, "Flujo de desarrollo y definición de hecho"); sirve a FR-001 a FR-017 y SC-004, los que prueban T011 a T013.
 
 ### Implementation for User Story 1
 
@@ -161,7 +161,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - la dependencia mínima de cada llave y el ciclo de FR-015 desde la llave de menor id del grupo hasta repetir; grupos ordenados por menor id.
   Ninguna pasada por llave. FR-014, FR-015, FR-033, FR-034.
 - [X] T018 [US1] Implementar `cripta/controlador/textoResolubilidad.py`: `ResultadoResolubilidad` → `ListaEnlazada` de líneas, con el formato **exacto** de contracts/reporte.md (encabezado, orden, motivo (a)/(b) con su línea extra, secciones con conteo, ciclos en una línea con ` -> `, "Ciclos: ninguno.", NO_VERIFICADA, y el aviso corto `La cripta es resoluble. V muestra el reporte.` como constante). FR-007, FR-011 a FR-015, FR-031, SC-004.
-- [X] T019 [US1] Correr la suite completa y `prueba_reglas` hasta que estén en verde (50). Si el oráculo discrepa, se corrige el programa, o el oráculo si este no aplica la spec al pie de la letra; nunca se acepta la diferencia. Si la discrepancia muestra que la **spec** es ambigua, se para y se enmienda spec.md en un commit propio (regla de arriba). Commit: "Resolubilidad US1: verificación y reporte (T011 a T019)".
+- [X] T019 [US1] Correr la suite completa y `prueba_reglas` hasta que estén en verde (50). Si el oráculo discrepa, se corrige el programa, o el oráculo si este no aplica la spec al pie de la letra; nunca se acepta la diferencia. Si la discrepancia muestra que la **spec** es ambigua, se para y se enmienda spec.md en un commit propio (regla de arriba). Commit: "Resolubilidad US1: verificación y reporte (T011 a T019)". Cubre: FR-001 a FR-017 y SC-004 (las pruebas de T011 a T013 en verde) y SC-001 (sus escenarios de la historia 1).
 
 **Checkpoint**: el veredicto, el orden y el reporte se pueden demostrar sin red ni vista.
 
@@ -175,7 +175,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
 
 ### Tests for User Story 4 (escribir primero; deben fallar)
 
-- [X] T020 [P] [US4] Agregar la ruta `/criptas/<id>/llaves` a `ServidorFalso` en `pruebas/prueba_falso_1_6.py`, con ubicaciones configurables en el constructor y sujeta a `inyectar_429` igual que las otras rutas. Justo después, correr `py -m pruebas.prueba_falso_1_9` y `py -m pruebas.prueba_errores_red` (usan `ServidorFalso`) y confirmar que siguen en verde.
+- [X] T020 [P] [US4] Agregar la ruta `/criptas/<id>/llaves` a `ServidorFalso` en `pruebas/prueba_falso_1_6.py`, con ubicaciones configurables en el constructor y sujeta a `inyectar_429` igual que las otras rutas. Justo después, correr `py -m pruebas.prueba_falso_1_9` y `py -m pruebas.prueba_errores_red` (usan `ServidorFalso`) y confirmar que siguen en verde. Cubre: FR-025 (la consulta GET /criptas/<id>/llaves) y FR-026 (sus reintentos ante 429 cuentan en el presupuesto), que prueba T021.
 - [X] T021 [P] [US4] Escribir `pruebas/prueba_datos_llaves.py` (FR-025 a FR-031).
   Escenarios:
   - H4.E1: una consulta, que cuenta en el presupuesto; un 429 reintentado cuenta dos;
@@ -189,7 +189,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - un error de red;
   - datos inválidos.
   Un archivo de caché dañado se ignora (FR-027).
-- [X] T022 [US4] Registrar T021 en `pruebas/ejecutar_pruebas.py` y confirmar que falla (no existe `FuenteDatos.llaves`). Anotarlo para el commit.
+- [X] T022 [US4] Registrar T021 en `pruebas/ejecutar_pruebas.py` y confirmar que falla (no existe `FuenteDatos.llaves`). Anotarlo para el commit. Cubre: soporte del principio VII y de "pruebas antes del código"; sirve a FR-025 a FR-031, los que prueba T021.
 
 ### Implementation for User Story 4
 
@@ -206,7 +206,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
 - [X] T025 [US4] Agregar `guardar_llaves(id_cripta, version_cripta, ubicaciones)` y `cargar_llaves(id_cripta, version_cripta)` a `cripta/modelo/puertos/almacenLocal.py` (`cargar_llaves` devuelve None si no existe, si la versión no coincide o si el archivo está dañado) e implementarlos en `cripta/adaptadores/almacenLocalDisco.py` en `<carpeta>/llaves/<id_cripta>.json` con `{"version_cripta", "llaves"}`, reutilizando `llaves_desde_json` al leer. FR-027, FR-028.
 - [X] T026 [US4] Implementar `ServicioDatos.ubicacion_llaves()` en `cripta/modelo/datos/servicioDatos.py`. Resuelve en cascada: memoria (id y versión de la cripta actual), luego disco (`cargar_llaves`) y por último red (`self._sincrona.llaves`, que después se guarda). Usa la versión de `datos_cripta()`. FR-027, SC-007.
 - [X] T027 [US4] Implementar `verificar_cripta(servicio)` en `cripta/modelo/resolubilidad/verificacion.py`: obtiene las ubicaciones, arma el grafo y verifica. Cualquier `ErrorCripta` (red, presupuesto, datos inválidos o ausentes) da un `ResultadoResolubilidad` NO_VERIFICADA con el mensaje, nunca NO_RESOLUBLE. Requiere que `servicio.iniciar_cripta` ya se haya llamado. FR-017, FR-029, FR-031.
-- [X] T028 [US4] Suite completa y `prueba_reglas` en verde (51). Commit: "Resolubilidad US4: consulta de llaves con presupuesto y caché (T020 a T028)".
+- [X] T028 [US4] Suite completa y `prueba_reglas` en verde (51). Commit: "Resolubilidad US4: consulta de llaves con presupuesto y caché (T020 a T028)". Cubre: FR-025 a FR-031 y SC-007 (las pruebas de la historia 4 en verde).
 
 **Checkpoint**: la ubicación de llaves llega por las dos fuentes, cuenta en el presupuesto y se reutiliza por versión.
 
@@ -216,7 +216,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
 
 **Purpose**: traer lo que Pablo ya integró antes de tocar `EstadoVista`, el encabezado del log, la Vista y las teclas.
 
-- [X] T029 `git fetch origin` y `git merge origin/main` en `003-resolubilidad`. Resolver los conflictos conservando lo de las dos ramas: campos de `EstadoVista` con nombre, palabras de marca del encabezado, filas de `PRUEBAS`, `benchTodo` y README, y numeración de DECISIONES.md y PROMPTS_LLM.md. Suite completa y `prueba_reglas` en verde después del merge. Si `main` cambió algo que esta feature asume (por ejemplo, el encabezado del log o las teclas), se para y se ajustan primero spec.md o plan.md, en commits propios. Commit del merge. T059 queda como segundo repaso antes de documentar.
+- [X] T029 `git fetch origin` y `git merge origin/main` en `003-resolubilidad`. Resolver los conflictos conservando lo de las dos ramas: campos de `EstadoVista` con nombre, palabras de marca del encabezado, filas de `PRUEBAS`, `benchTodo` y README, y numeración de DECISIONES.md y PROMPTS_LLM.md. Suite completa y `prueba_reglas` en verde después del merge. Si `main` cambió algo que esta feature asume (por ejemplo, el encabezado del log o las teclas), se para y se ajustan primero spec.md o plan.md, en commits propios. Commit del merge. T059 queda como segundo repaso antes de documentar. Cubre: soporte de la coordinación entre ramas (principio V para el encabezado del log; principio VII si main cambió algo que la spec asume); sirve a FR-019 (el campo de EstadoVista), FR-020 y FR-021 (palabras de marca del encabezado) y FR-037 (teclas sin repetir).
 
 ---
 
@@ -256,7 +256,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
 - [X] T032 [US2] Adaptar las pruebas existentes que inician por el menú (research.md R12):
   - `pruebas/prueba_datos_costo.py`: armar `ControladorMenu` con `forzar=True` y mandar `Comando("aceptar_resolubilidad")` después de cada "jugar". Comprobar que el error de caras distintas sigue apareciendo (al convertir o al iniciar la partida forzada, según dónde salte hoy);
   - `pruebas/prueba_controlador.py` y `pruebas/prueba_replay_menu.py`: agregar `llaves.json` al paquete temporal que escriben, con la llave en una sala alcanzable, y confirmar a mano con la regla de FR-001 que la cripta es resoluble. **Agregar además una aserción nueva**: después del primer "jugar" en una partida nueva, la bitácora contiene `La cripta es resoluble. V muestra el reporte.` (FR-019). Con eso las dos fallan antes de implementar y pasan después. Si alguna no resultara resoluble, se usa `forzar=True`, la aserción pasa a ser la pantalla de reporte con `puede_continuar=True` y se anota por qué.
-- [X] T033 [US2] Registrar T030 y T031 en `pruebas/ejecutar_pruebas.py`, correr la suite y confirmar que T030, T031 y las tres adaptadas en T032 fallan por lo que falta (sin `forzar`, sin pantalla, sin palabra `FORZADA`). La lista de pruebas que fallan debe ser **exactamente** esas cinco (`prueba_resolubilidad_inicio`, `prueba_vista_resolubilidad`, `prueba_datos_costo`, `prueba_controlador` y `prueba_replay_menu`). Si falla otra, se investiga antes de seguir. Anotarlo para el commit.
+- [X] T033 [US2] Registrar T030 y T031 en `pruebas/ejecutar_pruebas.py`, correr la suite y confirmar que T030, T031 y las tres adaptadas en T032 fallan por lo que falta (sin `forzar`, sin pantalla, sin palabra `FORZADA`). La lista de pruebas que fallan debe ser **exactamente** esas cinco (`prueba_resolubilidad_inicio`, `prueba_vista_resolubilidad`, `prueba_datos_costo`, `prueba_controlador` y `prueba_replay_menu`). Si falla otra, se investiga antes de seguir. Anotarlo para el commit. Cubre: soporte del principio VII y de "pruebas antes del código"; sirve a FR-018 a FR-021, FR-031 y FR-037, los que prueban T030 a T032.
 
 ### Implementation for User Story 2
 
@@ -279,7 +279,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - `cripta/vista/hudJuego.py`: el panel superpuesto;
   - `README.md`: la fila `| V | Mostrar / ocultar el reporte de resolubilidad (orden de llaves) |` en la tabla "Partida" (FR-037).
   **Depende de T006** (confirmación de Pablo, fase 1): no se implementa la tecla sin esa confirmación. Si V choca, se para y se enmiendan la aclaración 4 y FR-037 de spec.md en un commit propio. FR-019, FR-020, FR-037.
-- [X] T042 [US2] Suite completa y `prueba_reglas` en verde (53). Commit: "Resolubilidad US2: inicio de partida, --forzar y tecla V (T030 a T042)".
+- [X] T042 [US2] Suite completa y `prueba_reglas` en verde (53). Commit: "Resolubilidad US2: inicio de partida, --forzar y tecla V (T030 a T042)". Cubre: FR-018 a FR-021, FR-031, FR-037 y SC-005 (las pruebas de la historia 2 en verde).
 
 **Checkpoint**: una cripta no resoluble no inicia sin `--forzar`; con él inicia y queda anotada en el log.
 
@@ -299,13 +299,13 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - H3.E2: códigos 0 (`res-cadena`), 1 (`res-autociclo`) y 2 (`res-sin-llaves`); `--verificar` sin ID da 2 con el mensaje de uso;
   - H3.E3: el texto con `--offline` es idéntico al obtenido con `ClienteHttp` contra `ServidorFalso` sirviendo el mismo JSON de la misma versión.
   `--forzar` no cambia el código de `--verificar`.
-- [X] T044 [US3] Registrar T043 en `pruebas/ejecutar_pruebas.py` y confirmar que falla (no existe `--verificar`). Anotarlo para el commit.
+- [X] T044 [US3] Registrar T043 en `pruebas/ejecutar_pruebas.py` y confirmar que falla (no existe `--verificar`). Anotarlo para el commit. Cubre: soporte del principio VII y de "pruebas antes del código"; sirve a FR-022 a FR-024, los que prueba T043.
 
 ### Implementation for User Story 3
 
 - [X] T045 [US3] Crear `cripta/controlador/modoVerificar.py`. Llama a `servicio.iniciar_cripta(id)` (captura `ErrorCripta` → NO_VERIFICADA) y a `verificar_cripta`, imprime las líneas de `textoResolubilidad` con `Reporte` y el resumen de red de `ReporteFinal`, y devuelve 0, 1 o 2 según contracts/linea-de-comandos.md. FR-022, FR-024, FR-031.
 - [X] T046 [US3] En `cripta/controlador/fabricaAplicacion.py`, leer `--verificar ID` antes de `--replay`, armar el servicio (en línea o `--offline`), ejecutar `ModoVerificar` y `sys.exit(codigo)`, sin importar `vistaArcade` ni crear `ControladorMenu`. Sin ID: mensaje de uso y salida con 2. Docstring de uso en `main.py`. FR-022, FR-023, FR-024.
-- [X] T047 [US3] Suite completa y `prueba_reglas` en verde (54). Commit: "Resolubilidad US3: --verificar (T043 a T047)".
+- [X] T047 [US3] Suite completa y `prueba_reglas` en verde (54). Commit: "Resolubilidad US3: --verificar (T043 a T047)". Cubre: FR-022 a FR-024 y SC-006 (las pruebas de la historia 3 en verde).
 
 **Checkpoint**: cualquier cripta se revisa por terminal con un código de salida útil en revisión.
 
@@ -324,7 +324,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - H5.E1: la cripta de referencia (la de más salas de `datos_offline/`, elegida en ejecución, sin ids) se verifica en menos de 200 ms (mínimo de varias repeticiones, sin red ni renderizado). **Si esa cripta no tiene `llaves.json`, imprime `H5.E1 SIN DATOS: datos_offline/ no tiene llaves.json; se salta` y sigue con lo demás**;
   - H5.E2: en cadenas de 100, 200 y 400 llaves, resolubles y con ciclo, el texto del reporte de la verificación es igual al de la alternativa ingenua;
   - H5.E3: los cocientes de **salidas examinadas** 200/100 y 400/200 son ≤ 2,5 en la verificación y ≥ 3,5 en la ingenua. Se mide el contador, no el tiempo.
-- [X] T049 [US5] Registrar T048 en `pruebas/ejecutar_pruebas.py` y confirmar que falla (no existen la alternativa ni el bench). Anotarlo para el commit.
+- [X] T049 [US5] Registrar T048 en `pruebas/ejecutar_pruebas.py` y confirmar que falla (no existen la alternativa ni el bench). Anotarlo para el commit. Cubre: soporte del principio VII y de "pruebas antes del código"; sirve a FR-032 a FR-035, los que prueba T048.
 
 ### Implementation for User Story 5
 
@@ -334,7 +334,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - (2) las cadenas de 100, 200 y 400 llaves, resolubles y con ciclo: ms (informativo), salidas examinadas de las dos, cocientes con PASA/FALLA contra ≤ 2,5 y ≥ 3,5, y "mismo reporte: sí/no".
   Generar las cadenas en el mismo módulo, sin ids de criptas reales; `--rapido` reduce las repeticiones, no los tamaños. Registrar en `cripta/controlador/bench/benchTodo.py`. FR-032 a FR-035.
 - [X] T052 [US5] Correr `py main.py --bench` completo y anotar las cifras reales (referencia o SIN DATOS, ms y salidas examinadas por tamaño, cocientes) para DECISIONES.md (T061). Si un criterio de SC-002 o SC-003 **falla**, se para: se diagnostica con mediciones (principio VI), y solo si la spec pide algo imposible se enmienda spec.md en un commit propio. Nunca se relaja un umbral en la prueba.
-- [X] T053 [US5] Suite completa y `prueba_reglas` en verde (55, con H5.E1 saltada si no hay datos). Commit: "Resolubilidad US5: bench y alternativa ingenua (T048 a T053)".
+- [X] T053 [US5] Suite completa y `prueba_reglas` en verde (55, con H5.E1 saltada si no hay datos). Commit: "Resolubilidad US5: bench y alternativa ingenua (T048 a T053)". Cubre: FR-032 a FR-035, SC-002 y SC-003 (las pruebas de la historia 5 en verde), con el principio VI.
 
 **Checkpoint**: la escalabilidad queda demostrada por conteo; los 200 ms, por tiempo cuando haya datos.
 
@@ -346,12 +346,12 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
 
 - [X] T054 [P] Revisar `cripta/` contra la constitución: tipos y docstrings en lo nuevo, atributos `_` con propiedades, nombres camelCase y ninguna estructura prohibida (`prueba_reglas`). Buscar en `cripta/` los ids, versiones y cantidades de las criptas de `datos_offline/` y de `pruebas/datos/`: no debe aparecer ninguno (FR-036).
 - [X] T055 [P] Cobertura: cada FR-001 a FR-037 aparece citado en al menos una prueba (`grep -o "FR-0[0-9][0-9]" pruebas/prueba_*resolub* pruebas/prueba_verificar.py pruebas/prueba_datos_llaves.py pruebas/prueba_vista_resolubilidad.py`, FR-036 lo cubre `prueba_sin_datos_concretos`, T005) y las 28 marcas H*.E* de plan.md están en su prueba. Completar lo que falte.
-- [X] T056 Validar quickstart.md §3 a §5 a mano (`--verificar` con los tres códigos, pantalla de reporte con y sin `--forzar`, V, partida cargada y replay forzado, `--bench --rapido`). Corregir quickstart.md si algo no coincide.
+- [X] T056 Validar quickstart.md §3 a §5 a mano (`--verificar` con los tres códigos, pantalla de reporte con y sin `--forzar`, V, partida cargada y replay forzado, `--bench --rapido`). Corregir quickstart.md si algo no coincide. Cubre: FR-019 y FR-020 (pantalla de reporte, --forzar y V), FR-021 (partida cargada y replay forzado), FR-022 a FR-024 (--verificar y sus tres códigos) y FR-032 (--bench --rapido); SC-005 y SC-006.
 - [X] T057 [P] README.md (FR-037; la fila de V ya se agregó en T041):
   - una sección "Resolubilidad" con `--verificar ID` y sus códigos 0, 1 y 2, `--forzar`, la pantalla de reporte (ENTER y ESC), el aviso y la V en una partida cargada;
   - el total de pruebas actualizado;
   - la nota de que `datos_offline/` debe regenerarse para la Parte II.
-- [X] T058 [P] Actualizar `contracts/vista.md`, `plan.md` o `research.md` si la implementación cambió un detalle de diseño (no de regla). Un cambio de regla va por spec.md (regla de arriba).
+- [X] T058 [P] Actualizar `contracts/vista.md`, `plan.md` o `research.md` si la implementación cambió un detalle de diseño (no de regla). Un cambio de regla va por spec.md (regla de arriba). Cubre: soporte del principio VII (la regla va en spec.md y el diseño en plan.md y los contratos); sirve a FR-019, FR-020 y FR-037, que son los que describe contracts/vista.md.
 - [X] T059 Conflicto con Pablo, **segundo repaso** (el primero es la sincronización antes de la Fase 5, T029), **antes** de documentar números: `git fetch` y `git pull origin main` (o merge de `main` en la rama), y revisar:
   - numeración de DECISIONES.md: el siguiente D libre después de lo que trajo `main`;
   - numeración de PROMPTS_LLM.md: continua; si se repite un número, renumerar las entradas de esta rama;
@@ -359,6 +359,7 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - el encabezado del log: sumar las palabras de marca de Pablo a la lista de conocidas, si las hay;
   - las teclas: ninguna repetida en la partida, el menú y el replay.
   Suite y `prueba_reglas` en verde después del merge. Commit: "Merge de main en resolubilidad y coordinación con las features de Pablo".
+  Cubre: soporte de la coordinación entre ramas (principio V para el encabezado del log); sirve a FR-020 y FR-021 (palabras de marca del encabezado), FR-019 (el campo de EstadoVista) y FR-037 (teclas sin repetir).
 - [X] T060 DECISIONES.md, con los números libres de T059, una sección por decisión **con las cifras reales de T052**:
   - grafo enlazado por ordenamiento y fusión (R1);
   - fase 1 con puertas pendientes y heap mínimo, y la marca de la puerta de salida (R2, R3);
@@ -367,8 +368,9 @@ saliendo con código 0 (el ejecutor solo mira el código de salida).
   - encabezado con palabras de marca (R9);
   - V como estado local de la Vista y el verbo para la partida cargada (R8).
   Agregar la fila de la sección del problema a la tabla del inicio.
-- [X] T061 PROMPTS_LLM.md al día: cada prompt de la implementación registrado, con numeración continua revisada en T059.
-- [X] T062 Cierre parcial: suite completa, `prueba_reglas` y `--bench --rapido` en verde. Marcar las tareas hechas en este archivo. Commit: "Resolubilidad: documentación y cierre (T054 a T062)". El push lo pide el usuario.
+  Cubre: principio VI (decisiones con cifras propias de --bench); sirve a FR-032 a FR-035 y SC-002 y SC-003 (R1 a R4), FR-025 a FR-027 (R5), FR-020 y FR-021 (R9) y FR-019 y FR-037 (R8).
+- [X] T061 PROMPTS_LLM.md al día: cada prompt de la implementación registrado, con numeración continua revisada en T059. Cubre: soporte de proceso (constitución, "Flujo de desarrollo y definición de hecho": todo uso de un LLM se registra en PROMPTS_LLM.md). Ningún FR ni SC de la spec lo pide; sirve a la trazabilidad de FR-001 a FR-037 en conjunto.
+- [X] T062 Cierre parcial: suite completa, `prueba_reglas` y `--bench --rapido` en verde. Marcar las tareas hechas en este archivo. Commit: "Resolubilidad: documentación y cierre (T054 a T062)". El push lo pide el usuario. Cubre: SC-001 (la suite completa con los 28 escenarios en verde), FR-032 y SC-002 (--bench --rapido) y el principio VII (commit de la fase).
 - [X] T063 **H5.E1 obligatorio** (depende de T003): con `datos_offline/` regenerado, quitar el salto "SIN DATOS" de `pruebas/prueba_rendimiento_resolubilidad.py`: sin `llaves.json`, la prueba **falla**. Correr la suite y `--bench` con la cripta de referencia real (< 200 ms, PASA), y actualizar la cifra en DECISIONES.md (T060) y plan.md. Si no pasa, se aplica la regla de T052. Correr además la suite completa y `py main.py --bench --rapido` con los datos regenerados y documentar en el commit y en DECISIONES.md lo que cambie (tablas de otras features que usan `datos_offline/`, cifras de referencia). Commit: "Resolubilidad: H5.E1 obligatorio con datos de la Parte II".
   **Plan alternativo** si al cierre el servicio todavía no publica `/llaves` (T003 imposible): H5.E1 sigue saltando con "SIN DATOS" y **no** se da por cumplido SC-002. Se documenta como pendiente en DECISIONES.md (qué falta, desde cuándo, qué se midió en su lugar: las cadenas sintéticas de SC-003) y se avisa al profesor. El cierre de la feature lo indica en el README y en el commit, sin quitar el salto ni inventar una ubicación de llaves.
 
