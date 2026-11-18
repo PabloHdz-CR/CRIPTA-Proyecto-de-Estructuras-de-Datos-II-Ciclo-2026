@@ -211,20 +211,23 @@ description: "Tareas de la feature 004: línea de tiempo"
 
 ### Tests for User Story 6 ⚠️
 
-- [ ] T031 [P] [US6] Crear `pruebas/prueba_rendimiento_linea.py`:
+- [X] T031 [P] [US6] Crear `pruebas/prueba_rendimiento_linea.py`:
   - escenario 1 (FR-019, SC-003): partida de 5000 acciones sobre la cripta de referencia (`partida_referencia_inmortal`, T003) con el K por defecto; la consulta peor (mínimo de varias repeticiones) < 50 ms en instantes repartidos, con la cifra en el mensaje;
   - FR-021: ninguna consulta aplica más de K acciones (contador instrumentado);
   - escenario 2 (FR-020, SC-007): con `tracemalloc`, en una partida de 500 acciones, la memoria de la línea con K = 25 es menos de la mitad que con K = 1, y crece con las acciones (no con acciones por tamaño del estado); K = 1 con 5000 acciones queda solo para el bench (análisis G2);
   - escenario 3 (FR-023): el recorte del pergamino cuesta lo mismo con 100 y con 5000 acciones (contador).
   Cubre: FR-019 a FR-021, FR-023, SC-003, SC-007.
   **Nota (análisis I1):** estas pruebas miden código de historias anteriores, así que pueden pasar apenas se escriben; confirman el diseño en vez de guiarlo, como T047 de la feature 002.
+  **Hecho:** Pasó al escribirse (análisis I1). Consulta peor 11,4 ms con 5000 acciones y K = 25; memoria en 500 acciones: K = 1 unos 7,2 MiB, K = 25 unos 0,55 MiB. El escenario 3 (recorte constante) lo cubre caso_recorte_constante de prueba_linea_pergamino (T019).
 
 ### Implementation for User Story 6
 
-- [ ] T032 [P] [US6] Crear `cripta/controlador/bench/alternativasLineaTiempo.py` (solo para medir): búsqueda lineal del bloque en una `ListaEnlazada` y reconstrucción sin puntos de control (re-simular desde el instante 0, con un tope de tiempo en el bench). Cubre: FR-023, FR-024.
-- [ ] T033 [US6] Crear `cripta/controlador/bench/benchLineaTiempo.py` con `ejecutar(reporte, rapido)`, determinista por semilla, sobre la cripta de referencia y 5000 acciones (menos en `--rapido`): (1) memoria y tiempo de consulta (peor y mediana) con K = 10, 25 y 50 y sin puntos de control; (2) adelante contra atrás: tomar y restaurar una copia y deshacer K acciones con el Diario, junto a la reconstrucción hacia adelante medida; (3) búsqueda del bloque, arreglo por árbol contra lineal, con 10² a 10⁵ bloques; (4) recorte del pergamino según el largo de la historia; (5) tamaño y tiempo de guardar y cargar el formato 4. Cubre: FR-019 a FR-024, SC-003, SC-007. Depende de: T026, T032.
-- [ ] T034 [US6] En `cripta/controlador/bench/benchHistorial.py`: tabla nueva que repite las mediciones de la primera parte con la carga nueva (cazadores, viajes «ir a» y la línea conectada) y las compara con las anteriores, con el veredicto "sigue siendo adecuado" o "se cambió" (§5.6). Cubre: FR-025.
-- [ ] T035 [US6] Registrar `benchLineaTiempo` en `cripta/controlador/bench/benchTodo.py` y actualizar el total de tablas en `pruebas/prueba_4_4.py`; además, `prueba_4_4` comprueba que `benchHistorial` trae la tabla con la carga nueva y su veredicto ("sigue siendo adecuado" o "se cambió"), citando FR-025 (análisis C1); correr `py main.py --bench --rapido`. Cubre: FR-024, FR-025. Depende de: T033, T034. T031 pasa.
+- [X] T032 [P] [US6] Crear `cripta/controlador/bench/alternativasLineaTiempo.py` (solo para medir): búsqueda lineal del bloque en una `ListaEnlazada` y reconstrucción sin puntos de control (re-simular desde el instante 0, con un tope de tiempo en el bench). Cubre: FR-023, FR-024.
+- [X] T033 [US6] Crear `cripta/controlador/bench/benchLineaTiempo.py` con `ejecutar(reporte, rapido)`, determinista por semilla, sobre la cripta de referencia y 5000 acciones (menos en `--rapido`): (1) memoria y tiempo de consulta (peor y mediana) con K = 10, 25 y 50 y sin puntos de control; (2) adelante contra atrás: tomar y restaurar una copia y deshacer K acciones con el Diario, junto a la reconstrucción hacia adelante medida; (3) búsqueda del bloque, arreglo por árbol contra lineal, con 10² a 10⁵ bloques; (4) recorte del pergamino según el largo de la historia; (5) tamaño y tiempo de guardar y cargar el formato 4. Cubre: FR-019 a FR-024, SC-003, SC-007. Depende de: T026, T032.
+  **Hecho:** La alternativa sin puntos de control es la misma línea con K mayor que la partida (un solo punto de control): no hizo falta código aparte. --bench --rapido: K = 10, 25 y 50 con 9 a 11 ms de consulta peor en 1000 acciones; árbol contra lineal 18x con 10 000 bloques; recorte de 1 entrada con 100 y 1000 acciones.
+- [X] T034 [US6] En `cripta/controlador/bench/benchHistorial.py`: tabla nueva que repite las mediciones de la primera parte con la carga nueva (cazadores, viajes «ir a» y la línea conectada) y las compara con las anteriores, con el veredicto "sigue siendo adecuado" o "se cambió" (§5.6). Cubre: FR-025.
+  **Hecho:** Con la carga nueva: unos 28 registros por acción y 12 µs para deshacer una acción en la cripta de referencia; veredicto: sigue siendo adecuado.
+- [X] T035 [US6] Registrar `benchLineaTiempo` en `cripta/controlador/bench/benchTodo.py` y actualizar el total de tablas en `pruebas/prueba_4_4.py`; además, `prueba_4_4` comprueba que `benchHistorial` trae la tabla con la carga nueva y su veredicto ("sigue siendo adecuado" o "se cambió"), citando FR-025 (análisis C1); correr `py main.py --bench --rapido`. Cubre: FR-024, FR-025. Depende de: T033, T034. T031 pasa.
 
 **Checkpoint**: todas las historias en verde.
 

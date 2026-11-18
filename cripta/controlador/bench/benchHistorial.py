@@ -114,7 +114,50 @@ def ejecutar(reporte=None, rapido=False):
     reporte.nota(f"Con la capacidad real ({CAPACIDAD_REAL} acciones): {tiempo_real_doble:.2f} µs "
                  f"con lista doble y {tiempo_real_simple:.2f} µs con lista simple. La ventaja "
                  f"de la lista doble aparece al crecer la capacidad.")
+    _tabla_carga_nueva(reporte, rapido)
     return reporte
+
+
+VEREDICTO_ADECUADO = "sigue siendo adecuado"
+LIMITE_DESHACER_US = 1000      # muy por debajo de los 20 ms de un ciclo (§5.2)
+
+
+def _tabla_carga_nueva(reporte, rapido):
+    """004-linea-tiempo (§5.6, FR-025): el historial del pergamino con la carga
+    de la Parte II (costos por salida, cazadores y la línea de tiempo
+    conectada) sobre la cripta de referencia."""
+    import time
+    from ...modelo.nucleo.accion import Esperar, Mover
+    from ...modelo.nucleo.diario import Diario
+    from ...modelo.nucleo.lineaTiempo import K_POR_OMISION
+    from . import benchLineaTiempo
+
+    servicio, cripta = benchLineaTiempo._servicio()
+    partida, _ = benchLineaTiempo._partida(servicio, K_POR_OMISION, 200 if rapido else 1000)
+    diario = Diario()
+    partida.conectar_diario(diario)
+    inicio = time.perf_counter()
+    for numero in range(CAPACIDAD_REAL):
+        partida.aplicar_accion(Mover("N") if numero % 2 == 0 else Esperar())
+    por_accion = (time.perf_counter() - inicio) / CAPACIDAD_REAL * 1e6
+    registros = 0
+    for intervalo in diario._intervalos:
+        registros += len(intervalo)
+    inicio = time.perf_counter()
+    deshechas = 0
+    while partida.deshacer():
+        deshechas += 1
+    deshacer = (time.perf_counter() - inicio) / max(1, deshechas) * 1e6
+    filas = ListaEnlazada()
+    filas.agregar_al_final((f"{cripta.salas} salas, línea K = {K_POR_OMISION}",
+                            f"{registros / CAPACIDAD_REAL:.0f}", f"{por_accion:.0f}",
+                            f"{deshacer:.0f}"))
+    reporte.tabla("Historial del pergamino con la carga nueva (Parte II, §5.6)",
+                  ("carga", "registros por acción", "acción con diario µs",
+                   "deshacer una acción µs"), filas)
+    veredicto = VEREDICTO_ADECUADO if deshacer < LIMITE_DESHACER_US else "se cambió"
+    reporte.nota(f"Veredicto §5.6: {veredicto} (deshacer una acción cuesta {deshacer:.0f} µs; "
+                 f"la pila acotada sigue apilando y descartando en O(1)).")
 
 
 def main():
