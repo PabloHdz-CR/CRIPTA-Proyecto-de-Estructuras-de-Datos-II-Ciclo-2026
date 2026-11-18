@@ -762,6 +762,7 @@ Complejidad: O(palabras de marca) al leer el encabezado.
 Coincide con plan.md: sí (research R9) tal como quedó después del hallazgo I2 de /speckit-analyze, antes de implementar, que sumó NO_RESOLUBLE o NO_VERIFICADA a la palabra FORZADA. Ninguna medición lo cambió.
 Evidencia: prueba_resolubilidad_inicio lee un log de 4 campos, las dos combinaciones válidas, los cinco casos inválidos y la ida y vuelta, y reproduce con ModoReplay una partida forzada. prueba_persistencia_cazador y prueba_controlador siguen reproduciendo sus logs.
 Límites: una feature nueva que necesite marcar el log agrega su palabra a MARCAS_CONOCIDAS en registroArchivo.
+Nota de proceso (feature 003): el commit 33a4db8 (08/11/2026) juntó en uno solo las fases specify y clarify de specs/003-resolubilidad/spec.md, contra "una confirmación en git por fase" de la constitución ("Flujo de desarrollo y definición de hecho"). Pasó porque ni /speckit-specify ni /speckit-clarify confirmaron nada al terminar (los pedidos no lo decían; entradas 133 y 134 de PROMPTS_LLM.md), y cuando llegó la corrección de la spec, que pedía un commit propio (entrada 136), se confirmó primero lo que había, specify y clarify juntos, para que la corrección quedara aparte (aea2b74). No se reescribe el historial: lo que aportó cada fase se distingue en la spec por la sección Clarifications (sesión 2026-11-08) y en PROMPTS_LLM.md por las entradas 133 y 134.
 
 D80. Inicio de partida, pantalla de reporte y tecla V
 
