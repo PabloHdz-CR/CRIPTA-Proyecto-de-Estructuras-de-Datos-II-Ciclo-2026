@@ -87,6 +87,18 @@ class LineaTiempo:
         self.ultimas_aplicadas = 0                    # acciones re-simuladas en la última consulta (FR-021)
         self.ultimo_recorte = 0                       # entradas y bloques que tocó el último pergamino (FR-023)
 
+    @classmethod
+    def desde_partes(cls, k: int, copiador, acciones: int, contenidos, bloques) -> "LineaTiempo":
+        """Una línea armada desde un guardado (formato 4, FR-009): las mismas
+        acciones, contenidos iniciales y bloques que tenía al guardar."""
+        linea = cls(k, copiador)
+        linea._acciones = acciones
+        for id_sala, contenido in contenidos:
+            linea._contenidos.agregar_al_final((id_sala, contenido))
+        for bloque in bloques:
+            linea._bloques.agregar_al_final(bloque)
+        return linea
+
     # ------------------------------------------------------------------
     # Consultas simples
     # ------------------------------------------------------------------

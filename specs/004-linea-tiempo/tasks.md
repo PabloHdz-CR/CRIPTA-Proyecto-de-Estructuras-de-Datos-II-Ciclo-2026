@@ -158,7 +158,7 @@ description: "Tareas de la feature 004: línea de tiempo"
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T025 [P] [US4] Crear `pruebas/prueba_persistencia_linea.py`:
+- [X] T025 [P] [US4] Crear `pruebas/prueba_persistencia_linea.py`:
   - escenario 1 (FR-009): guardar y cargar una partida con pergaminos y viajes; todas las consultas de instantes y números de acción iguales a antes;
   - escenario 2 (FR-010; **Apéndice B 6**): `pruebas/datos/linea/guardado_formato_3.bin` (T002) se reporta incompatible con "se esperaba 4 y se encontró 3" y no se carga;
   - escenario 3 (FR-009): seguir jugando después de cargar; la historia es continua (instantes antes y después de la carga);
@@ -169,8 +169,10 @@ description: "Tareas de la feature 004: línea de tiempo"
 
 ### Implementation for User Story 4
 
-- [ ] T026 [US4] En `cripta/adaptadores/partidaBinaria.py`: `FORMATO_VERSION = 4`, la bandera `con_linea` y la sección de la línea según contracts/partida-binaria.md (K, acciones, contenidos iniciales, bloques con su punto de control y sus entradas "A"/"P"), escrita **antes** del índice de salas para que el índice siga siendo lo último del archivo y `cargar_sala` lea solo el índice y su sala (análisis F1); las acciones se leen con `_accion_desde_texto` de `registroArchivo.py` (expuesto como función pública); los puntos de control van con `con_linea` en falso y sin la sección de la línea, y `desde_bytes` los distingue de un guardado por esa bandera (análisis F3); la carga reconstruye la `LineaTiempo`. Actualizar el docstring del formato. Cubre: FR-009, FR-010. Depende de: T002, T021.
-- [ ] T027 [US4] En `cripta/controlador/controladorJuego.py` y donde se carga una partida: conectar la línea cargada a la partida; en `pruebas/prueba_persistencia_niebla.py` y `pruebas/prueba_persistencia_cazador.py`, aceptar la versión actual (≥ 3 y ≥ 2) en vez de un número fijo. Cubre: FR-009. Depende de: T026. T025 pasa.
+- [X] T026 [US4] En `cripta/adaptadores/partidaBinaria.py`: `FORMATO_VERSION = 4`, la bandera `con_linea` y la sección de la línea según contracts/partida-binaria.md (K, acciones, contenidos iniciales, bloques con su punto de control y sus entradas "A"/"P"), escrita **antes** del índice de salas para que el índice siga siendo lo último del archivo y `cargar_sala` lea solo el índice y su sala (análisis F1); las acciones se leen con `_accion_desde_texto` de `registroArchivo.py` (expuesto como función pública); los puntos de control van con `con_linea` en falso y sin la sección de la línea, y `desde_bytes` los distingue de un guardado por esa bandera (análisis F3); la carga reconstruye la `LineaTiempo`. Actualizar el docstring del formato. Cubre: FR-009, FR-010. Depende de: T002, T021.
+  **Hecho:** La sección de la línea va antes del índice y las entradas "P" guardan también el estado del azar, la secuencia de la agenda y el próximo id de objeto (los campos de T021). accion_desde_texto quedó pública en registroArchivo. cargar_sala lee los mismos bytes con o sin línea (caso_cargar_sala_no_lee_la_linea).
+- [X] T027 [US4] En `cripta/controlador/controladorJuego.py` y donde se carga una partida: conectar la línea cargada a la partida; en `pruebas/prueba_persistencia_niebla.py` y `pruebas/prueba_persistencia_cazador.py`, aceptar la versión actual (≥ 3 y ≥ 2) en vez de un número fijo. Cubre: FR-009. Depende de: T026. T025 pasa.
+  **Hecho:** ControladorJuego ya conservaba la línea cargada (solo conecta una nueva si la carga no trajo línea). prueba_persistencia_cazador ya aceptaba la versión actual; se ajustó prueba_persistencia_niebla.
 
 **Checkpoint**: US4 en verde.
 

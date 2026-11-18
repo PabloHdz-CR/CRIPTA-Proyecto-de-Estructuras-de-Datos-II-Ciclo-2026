@@ -95,6 +95,7 @@ PRUEBAS = (
     "prueba_linea_pergamino",
     "prueba_replay_hasta",
     "prueba_rendimiento_linea",
+    "prueba_persistencia_linea",
 
 )
 

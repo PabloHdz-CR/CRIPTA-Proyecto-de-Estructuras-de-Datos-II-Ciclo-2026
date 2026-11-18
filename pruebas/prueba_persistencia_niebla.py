@@ -8,6 +8,7 @@ import random
 import tempfile
 from pathlib import Path
 
+from cripta.adaptadores import partidaBinaria
 from cripta.adaptadores.partidaBinaria import PartidaBinaria
 from cripta.modelo.mundo.conocimiento import ABIERTA
 from cripta.modelo.nucleo.accion import AbrirPuerta, Esperar
@@ -81,8 +82,10 @@ def caso_us5_e4_formato_anterior():
     try:
         PartidaBinaria.cargar(FIXTURE, servicio_niebla((sala_n(1),)))
     except VersionIncompatible as error:
-        assert error.esperada == 3 and error.encontrada == 2, error
-        assert "se esperaba 3 y se encontró 2" in str(error), str(error)
+        # 004-linea-tiempo (T027): la versión esperada es la actual (≥ 3).
+        actual = partidaBinaria.FORMATO_VERSION
+        assert actual >= 3 and error.esperada == actual and error.encontrada == 2, error
+        assert f"se esperaba {actual} y se encontró 2" in str(error), str(error)
     else:
         raise AssertionError("FR-013: el formato 2 debía reportarse incompatible")
 
@@ -100,7 +103,8 @@ def caso_us5_e4_el_controlador_lo_muestra():
 
     controlador._gestor_guardado = GestorViejo()
     controlador.procesar(Comando("cargar"))
-    assert "se esperaba 3 y se encontró 2" in (vista.ultimo_error or ""), vista.ultimo_error
+    esperado = f"se esperaba {partidaBinaria.FORMATO_VERSION} y se encontró 2"
+    assert esperado in (vista.ultimo_error or ""), vista.ultimo_error
 
 
 def caso_valores_fuera_de_rango():

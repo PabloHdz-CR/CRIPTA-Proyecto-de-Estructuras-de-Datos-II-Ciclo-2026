@@ -102,7 +102,7 @@ def _encabezado_desde_texto(linea: str) -> EncabezadoPartida:
                              forzada=forzada, veredicto_forzado=veredicto_forzado)
 
 
-def _accion_desde_texto(linea: str):
+def accion_desde_texto(linea: str):
     partes = linea.split(" ")
     nombre = partes[0]
     if nombre == "MOVER":
@@ -166,7 +166,7 @@ class RegistroArchivo(RegistroAcciones):
                     encabezado = _encabezado_desde_texto(linea)
                 elif linea and not linea.startswith("#"):
                     # 002-niebla-guerra (FR-027): los comentarios no son acciones.
-                    acciones.agregar_al_final(_accion_desde_texto(linea))
+                    acciones.agregar_al_final(accion_desde_texto(linea))
         if encabezado is None:
             raise ErrorCripta("El archivo de partida está vacío")
         return encabezado, acciones
