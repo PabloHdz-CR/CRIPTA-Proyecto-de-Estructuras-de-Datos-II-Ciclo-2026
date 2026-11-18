@@ -18,6 +18,10 @@
 - Q: En la ventana del juego, ¿cómo y cuándo se muestra el reporte de resolubilidad? → A: Resoluble: la partida inicia con un aviso corto y el reporte completo (con el orden) se abre a pedido con la tecla V, que no estaba asignada; no resoluble sin --forzar: pantalla con el reporte completo y vuelta al menú; no resoluble con --forzar: la misma pantalla y, al aceptar, la partida inicia, con el reporte disponible con V. La asignación de V se documenta en el README (FR-019, FR-020, FR-037).
 - Q: Cuando hay un ciclo entre llaves no obtenibles, ¿qué ciclo concreto debe mostrar el reporte y en qué orden? → A: Un ciclo por grupo: se empieza en la llave de menor id del grupo y en cada paso se va a la dependencia de menor id dentro del grupo hasta volver a una llave ya visitada; el ciclo se muestra desde esa llave repetida, con la puerta que encierra cada llave (FR-015).
 
+### Enmienda posterior al código (2026-11-18)
+
+- El commit 7ca2ab3 (08/11/2026) cambió lo que el jugador ve sin enmendar antes la spec: el panel de V dejó de recortar cada línea con "…" y la pantalla del reporte dejó de salirse del borde; las dos parten las líneas largas en filas y se desplazan si no caben. Se agrega FR-038 y su caso borde para que la spec describa ese comportamiento. No cambia ninguna regla de la verificación ni el texto del reporte, y SC-001 sigue con 28 escenarios: el caso nuevo es un caso borde y ya lo prueba prueba_vista_resolubilidad (la línea de 200 caracteres en el panel y en la pantalla, y el desplazamiento).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Saber si la cripta puede ganarse y por qué no (Priority: P1)
@@ -172,6 +176,7 @@ compararla con la alternativa ingenua.
 - **Una puerta cerrada cuya sala de destino ya es alcanzable por otro camino**: no forma parte de la frontera bloqueada (FR-012).
 - **La ubicación de llaves está vacía**: llave_salida no puede obtenerse, la cripta no es resoluble y el reporte la lista como no obtenible "sin ubicación" (FR-001, FR-011, FR-013).
 - **Las páginas del esqueleto o las entradas de la ubicación de llaves llegan en otro orden**: el veredicto, el orden y el reporte no cambian (FR-010).
+- **Una línea del reporte es más larga que el ancho de la ventana** (por ejemplo, un ciclo largo entre llaves): en el panel de V y en la pantalla del reporte se parte en filas y se lee completa; si las filas no caben, se desplazan (FR-038).
 
 ## Requirements *(mandatory)*
 
@@ -206,6 +211,7 @@ compararla con la alternativa ingenua.
 - **FR-019**: El reporte de resolubilidad MUST poder verse al iniciar una partida. Si la cripta es resoluble, la partida MUST iniciar con un aviso corto de que la cripta es resoluble, sin mostrar el orden de llaves; el reporte completo MUST abrirse y cerrarse a pedido con la tecla V durante la partida. Si la cripta no es resoluble y no se usó --forzar, la partida MUST NOT iniciar (no se crea partida ni registro de partida): se muestra una pantalla con el reporte completo y, al cerrarla, se vuelve al menú.
 - **FR-020**: Con la bandera --forzar, una cripta no resoluble MUST mostrar primero la misma pantalla con el reporte completo y, cuando el jugador la acepta, iniciar la partida igual, con el reporte disponible con la tecla V; el registro de la partida MUST anotar que la cripta no era resoluble y que se forzó el inicio.
 - **FR-037**: La tecla V MUST NOT estar asignada a ninguna otra acción en la partida, y su uso MUST documentarse en la tabla de teclas de la partida del README.
+- **FR-038**: En la ventana del juego, el reporte de resolubilidad (el panel que abre V y la pantalla del reporte de FR-019 y FR-020) MUST leerse completo, sin recortar texto: una línea más larga que el ancho disponible MUST partirse en varias filas, cortando en los espacios y con una sangría de continuación de dos espacios, de modo que al unir las filas se obtiene la línea original. Si las filas no caben en el alto disponible, el jugador MUST poder desplazarlas con flecha arriba/abajo y RePág/AvPág mientras el panel o la pantalla están abiertos, sin que esas teclas actúen sobre la partida, y el panel MUST indicar qué filas se ven del total; solo si no cabe ni una fila se indica con "…" que hay más texto. El texto del reporte (FR-011 a FR-016 y la terminal de --verificar) no cambia. *(Enmienda del 2026-11-18, posterior al código: ver Clarifications.)*
 - **FR-021**: --replay MUST reproducir una partida sin bloquearla por resolubilidad, incluida una partida forzada; cargar una partida guardada MUST NOT volver a exigir la verificación.
 
 **Solo verificación**
