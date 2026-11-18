@@ -1,3 +1,10 @@
+> **Notas sobre este registro (agregadas el 18/11/2026).**
+>
+> - **Saltos de numeración.** En la Parte I no existen las entradas 4, 6, 14 y 15. Faltan desde el primer commit que trajo este archivo con entradas (1e29c68, 20/09/2026, que ya pasaba de la 3 a la 5, de la 5 a la 7 y de la 13 a la 16), y ninguna versión del archivo en el historial de git las tuvo: se revisaron todas las de `git log --all -- PROMPTS_LLM.md`. Las conversaciones de esas fechas fueron en Claude (web) y no queda copia de ellas, así que no se puede saber qué prompts eran; no se renumera para no romper las referencias a los números.
+> - **Entrada 1 repetida.** El segundo "## Entrada 1" está dentro del prompt de la entrada 2: es el ejemplo de formato que se pegó en ese mensaje. Se deja y se anota allí.
+> - **Entrada 93-bis.** El comando `/speckit-constitution` no tenía registro; se agregó con el sufijo -bis, sin renumerar, porque otros documentos citan números de entrada.
+> - **Textos completos.** Las entradas que estaban resumidas y cuyo texto está en las transcripciones de Claude Code de esta máquina se reemplazaron por el texto real, copiado tal cual. Donde el texto no está en ninguna transcripción, la entrada lo dice con una nota y queda como se registró.
+
 ## Diego:
 ## Entrada 1
 - **Fecha:** 19/09/2026
@@ -31,6 +38,7 @@ De ahora en adeltante me vas a pasar lo siguiente por prompt resuelto:
 
 Ahora iniciemos segun el orden que corresponda. Paso a paso, seccion por seccion, me lo envias al chat, no me hagas archivos como tal para facilitar la correccion."
 - **Uso:** dividir el trabajo entre los dos integrantes, ajustar el diseño a los TDA permitidos y planificar el Paso 1 (puerto FuenteDatos, cliente HTTP, modo offline y presupuesto de red).
+- **Nota:** el bloque "## Entrada 1" que aparece dentro de este prompt es el ejemplo de formato que se pegó en el mensaje, no una segunda entrada 1. El registro de la entrada 1 es el de arriba; el del prompt se deja porque es parte del texto real de esta entrada.
 
 ## Entrada 3
 - **Fecha:** 20/09/2026
@@ -490,6 +498,7 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 - **Fecha:** 14/10/2026
 - **Herramienta:** Claude
 - **Prompt:** "Ayudame a implementar PyArcade dentro del proyecto como vista, explicame brevemente en que consiste, como funciona..."
+- **Nota:** el texto completo no se encontró: se registró cortado y la conversación fue en Claude (web), de la que no queda copia en el repositorio ni en esta máquina.
 - **Uso:** entender en qué consiste PyArcade y cómo se puede integrar dentro del proyecto.
 
 ## Entrada 33
@@ -526,6 +535,7 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 - **Fecha:** 15/10/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "Necesito que el codigo que acabamos de implementar cumpla con esto y si no lo hace, dime que es lo que vas a cambiar [...] Y tiene que estar comentado en el código pq se toma esa decisión de diseño". Se adjuntaron el prompt de reglas del proyecto (arquitectura MVC + adaptadores, TDA permitidos, sin dict ni listas nativas como almacenamiento, ordenamientos propios, sin lambda, justificación con Big O), Cripta_Guia_MVC.md y el enunciado.
+- **Nota:** el texto completo no se encontró: la sesión de Claude Code del 15/10/2026 no está entre las transcripciones de esta máquina (la primera es del 31/10/2026), así que lo omitido con [...] no se completa.
 - **Uso:** auditar el Controlador contra las reglas; se encontraron 7 puntos (acceso a disco desde el Controlador, duplicación de pergaminos en el Diario, tipado, comentarios de decisión, print en ReporteFinal, partida nueva o cargada, prueba faltante).
 
 ## Entrada 39
@@ -868,7 +878,85 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 ## Entrada 94
 - **Fecha:** 31/10/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5), comando de spec-kit `/speckit-specify`
-- **Prompt:** "Terreno y cazador: las salidas de una sala tienen costo de tránsito y aparece un nuevo enemigo, el cazador, que calcula la ruta más barata hacia el jugador. ..." (texto completo con reglas del juego, contrato de datos, interfaz, rendimiento y escenarios de aceptación).
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-10-31 23:59:29 UTC):
+
+````text
+/speckit-specify Terreno y cazador: las salidas de una sala tienen costo de tránsito y aparece
+un nuevo enemigo, el cazador, que calcula la ruta más barata hacia el jugador.
+
+REGLAS DEL JUEGO
+
+Costo de las salidas.
+- Cada salida puede declarar un costo, entero mayor o igual que 1. Si no lo
+  declara, vale 100. El costo es el mismo en ambos sentidos.
+- Moverse a través de una salida es una acción cuyo costo base es el costo de
+  esa salida, en lugar del 100 fijo. El intervalo hasta la próxima acción es
+  max(1, costo_salida * 100 // velocidad). Aplica a todos los actores
+  (jugador, errantes, rastreadores y cazadores). El costo de atacar, esperar y
+  las demás acciones no cambia.
+- Errantes y rastreadores conservan su comportamiento; solo cambia lo que
+  tarda su movimiento.
+- Si la velocidad de un actor cambia mientras atraviesa una salida costosa, el
+  tiempo restante se reescala con la regla de velocidad ya existente.
+
+El cazador.
+- Es un cuarto comportamiento de enemigo. Su ficha de catálogo incluye un
+  campo rango, un entero en unidades de costo.
+- En su turno aplica, en orden:
+  1. Si comparte sala con el jugador, ataca.
+  2. Si no, considera el costo mínimo d de llegar desde su sala hasta la sala
+     actual del jugador, sumando el costo de cada salida recorrida y usando
+     únicamente salidas abiertas en ese instante.
+  3. Si no existe ruta, o si d es mayor que rango, espera (costo 100).
+  4. Si existe, se mueve un paso por una ruta de costo d. El costo de esa
+     acción es el costo de la salida que atraviesa.
+- Desempate: sea u la sala del cazador. Entre las vecinas v tales que
+  costo(u, v) + dist(v, jugador) = d, se mueve a la de menor id, sin importar
+  cómo se calcule la ruta.
+- Conocimiento: el cazador conoce el esqueleto completo y el estado actual de
+  todas las puertas. No le afecta la niebla de guerra del jugador. Como
+  cualquier enemigo, no abre puertas cerradas. Su cálculo depende solo del
+  esqueleto (que incluye el costo de cada salida) y del estado actual de las
+  puertas, nunca de si el contenido de una sala ya fue descargado.
+- Equivalencia observable: su decisión en cada turno debe ser idéntica a la
+  que se obtendría calculando la ruta desde cero en ese instante. Las puertas
+  que se abren o cierran, el movimiento del jugador y la muerte de otros
+  actores pueden cambiar la respuesta entre un turno y el siguiente.
+  Reutilizar cálculos anteriores es válido solo si nunca cambia la decisión.
+
+CONTRATO DE DATOS
+- El esqueleto de la cripta trae un campo costo opcional en cada salida
+  (ausente equivale a 100), válido mientras coincida la versión de la cripta.
+- El catálogo trae fichas de enemigo con comportamiento "cazador" y un campo
+  rango, válidas mientras coincida la versión global del catálogo.
+
+INTERFAZ
+- La vista muestra el costo de las salidas de la sala actual y distingue a los
+  cazadores de los demás enemigos.
+
+RENDIMIENTO
+- Con decenas de cazadores activos persiguiendo al mismo objetivo en la cripta
+  de referencia, resolver un ciclo completo de eventos entre dos decisiones del
+  jugador toma menos de 20 ms. La decisión de un cazador con rango pequeño no
+  debe costar proporcionalmente al tamaño de la cripta, sino a la región que
+  queda dentro de su rango.
+
+ESCENARIOS DE ACEPTACIÓN (casos que deben tener resultado definido)
+- Un cazador sin ruta abierta hacia el jugador espera con costo 100.
+- Si la ruta más barata cuesta más que su rango, el cazador espera con costo 100.
+- Con una ruta de menos salas pero mayor costo y otra de más salas y menor
+  costo, el cazador sigue la de menor costo.
+- Si dos vecinas inician rutas de costo mínimo, el cazador va a la de menor id.
+- Si una puerta de la ruta del cazador se cierra entre dos de sus turnos, en el
+  turno siguiente decide como si calculara desde cero.
+- Un actor de velocidad alta que atraviesa una salida de costo 1 tiene un
+  intervalo de al menos 1.
+- Cuando cambia la velocidad de un actor que atraviesa una salida costosa, el
+  tiempo restante se escala según la regla de velocidad existente.
+- Una salida sin costo declarado cuesta 100.
+- Un cazador que comparte sala con el jugador ataca y no se mueve.
+````
+
 - **Uso:** generar specs/001-terreno-cazador/spec.md y su checklist de calidad (checklists/requirements.md).
 
 ## Entrada 95
@@ -904,7 +992,24 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 ## Entrada 100
 - **Fecha:** 31/10/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5)
-- **Prompt:** "Aplica estas correcciones, cada grupo en su propio commit: 1) En spec.md: cambia SC-001 para cubrir todos los escenarios de aceptación de las Historias 1 a 4 ... 2) En plan.md y quickstart.md: (a) agrega pruebas automáticas para FR-021 y para los conteos de salas examinadas de FR-026/SC-004, y una verificación automática de FR-025; (b) ... DatosInvalidos ... mostrar_error; (c) ... 100 cazadores de rangos distintos ... cota al doble; (d) deja FORMATO_VERSION como pendiente de coordinar ... 3) Luego corre /speckit-analyze y corrige lo que reporte." Seguido de "2" (corregir solo las inconsistencias, porque /speckit-analyze exige tasks.md).
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-11-01 00:56:38 UTC):
+
+````text
+Aplica estas correcciones, cada grupo en su propio commit:
+1) En spec.md: cambia SC-001 para cubrir todos los escenarios de aceptación de
+   las Historias 1 a 4, no solo 9. Commit solo de la spec.
+2) En plan.md y quickstart.md: (a) agrega pruebas automáticas para FR-021 y para
+   los conteos de salas examinadas de FR-026/SC-004, y una verificación
+   automática de FR-025; (b) en el plan, indica que el Controlador captura
+   DatosInvalidos al iniciar la cripta y llama a mostrar_error; (c) agrega al
+   bench un escenario con 100 cazadores de rangos distintos y evalúa crecer la
+   cota al doble; (d) deja FORMATO_VERSION como pendiente de coordinar con las
+   otras features.
+3) Luego corre /speckit-analyze y corrige lo que reporte.
+````
+
+- **Respuesta posterior:** "2" (corregir solo las inconsistencias, porque /speckit-analyze exige tasks.md).
+
 - **Uso:** SC-001 con los 21 escenarios; pruebas, captura de DatosInvalidos, bench de rangos distintos y FORMATO_VERSION pendiente en plan y quickstart; alinear research.md, data-model.md y el contrato del formato de guardado. /speckit-analyze no se pudo ejecutar porque todavía no existe tasks.md.
 
 ## Entrada 101
@@ -916,7 +1021,16 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 ## Entrada 102
 - **Fecha:** 31/10/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5)
-- **Prompt:** "Aplica estas 4 correcciones en un commit propio, sin tocar spec.md: 1) plan.md, Summary: cambia "0,3 a 9,8 ms" por "0,2 a 9,8 ms" ... 2) research.md R3: reescribe la alternativa descartada "cota = rango máximo entre las fichas cargadas" para que no contradiga a P3 ... 3) data-model.md, MapaDistancias.distancia(): devuelve None si la distancia guardada es mayor que la cota ... 4) quickstart.md: verifica que "python -m pruebas.ejecutar_pruebas" corre; unifica el estilo de comandos con el README (py ...)."
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-11-01 01:09:29 UTC):
+
+````text
+Aplica estas 4 correcciones en un commit propio, sin tocar spec.md:
+1) plan.md, Summary: cambia "0,3 a 9,8 ms" por "0,2 a 9,8 ms" (el mínimo de la tabla de research R1 es 0,23 ms).
+2) research.md R3: reescribe la alternativa descartada "cota = rango máximo entre las fichas cargadas" para que no contradiga a P3 (que usa R_activos, el mayor rango entre cazadores activos). Explica en qué se diferencian.
+3) data-model.md, MapaDistancias.distancia(): devuelve None si la distancia guardada es mayor que la cota (valor provisional de una vecina fuera de la cota), para no exponer distancias no exactas. Indica que no cambia la decisión (R3).
+4) quickstart.md: verifica que "python -m pruebas.ejecutar_pruebas" corre; unifica el estilo de comandos con el README (py ...).
+````
+
 - **Uso:** aplicar las cuatro correcciones al plan de 001-terreno-cazador y verificar la suite de pruebas: con el entorno .venv activo pasan las 37; con el py del sistema fallan 13 por falta de requests.
 
 ## Entrada 103
@@ -928,7 +1042,32 @@ Uso: aclarar cómo se escribe /speckit-tasks junto con el texto de instrucciones
 ## Entrada 104
 - **Fecha:** 31/10/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5), comando de spec-kit `/speckit-tasks`
-- **Prompt:** "/speckit-tasks Genera tasks.md para 001-terreno-cazador. Cada tarea debe citar los FR-xxx que cubre. Incluye estas tareas de forma explícita: 1. Pruebas, antes del código que las hace pasar ... 2. La tabla de los 21 escenarios de aceptación ... 3. El bench de la cota con las reglas P1, P2 y P3 ... 4. Tarea condicional ... FR-026(b) ... 5. La equivalencia con el oráculo Bellman-Ford ... 6. modoReplay ... 7. El paquete sin conexión de prueba ... 8. benchCazador.py ejecutable con -m ... 9. Registrar las 9 pruebas nuevas ... 10. README ... 11. DECISIONES.md ... PROMPTS_LLM.md. 12. FORMATO_VERSION queda como tarea pendiente de coordinar con Pablo ..." (texto completo en la conversación).
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-11-01 01:22:30 UTC):
+
+````text
+/speckit-tasks Genera tasks.md para 001-terreno-cazador. Cada tarea debe citar los FR-xxx que cubre. Incluye estas tareas de forma explícita:
+
+1. Pruebas, antes del código que las hace pasar: prueba_costo_salidas, prueba_datos_costo, prueba_fuentes_costos, prueba_cazador, prueba_cazador_equivalencia, prueba_conteo_cazador, prueba_rendimiento_cazador, prueba_persistencia_cazador y prueba_vista_costos. Incluye la prueba del error DatosInvalidos cuando las dos caras de una salida declaran costos distintos (el Controlador lo captura y llama a mostrar_error).
+2. La tabla de los 21 escenarios de aceptación, con cada escenario asignado a la prueba que lo cubre (marca H<historia>.E<escenario>).
+3. El bench de la cota con las reglas P1, P2 y P3, incluido el escenario de 100 cazadores con rangos distintos.
+4. Tarea condicional: si gana P2 o P3, primero se enmienda FR-026(b) en la spec, en un commit propio, y después se cambia el código.
+5. La equivalencia con el oráculo Bellman-Ford independiente (al menos 1000 situaciones aleatorias).
+6. modoReplay: verificar que con una cripta de caras distintas muestre el mensaje y salga con código 1; si no lo hace, agregar la captura, con su prueba.
+7. El paquete sin conexión de prueba en pruebas/datos/terreno_cazador/.
+8. benchCazador.py ejecutable con -m (bloque __main__) y registrado en benchTodo.
+9. Registrar las 9 pruebas nuevas en ejecutar_pruebas.py.
+10. README: nota de que los archivos de guardado del formato anterior se reportan incompatibles.
+11. La sección de DECISIONES.md, con enlaces a spec.md y plan.md, y la entrada en PROMPTS_LLM.md.
+12. FORMATO_VERSION queda como tarea pendiente de coordinar con Pablo, no con un número fijo.
+
+Ordena las fases de forma que las pruebas y el bench vayan antes de la tarea de cerrar la feature, que debe ser la última. antes de agregar el prompt tuyo agrega este Fecha: 31/10/2026
+Herramienta: Claude
+Prompt: “osea pongo el comando y en el mismo espacio de escribir eso?”
+Uso: aclarar cómo se escribe /speckit-tasks junto con el texto de instrucciones adicionales en un solo mensaje.
+````
+
+- **Nota:** el texto que se pidió agregar al final es el registro de la entrada 103 (conversación con Claude).
+
 - **Uso:** generar specs/001-terreno-cazador/tasks.md: 56 tareas en 8 fases, con pruebas antes del código, la tabla de los 21 escenarios, la cobertura de FR-001 a FR-028 y la tarea de cierre al final.
 
 ## Entrada 105
@@ -940,7 +1079,39 @@ Uso: revisar tasks.md de 001-terreno-cazador antes de /speckit-analyze, señalar
 ## Entrada 106
 - **Fecha:** 31/10/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5)
-- **Prompt:** "corrige esto: Aplica estos ajustes a specs/001-terreno-cazador/tasks.md en un commit propio: 1) Fase 1: agrega una tarea al inicio que confirme que `py pruebas/ejecutar_pruebas.py` corre completa y en verde ... y otra que genere con el código ACTUAL un archivo de guardado del formato anterior como fixture ... 2) T013: enlazar() debe ser idempotente ... 3) T025: aísla la regla de la cota en un método `_cota_nueva(cota_minima)` ... 4) T003: el oráculo corre Bellman-Ford desde cada vecina abierta v ... 5) T053: mover el registro en PROMPTS_LLM.md a cada commit de fase ... 6) T051 ... T052 ... git pull de main y usar el siguiente número D libre. 7) T038 y T039: ... prueba_reglas lo revisa ... 8) Actualiza la tabla de cobertura y las dependencias si cambia algún ID." (texto completo en la conversación).
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code; fueron 2 mensajes seguidos:
+
+Mensaje del 2026-11-01 01:30:53 UTC:
+
+````text
+corrige esto
+````
+
+Mensaje del 2026-11-01 01:31:26 UTC:
+
+````text
+corrige esto
+
+Aplica estos ajustes a specs/001-terreno-cazador/tasks.md en un commit propio:
+1) Fase 1: agrega una tarea al inicio que confirme que `py pruebas/ejecutar_pruebas.py` corre completa y en verde en esta rama antes de cambiar código (descomentar las pruebas que estén comentadas), y otra que genere con el código ACTUAL un archivo de guardado del formato anterior como fixture en pruebas/datos/terreno_cazador/guardado_formato_anterior.bin. T044(b) usa ese fixture. En T044(d), el log de terreno-caras-distintas se escribe a mano con el encabezado mínimo.
+2) T013: enlazar() debe ser idempotente (vacía `entrantes` antes de llenar); agrega un caso de prueba en prueba_datos_costo.
+3) T025: aísla la regla de la cota en un método `_cota_nueva(cota_minima)` que las subclases puedan sobrescribir. T038: P2 y P3 lo sobrescriben; BusquedaPorCazador es un Dijkstra hacia adelante propio, no reutiliza MapaDistancias.
+4) T003: el oráculo corre Bellman-Ford desde cada vecina abierta v hasta la sala del jugador, no solo desde la sala del cazador.
+5) T053: mover el registro en PROMPTS_LLM.md a cada commit de fase (no solo al final).
+6) T051: verifica si el README menciona un conteo de pruebas; si no lo hay, elimina esa línea. T052: antes de numerar, hacer git pull de main y usar el siguiente número D libre.
+7) T038 y T039: agrega la nota de que ese código vive en cripta/ y prueba_reglas lo revisa (sin list, dict, sorted ni heapq).
+8) Actualiza la tabla de cobertura y las dependencias si cambia algún ID.
+
+ y agregas este prompt antes del tuyo
+
+Fecha: 31/10/2026
+Herramienta: Claude
+Prompt: “[tasks.md adjunto] antes de analyze revisemos esto bien pq el paso que sigue es implementar y quiero que todo quede de la mejor manera”
+Uso: revisar tasks.md de 001-terreno-cazador antes de /speckit-analyze, señalar 9 ajustes y dar el prompt para aplicarlos.
+````
+
+- **Nota:** el primer mensaje se envió sin el texto pegado; el texto que se pidió agregar al final del segundo es el registro de la entrada 105 (conversación con Claude).
+
 - **Uso:** aplicar los ocho ajustes a tasks.md: dos tareas nuevas al inicio (línea base verde y fixture del formato anterior), renumerar a T001–T058 y actualizar la tabla de escenarios, la cobertura y las dependencias. Las prueba_real_* siguen comentadas porque usan el API real y gastan presupuesto.
 
 ## Entrada 107
@@ -970,7 +1141,31 @@ Uso: revisar el informe de analyze, decidir qué hallazgos corregir, mover la re
 ## Entrada 111
 - **Fecha:** 01/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5)
-- **Prompt:** "Sí. Corrige D1, U1, U2 (el de T013), I2, I3, I4 y C1, en este orden de commits: 1) Un commit que toque SOLO spec.md: agrega a FR-014 que si dos salidas de u llevan a la misma vecina v con el mismo costo, gana la primera en el orden N, S, E, O, y agrega ese caso a los casos borde (no como escenario de aceptación nuevo, para que SC-001 siga en 21). 2) Un commit con los cambios en tasks.md y plan.md: - D1: tarea nueva en la Fase 1, justo después de T001: ampliar prueba_reglas para detectar set, frozenset, {a, b}, comprensiones de conjunto, set(), import heapq, bisect, collections (cualquiera), networkx y otras bibliotecas de grafos, con autopruebas. T057 queda con "sin dict, set, list, heapq, bisect ni sorted". - U1: T005, T028 y el generador de T021 siguen la regla de FR-014 (id de la vecina, luego orden N, S, E, O); agrega un caso con dos salidas a la misma vecina. - U2: en T013, _registro = None se asigna antes que cerrada. - C1: agrega a T020 (prueba_cazador) los casos de jugador muerto, varios cazadores en la misma sala y primer costo del cazador, con la marca BORDE. - I2, I3, I4 como los propones. - El total: "47/47" en T053 y T057; en T001, corregir README.md:27 a 38; en la tarea de README final, a 47. 3) Un commit con las entradas faltantes de PROMPTS_LLM.md (analyze y esta revisión). No empieces T001 hasta que yo confirme los tres commits." Seguido de "Agrega este prompt antes del tuyo" con el texto de la entrada 110.
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-11-01 22:06:06 UTC):
+
+````text
+Sí. Corrige D1, U1, U2 (el de T013), I2, I3, I4 y C1, en este orden de commits:
+1) Un commit que toque SOLO spec.md: agrega a FR-014 que si dos salidas de u llevan a la misma vecina v con el mismo costo, gana la primera en el orden N, S, E, O, y agrega ese caso a los casos borde (no como escenario de aceptación nuevo, para que SC-001 siga en 21).
+2) Un commit con los cambios en tasks.md y plan.md:
+   - D1: tarea nueva en la Fase 1, justo después de T001: ampliar prueba_reglas para detectar set, frozenset, {a, b}, comprensiones de conjunto, set(), import heapq, bisect, collections (cualquiera), networkx y otras bibliotecas de grafos, con autopruebas. T057 queda con "sin dict, set, list, heapq, bisect ni sorted".
+   - U1: T005, T028 y el generador de T021 siguen la regla de FR-014 (id de la vecina, luego orden N, S, E, O); agrega un caso con dos salidas a la misma vecina.
+   - U2: en T013, _registro = None se asigna antes que cerrada.
+   - C1: agrega a T020 (prueba_cazador) los casos de jugador muerto, varios cazadores en la misma sala y primer costo del cazador, con la marca BORDE.
+   - I2, I3, I4 como los propones.
+   - El total: "47/47" en T053 y T057; en T001, corregir README.md:27 a 38; en la tarea de README final, a 47.
+3) Un commit con las entradas faltantes de PROMPTS_LLM.md (analyze y esta revisión).
+No empieces T001 hasta que yo confirme los tres commits.
+
+ Agrega este prompt antes del tuyo,
+
+Fecha: 01/11/2026
+Herramienta: Claude
+Prompt: “[informe de /speckit-analyze de 001-terreno-cazador adjunto]”
+Uso: revisar el informe de analyze, decidir qué hallazgos corregir, mover la regla de desempate a la spec y fijar dónde va el total de 47 pruebas.
+````
+
+- **Nota:** el texto que se pidió agregar al final es el registro de la entrada 110.
+
 - **Uso:** tres commits. (1) spec.md: desempate N, S, E, O en FR-014 y su caso borde; SC-001 sigue en 21. (2) tasks.md y plan.md: nueva T002 (ampliar prueba_reglas), así que las tareas se renumeran a T001–T059 (las citadas como T005, T013, T020, T021, T028, T053 y T057 ahora son T006, T014, T021, T022, T029, T054 y T058); desempate en el oráculo, el Cazador y el generador; _registro antes que cerrada; casos BORDE; totales 38 y 47/47; I2, I3 e I4 en plan.md. (3) Estas entradas 107 a 111.
 
 ## Entrada 112
@@ -983,12 +1178,27 @@ Uso: revisar el informe de analyze, decidir qué hallazgos corregir, mover la re
 Fecha: 01/11/2026
 Herramienta: Claude
 Prompt: “La Fase 1 está terminada y confirmada en fa09957. Las pruebas pasan 37/37. ... yo loveo muy bien, pensaria que se puede hacerr el push y empozar com la 2”
+- **Nota:** el texto completo no se encontró: la conversación fue en Claude (web), de la que no queda copia en el repositorio ni en esta máquina; las partes con "..." quedan como se registraron.
 Uso: revisar el informe de la Fase 1, aprobar el push, señalar tres ajustes previos a la Fase 2 y marcar la duda sobre la activación del cazador.
 
 ## Entrada 114
 - **Fecha:** 01/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5)
-- **Prompt:** "Sí, haz push y antes de la Fase 2: 1) Baja la probabilidad de salidas repetidas hacia la misma vecina en las criptas al azar de apoyo_terreno para que solo una minoría (alrededor de 20 a 30 %) tenga alguna sala con duplicadas, y deja un caso fijo con duplicadas. Commit propio.2)Agrega a la sección Assumptions de spec.md, en un commit propio que solo toque spec.md: "El cazador usa la misma regla de activación que los demás enemigos (Parte I §2.4): está dormido y no actúa hasta que el jugador entra a su sala; una vez activo permanece activo aunque cambie de sala. Su primera acción se programa con costo base 100. La decisión de la ruta (FR-011 a FR-017) solo aplica a cazadores activos." Registra el prompt en PROMPTS_LLM.md. No cambies nada más." Seguido de "Agrega este prompt" con el texto de la entrada 113.
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-11-01 22:37:45 UTC):
+
+````text
+Sí, haz push y antes de la Fase 2: 1) Baja la probabilidad de salidas repetidas hacia la misma vecina en las criptas al azar de apoyo_terreno para que solo una minoría (alrededor de 20 a 30 %) tenga alguna sala con duplicadas, y deja un caso fijo con duplicadas. Commit propio.2)Agrega a la sección Assumptions de spec.md, en un commit propio que solo toque spec.md:
+"El cazador usa la misma regla de activación que los demás enemigos (Parte I §2.4): está dormido y no actúa hasta que el jugador entra a su sala; una vez activo permanece activo aunque cambie de sala. Su primera acción se programa con costo base 100. La decisión de la ruta (FR-011 a FR-017) solo aplica a cazadores activos."
+Registra el prompt en PROMPTS_LLM.md. No cambies nada más. Agrega este prompt:
+
+Fecha: 01/11/2026
+Herramienta: Claude
+Prompt: “La Fase 1 está terminada y confirmada en fa09957. Las pruebas pasan 37/37. ... yo loveo muy bien, pensaria que se puede hacerr el push y empozar com la 2”
+Uso: revisar el informe de la Fase 1, aprobar el push, señalar tres ajustes previos a la Fase 2 y marcar la duda sobre la activación del cazador.
+````
+
+- **Nota:** el texto que se pidió agregar al final es el registro de la entrada 113.
+
 - **Uso:** push de la Fase 1 (a2b02b8..fa09957). (1) apoyo_terreno: dos salas se conectan una sola vez y la duplicada se agrega solo a propósito (PROB_DUPLICADA = 0.04, 23,9 % de 1000 criptas), con el caso fijo duplicadas_misma_vecina() comprobado con el oráculo. (2) spec.md: la regla de activación del cazador en Assumptions. (3) Estas entradas.
 
 ## Entrada 115
@@ -1018,7 +1228,25 @@ Uso: decidir que un costo null equivale a no declarado, registrar la aclaración
 ## Entrada 119
 - **Fecha:** 01/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5)
-- **Prompt:** "Sí: un "costo": null equivale a no declarado (100), igual que llave y cierre_automatico, que ya usan datos.get. Orden: 1) Un commit que toque SOLO spec.md: en FR-003 y en los casos borde, aclara que costo null equivale a ausente (100) y que cualquier otro valor que no sea entero ≥ 1 sigue siendo error. rango null o ausente en un cazador sigue siendo error (FR-009). 2) Ajusta el convertidor (T013) y prueba_datos_costo: null vale 100; "100", true, 0, -5 y 2.5 siguen fallando. Corre la suite. 3) Commit de la Fase 3 (US1) con las tareas marcadas en tasks.md y los prompts en PROMPTS_LLM.md. Avísame al terminar, con el resultado de la suite." Seguido de "y agrega" con el texto de la entrada 118.
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-11-01 23:05:30 UTC):
+
+````text
+Sí: un "costo": null equivale a no declarado (100), igual que llave y cierre_automatico, que ya usan datos.get. Orden:
+1) Un commit que toque SOLO spec.md: en FR-003 y en los casos borde, aclara que costo null equivale a ausente (100) y que cualquier otro valor que no sea entero ≥ 1 sigue siendo error. rango null o ausente en un cazador sigue siendo error (FR-009).
+2) Ajusta el convertidor (T013) y prueba_datos_costo: null vale 100; "100", true, 0, -5 y 2.5 siguen fallando. Corre la suite.
+3) Commit de la Fase 3 (US1) con las tareas marcadas en tasks.md y los prompts en PROMPTS_LLM.md.
+Avísame al terminar, con el resultado de la suite.
+
+ y agrega
+
+Fecha: 01/11/2026
+Herramienta: Claude
+Prompt: “[informe de la Fase 3 de Claude Code] lo que veo es lo del null del json pero realmente no lo veo tan mal, auqnue nose si es mejor no declarado para evitar errorres de no haber inicializado parametors, y lo demas lo veo bien trabajado”
+Uso: decidir que un costo null equivale a no declarado, registrar la aclaración en la spec antes del código y dar el prompt para cerrar la Fase 3.
+````
+
+- **Nota:** el texto que se pidió agregar al final es el registro de la entrada 118.
+
 - **Uso:** (1) spec.md: FR-003 y casos borde (costo null = no declarado; rango null o ausente de un cazador sigue siendo error), commit e6106f2. (2) Primero se ajustó prueba_datos_costo (sacar null de los inválidos y un caso nuevo, que falló), después el convertidor con datos.get("costo"). Las tres pruebas de US1 pasan, prueba_reglas OK y la suite 37/37. T013 y contracts/datos-entrada.md dicen ahora "ausente o null". La Fase 3 ya estaba confirmada en 8bdd138, así que el ajuste va en un commit propio encima.
 
 ## Entrada 120
@@ -1048,7 +1276,19 @@ Uso: decidir que un costo null equivale a no declarado, registrar la aclaración
 ## Entrada 124
 - **Fecha:** 01/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-implement` (Fase 6, US4)
-- **Prompt:** respuestas a dos preguntas de la Fase 6: "¿Apruebas esta enmienda [de FR-026(b): R es el mayor rango entre los cazadores activos (los únicos que deciden) en el momento del cálculo]?" → "Sí, con este texto (Recomendado)"; "P3 necesita R_activos [...] ¿Cómo lo calcula la Partida?" → "Recorrer cazadores (Recomendado)".
+- **Prompt:** respuestas a dos preguntas que hizo Claude Code en la Fase 6 (texto copiado de la transcripción, 2026-11-01 23:45:53 UTC):
+
+````text
+Pregunta 1 (FR-026(b)): El bench elige P3 (duplicar con tope R_activos): es la única que pasa los 20 ms con 100 rangos distintos en la malla de 1024 salas. T045 exige enmendar primero FR-026(b) en un commit que solo toque spec.md. ¿Apruebas esta enmienda?
+Texto propuesto: FR-026 (b) los cálculos de distancia que esas decisiones necesitan examinan como máximo las salas a costo ≤ R de la sala del jugador más sus vecinas inmediatas, donde R es el mayor rango entre los cazadores activos (los únicos que deciden) en el momento del cálculo. SC-004: sin cambios (ya remite a las cotas de FR-026).
+Opciones: "Sí, con este texto (Recomendado)" / "No, quedarse con P1" / "Otra redacción"
+Respuesta: Sí, con este texto (Recomendado)
+
+Pregunta 2 (R_activos): P3 necesita R_activos: el mayor rango entre los cazadores activos. ¿Cómo lo calcula la Partida?
+Opciones: "Recorrer cazadores (Recomendado)" (la Partida guarda la lista de cazadores que crea la fábrica y, en cada recálculo, toma el máximo entre los activos y vivos) / "Máximo que solo crece" (se actualiza al activar cada cazador y nunca baja)
+Respuesta: Recorrer cazadores (Recomendado)
+````
+
 - **Uso:** Fase 6 (T039 a T046). Pruebas primero: prueba_conteo_cazador (pasó desde el inicio porque el mapa acotado ya existía; se comprobó que un mapa sin cota la hace fallar) y prueba_rendimiento_cazador (falló: no existía el bench, y después P1 dio 45 y 50 ms con 100 rangos distintos en la malla de 1024 salas). Se escribieron alternativasCazador (P1, P2 y BusquedaPorCazador, validada contra el oráculo en 4500 decisiones) y benchCazador, registrado en benchTodo. T044: solo P3 pasaba los 20 ms (P1 40,8 y 41,4 ms; P2 21,6 ms; P3 18,0 ms). T045: enmienda de FR-026(b) en su propio commit (859cf55), P3 en MapaDistancias y R_activos en la Partida. P3 quedaba en el límite (17,9 a 21,6 ms) por la búsqueda lineal de salas por id, repetida en cada turno de enemigo: Mundo.sala() recuerda la última sala y el movimiento de enemigos usa salida.sala_destino. Bench final: P3 15,8 ms como máximo en la malla. prueba_4_4 cuenta las 5 tablas nuevas de benchTodo. Suite 37/37.
 
 ## Entrada 125
@@ -1078,7 +1318,25 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 ## Entrada 129
 - **Fecha:** 01/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5)
-- **Prompt:** "La suite no pasa: prueba_rendimiento_cazador falla en malla 1024 con 100 rangos distintos (creciente 23,75 ms, decreciente 20,86 ms), y en el bench P3 también FALLA en creciente (20,89 y 22,61 ms). Eso contradice D72 y la enmienda de FR-026(b), que se aprobaron porque "P3 es la única que pasa". No hagas merge. Orden: 1) Diagnóstico, sin cambiar código: corre el bench 3 veces y dime la variación de P3 en malla/creciente; explica por qué decreciente da 8-12 ms en el bench y 20,86 ms en la suite. 2) Agrega una política P4 al bench: al recalcular, cota = R_activos directamente (sin duplicar), para tener un solo recálculo por ciclo sin importar el orden. Reporta la tabla P1 a P4 (recálculos, salas examinadas, mínimo ms, margen frente a 20 ms). P4 cumple FR-026(b) como quedó enmendado (cota ≤ R_activos). 3) Con las cifras, propón sin aplicar qué política queda y qué hacer con prueba_rendimiento_cazador: FR-025 y SC-003 exigen < 20 ms solo en la cripta de referencia; la malla de 1024 y los rangos distintos son estrés propio del plan. Propón dejar en la suite solo los casos de la cripta de referencia y pasar los de la malla al bench informativo. Espera mi confirmación antes de cambiar mapaDistancias.py, la prueba, D72, plan.md o tasks.md." Seguido de "y agrega este Prompt" con el texto de la entrada 128.
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-11-02 00:28:19 UTC):
+
+````text
+La suite no pasa: prueba_rendimiento_cazador falla en malla 1024 con 100 rangos distintos (creciente 23,75 ms, decreciente 20,86 ms), y en el bench P3 también FALLA en creciente (20,89 y 22,61 ms). Eso contradice D72 y la enmienda de FR-026(b), que se aprobaron porque "P3 es la única que pasa". No hagas merge. Orden:
+1) Diagnóstico, sin cambiar código: corre el bench 3 veces y dime la variación de P3 en malla/creciente; explica por qué decreciente da 8-12 ms en el bench y 20,86 ms en la suite.
+2) Agrega una política P4 al bench: al recalcular, cota = R_activos directamente (sin duplicar), para tener un solo recálculo por ciclo sin importar el orden. Reporta la tabla P1 a P4 (recálculos, salas examinadas, mínimo ms, margen frente a 20 ms). P4 cumple FR-026(b) como quedó enmendado (cota ≤ R_activos).
+3) Con las cifras, propón sin aplicar qué política queda y qué hacer con prueba_rendimiento_cazador: FR-025 y SC-003 exigen < 20 ms solo en la cripta de referencia; la malla de 1024 y los rangos distintos son estrés propio del plan. Propón dejar en la suite solo los casos de la cripta de referencia y pasar los de la malla al bench informativo.
+Espera mi confirmación antes de cambiar mapaDistancias.py, la prueba, D72, plan.md o tasks.md.
+
+ y agrega este Prompt
+
+Fecha: 01/11/2026
+Herramienta: Claude
+Prompt: “[salida de la terminal con la suite 45/46, prueba_reglas, el bench completo y benchCazador --rapido adjunta]”
+Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en la malla de 1024 y dar el prompt para diagnosticar, probar una política P4 y ajustar el alcance de la prueba.
+````
+
+- **Nota:** el texto que se pidió agregar al final es el registro de la entrada 128.
+
 - **Uso:** diagnóstico: con el código sin cambios, P3 en malla y orden creciente da de 13,1 a 14,8 ms en esta máquina, pero el escenario no era estacionario: EscenarioCiclo.preparar() no reiniciaba los turnos, así que con los costos sintéticos cada repetición medía otra carga (82 a 125 decisiones, 1 a 3 recálculos) y el orden del escenario se perdía; medir dos veces el mismo escenario pasaba de 8,06 a 18,29 ms. Se corrigió el banco de medición (preparar reprograma los turnos en orden) y se agregó P4 al bench. Con escenarios estacionarios, en la malla de 1024 salas: P3 46,3 ms en orden creciente y 24,4 ms al azar (FALLA); P4 un recálculo por ciclo y 8,1 ms como máximo en los tres órdenes. Las cifras de D72 y del reporte de la Fase 6 eran artefactos del banco. Pendiente de confirmación: política y alcance de la prueba.
 
 ## Entrada 130
@@ -1102,7 +1360,80 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 ## Entrada 133
 - **Fecha:** 08/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-specify`
-- **Prompt:** texto de la entrada 132 pasado a `/speckit-specify` ("Resolubilidad: antes de iniciar una partida, el programa determina si la cripta puede ganarse y, si no, explica por qué. Usa el esqueleto de la cripta y la ubicación de las llaves. [...] Todos los requisitos funcionales con identificador FR-xxx y cada escenario de aceptación con su requisito. No menciones estructuras de datos, clases ni módulos. Respeta la constitución. Registra este prompt en PROMPTS_LLM.md.").
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-11-08 16:21:41 UTC):
+
+````text
+/speckit-specify Resolubilidad: antes de iniciar una partida, el programa determina si la cripta puede ganarse y, si no, explica por qué. Usa el esqueleto de la cripta y la ubicación de las llaves. (Fuente: Cripta Parte II §3.5, §4.2, §4.3, §5.4, §6.1, §7.3 y Apéndice B.)
+
+REGLAS DEL JUEGO
+Supuestos de la verificación:
+- El jugador puede atravesar cualquier salida abierta y cualquier salida cerrada cuya llave ya obtuvo.
+- Las llaves no se consumen.
+- Todo enemigo puede ser derrotado.
+- Una llave que suelta un enemigo se considera obtenible en la sala donde ese enemigo inicia, aunque el enemigo sea errante o se mueva después.
+- Las trampas y los cierres automáticos no bloquean: una puerta que se cierra sola puede volver a abrirse con la misma llave.
+- Cada cara de una puerta tiene su propio estado y su propia llave; se evalúa cada salida en el sentido en que se recorre.
+
+Resoluble: una cripta es resoluble si, partiendo de la sala inicial y bajo esos supuestos, el jugador puede obtener llave_salida y llegar a sala_salida a través de una puerta que la requiere.
+
+Resultado si es resoluble: un orden de obtención de llaves en el que cada llave aparece después de todas las llaves necesarias para alcanzarla. Si hay varios órdenes válidos, cualquiera sirve, pero debe ser determinista: dos ejecuciones sobre la misma cripta dan el mismo orden.
+
+Resultado si no es resoluble, el reporte indica:
+(a) las llaves que no pueden obtenerse;
+(b) las puertas de la frontera bloqueada, es decir, las puertas cerradas adyacentes a la región alcanzable, con la llave que requiere cada una;
+(c) dónde se encuentra cada una de esas llaves;
+(d) si una llave está ubicada detrás de puertas que solo ella abre, directamente o mediante una cadena de llaves, el ciclo concreto, de forma determinista.
+
+Inicio de partida: si la cripta no es resoluble, la partida no inicia y se muestra el reporte, salvo que se use la bandera --forzar. La bandera --verificar <cripta> ejecuta únicamente la verificación, sin instanciar la vista.
+
+CONTRATO DE DATOS
+- La ubicación de las llaves se obtiene con GET /criptas/<id>/llaves. Ejemplo: {"llaves": [{"id": "itm_llave_bronce", "sala": 4}, {"id": "itm_llave_negra", "sala": 12, "enemigo": "e-1203"}]}. Cuando existe el campo enemigo, la llave está en el campo suelta de esa instancia, y sala es la sala donde el enemigo inicia.
+- La consulta de llaves cuenta dentro de presupuesto_solicitudes, como toda solicitud.
+- La respuesta es válida mientras coincida la versión de la cripta y puede persistirse con el resto de los datos de la cripta.
+- Las fuentes en línea y sin conexión (--offline) entregan la misma ubicación de llaves para la misma versión de cripta.
+- Las criptas de la segunda parte tienen versiones nuevas: lo persistido por la primera parte se invalida mediante la validación de versión ya existente, no borrando archivos a mano.
+- El servicio publicará criptas no resolubles y en la revisión se usará una cripta nueva: ningún dato de una cripta concreta puede estar escrito en el código.
+
+INTERFAZ
+- El reporte de resolubilidad se puede ver al iniciar una partida.
+- --verificar muestra el reporte por la terminal, sin vista.
+
+RENDIMIENTO
+- La verificación toma menos de 200 ms en la cripta publicada más grande, sin red ni renderizado, medido con --bench.
+- El costo total crece aproximadamente de forma lineal con las salas, las salidas y las llaves: no se repite el recorrido completo de la cripta cada vez que se obtiene una llave.
+- La frontera bloqueada y las dependencias entre llaves salen del mismo recorrido, no de recorridos adicionales por cada llave.
+- --bench también mide la alternativa ingenua (repetir el recorrido por llave) con criptas sintéticas de muchas llaves encadenadas.
+
+ESCENARIOS DE ACEPTACIÓN (los cuatro del Apéndice B son obligatorios; incluye además los demás)
+1. llave_salida está detrás de la única puerta que ella misma abre: no resoluble; el reporte señala el ciclo.
+2. Una llave está en el campo suelta de un enemigo errante: la verificación la ubica en la sala inicial del enemigo.
+3. Existen varios órdenes válidos de obtención de llaves: dos ejecuciones producen el mismo orden.
+4. Cripta no resoluble sin --forzar: la partida no inicia y se muestra el reporte.
+5. Cadena de llaves (la llave A abre la zona con la llave B, y B abre la zona con llave_salida): el orden es A, B, llave_salida.
+6. Una puerta de la frontera necesita una llave que no aparece en la ubicación de llaves: la llave se reporta como no obtenible y la puerta como frontera bloqueada.
+7. Una llave suelta por un enemigo que inicia en una región inalcanzable: no se puede obtener y se reporta.
+8. Ciclo entre dos llaves (cada una detrás de la puerta que abre la otra): el reporte señala el ciclo concreto.
+9. Una puerta con cierre automático en el camino: no bloquea.
+10. Cripta no resoluble con --forzar: la partida inicia.
+11. --verificar no instancia la vista ni inicia una partida.
+12. Misma ubicación de llaves por la fuente en línea y por la fuente sin conexión.
+
+CASOS BORDE
+- Una llave abre varias puertas.
+- Una llave está en la sala inicial.
+- Una puerta cerrada sin llave asociada.
+- Una puerta que requiere una llave que no existe en la ubicación de llaves.
+- Una cripta con varios ciclos de dependencia.
+
+Todos los requisitos funcionales con identificador FR-xxx y cada escenario de aceptación con su requisito. No menciones estructuras de datos, clases ni módulos. Respeta la constitución. Registra este prompt en PROMPTS_LLM.md. y agregame este prompt al registro: ## Entrada 149
+- **Fecha:** 08/11/2026
+- **Herramienta:** Claude
+- **Prompt:** "ok hay que hacer el spec de esta feature" (feature de resolubilidad de la rama de trabajo; se pidió el texto de entrada para /speckit-specify a partir del enunciado de la Parte II)
+- **Uso:** redactar, desde §3.5, §4.2, §4.3, §5.4, §6.1, §7.3 y el Apéndice B del enunciado, el texto de entrada de /speckit-specify para resolubilidad (reglas de la verificación, contrato de GET /criptas/<id>/llaves, interfaz con --verificar y --forzar, límite de 200 ms y 12 escenarios de aceptación) y la lista de puntos que conviene aclarar con /speckit-clarify.
+````
+
+- **Nota:** el registro que se pidió agregar al final, con el encabezado "## Entrada 149", quedó en este archivo como la entrada 132.
+
 - **Uso:** specs/003-resolubilidad/spec.md con 5 historias (verificación y reporte, bloqueo de inicio con --forzar, --verificar, consulta de llaves, rendimiento), FR-001 a FR-036, SC-001 a SC-007, los 12 escenarios del enunciado (los 4 del Apéndice B marcados) y los 5 casos borde; checklist de calidad completa y .specify/feature.json apuntando a la nueva carpeta. Sin marcadores [NEEDS CLARIFICATION]; las decisiones por defecto quedan en Assumptions para /speckit-clarify.
 
 ## Entrada 134
@@ -1120,7 +1451,28 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 ## Entrada 136
 - **Fecha:** 08/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5)
-- **Prompt:** "Aplica estas correcciones a spec.md en un commit propio: 1) Corrige la contradicción entre FR-001 y la aclaración 1, FR-011 y los casos borde. Según el enunciado ("llegar a sala_salida a través de una puerta que la requiere"; Parte I §2.12), una cripta es resoluble si EXISTE un camino que entra a sala_salida por una salida que requiere llave_salida, aunque sala_salida también sea alcanzable por otro camino. [...] Agrega un escenario de aceptación: sala_salida alcanzable por dos caminos, uno por la puerta que requiere llave_salida => resoluble. 2) SC-001: cuenta los escenarios reales (11 + 4 + 3 + 6 + 3 = 27) y aclara que 4 son del Apéndice B. 3) SC-003: define la tolerancia numérica (al duplicar las llaves, el cociente de salidas examinadas es <= 2,5 en la verificación y >= 3,5 en la alternativa ingenua). 4) Assumption de códigos de salida: 1 = no resoluble difiere del 1 = fallo de --replay; documéntalo como decisión propia, no como seguimiento del uso actual. 5) Nueva Assumption: los paquetes sin conexión (datos_offline y el de pruebas) deben incluir la ubicación de llaves; sin ella, FR-029 y FR-031 exigen --forzar para jugar sin conexión. 6) Assumption sobre la tecla V: se coordina con el otro integrante del grupo para no chocar con las teclas de niebla, ir a y línea de tiempo. No cambies FR-014 ni FR-015. Registra el prompt en PROMPTS_LLM.md." Seguido de "y agregame este prompt" con el texto de la entrada 135.
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-11-08 16:52:35 UTC):
+
+````text
+Aplica estas correcciones a spec.md en un commit propio:
+1) Corrige la contradicción entre FR-001 y la aclaración 1, FR-011 y los casos borde. Según el enunciado ("llegar a sala_salida a través de una puerta que la requiere"; Parte I §2.12), una cripta es resoluble si EXISTE un camino que entra a sala_salida por una salida que requiere llave_salida, aunque sala_salida también sea alcanzable por otro camino. Es no resoluble solo si llave_salida no es obtenible o si ninguna salida que la requiere da acceso a sala_salida desde la región alcanzable (incluido el caso en que sala_salida solo se alcanza sin esa puerta). Actualiza FR-001, los motivos de FR-011, el caso borde "La sala de salida es alcanzable sin..." (sepáralo en dos casos), la Assumption "Definición de resoluble" y la aclaración 1 (deja registrada la corrección). Agrega un escenario de aceptación: sala_salida alcanzable por dos caminos, uno por la puerta que requiere llave_salida => resoluble.
+2) SC-001: cuenta los escenarios reales (11 + 4 + 3 + 6 + 3 = 27) y aclara que 4 son del Apéndice B.
+3) SC-003: define la tolerancia numérica (al duplicar las llaves, el cociente de salidas examinadas es <= 2,5 en la verificación y >= 3,5 en la alternativa ingenua).
+4) Assumption de códigos de salida: 1 = no resoluble difiere del 1 = fallo de --replay; documéntalo como decisión propia, no como seguimiento del uso actual.
+5) Nueva Assumption: los paquetes sin conexión (datos_offline y el de pruebas) deben incluir la ubicación de llaves; sin ella, FR-029 y FR-031 exigen --forzar para jugar sin conexión.
+6) Assumption sobre la tecla V: se coordina con el otro integrante del grupo para no chocar con las teclas de niebla, ir a y línea de tiempo.
+No cambies FR-014 ni FR-015. Registra el prompt en PROMPTS_LLM.md.
+
+ y agregame este prompt,
+
+Fecha: 08/11/2026
+Herramienta: Claude
+Prompt: “revisión a detalle del spec con sus observaciones aclaradas” (con spec.md de resolubilidad adjunto)
+Uso: revisar a detalle la spec de resolubilidad, corregir la contradicción en la definición de “resoluble”, señalar el bloqueo de los paquetes sin conexión y otros ajustes, y dar el prompt de corrección.
+````
+
+- **Nota:** el texto que se pidió agregar al final es el registro de la entrada 135.
+
 - **Uso:** primero se confirmó el estado de specify y clarify en su propio commit (33a4db8), para que la corrección quedara aparte (principio VII). Correcciones: FR-001 (basta con que exista un camino que entra por la salida que requiere llave_salida), FR-011 con dos motivos (a) y (b), el caso borde dividido en dos, Assumption de la definición y aclaración 1 con la corrección registrada, escenario 12 nuevo en la historia 1; SC-001 con 28 escenarios (12 + 4 + 3 + 6 + 3: los 27 contados más el escenario nuevo), 4 del Apéndice B; SC-003 con cocientes ≤ 2,5 y ≥ 3,5; códigos de salida como decisión propia; Assumptions nuevas de los paquetes sin conexión y de la coordinación de la tecla V. FR-014 y FR-015 sin cambios.
 
 ## Entrada 137
@@ -1138,19 +1490,68 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 ## Entrada 139
 - **Fecha:** 08/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5)
-- **Prompt:** "Ajusta el plan de resolubilidad sin cambiar las reglas de spec.md. Haz dos commits separados. Commit 1 (solo spec.md): revisa FR-033, FR-034 y SC-003. Si FR-034 dice "del mismo recorrido" sin más, reescríbelo [...]. Dime también si SC-003 mide salidas examinadas o tiempo, y alinea el plan con eso. Commit 2 (plan.md, research.md, data-model.md y quickstart.md): 1) R2 y R3: la marca entra_por_puerta_salida [...] Enlázalo con el escenario 12. 2) Paquetes sin llaves [...] Conserva ControladorJuego.iniciar(id) como camino sin verificación [...] Agrega una tarea explícita para regenerar datos_offline/ [...]. 3) Bench de referencia (R11): [...] "SIN DATOS" y no PASA. 4) Agrega una prueba de oráculo [...] unas 200 criptas pequeñas generadas con random.Random(semilla). 5) [...] tabla de los 28 escenarios [...]. 6) [...] posibles choques con las features de Pablo [...]. 7) Tecla V en partida cargada [...]. 8) Verifica en fabricaAplicacion.py la sintaxis real de --offline [...] Verifica que ordenamiento.mezcla y la comparación de HeapMinimo existan con esos nombres. No hagas push. Registra este prompt en PROMPTS_LLM.md." Seguido de "y agrega" con el texto de la entrada 138.
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-11-08 17:08:30 UTC):
+
+````text
+Ajusta el plan de resolubilidad sin cambiar las reglas de spec.md. Haz dos commits separados.
+
+Commit 1 (solo spec.md): revisa FR-033, FR-034 y SC-003. Si FR-034 dice "del mismo recorrido" sin más, reescríbelo para que diga que las dependencias y los ciclos se obtienen sin repetir el recorrido por cada llave (una sola pasada para todas las llaves, que puede continuar más allá de la frontera). Si ya dice algo equivalente, no cambies nada y dímelo. Dime también si SC-003 mide salidas examinadas o tiempo, y alinea el plan con eso.
+
+Commit 2 (plan.md, research.md, data-model.md y quickstart.md):
+1) R2 y R3: la marca entra_por_puerta_salida se pone al examinar una salida cerrada que requiere llave_salida, con esa llave ya obtenida y destino sala_salida, aunque sala_salida ya estuviera alcanzada por otro camino. Aplica al sacar la sala de la cola y al reexaminar puertas pendientes. Enlázalo con el escenario 12.
+2) Paquetes sin llaves: indica qué pasa con pruebas/datos/terreno_cazador y los demás paquetes de pruebas (agregarles llaves.json o usar un camino que no verifica). Conserva ControladorJuego.iniciar(id) como camino sin verificación para pruebas, bench y replays. Agrega una tarea explícita para regenerar datos_offline/ (requiere red; la corre el equipo).
+3) Bench de referencia (R11): si el paquete sin conexión no tiene llaves.json, imprime "SIN DATOS" y no PASA.
+4) Agrega una prueba de oráculo: comparar la verificación contra una versión ingenua en unas 200 criptas pequeñas generadas con random.Random(semilla).
+5) Agrega al plan la tabla de los 28 escenarios hacia su prueba y su marca H*.E*.
+6) Agrega una sección de posibles choques con las features de Pablo (último campo de EstadoVista, encabezado del log, teclas, numeración de DECISIONES.md).
+7) Tecla V en partida cargada: línea en la bitácora "Esta partida no tiene reporte de resolubilidad".
+8) Verifica en fabricaAplicacion.py la sintaxis real de --offline y corrige el quickstart si hace falta. Verifica que ordenamiento.mezcla y la comparación de HeapMinimo existan con esos nombres.
+No hagas push. Registra este prompt en PROMPTS_LLM.md.
+
+ y agrega
+
+Fecha: 08/11/2026
+Herramienta: Claude
+Prompt: “Adjunté plan.md, research.md, data-model.md y quickstart.md de resolubilidad; la carpeta contracts llegó vacía.”
+Uso: revisar el plan de resolubilidad, señalar correcciones previas a las tareas y dar el prompt de ajuste para Claude Code.
+````
+
+- **Nota:** el texto que se pidió agregar al final es el registro de la entrada 138.
+
 - **Uso:** commit 1 (254747e): FR-034 decía "del mismo recorrido que decide la resolubilidad, sin recorridos adicionales por cada llave"; se reescribió porque ese recorrido no entra a las salas no alcanzadas (frontera de la fase 1; dependencias y ciclos de una sola pasada que continúa más allá de la frontera). FR-033 y SC-003 no cambian; SC-003 mide salidas examinadas. Commit 2: marca entra_por_puerta_salida al examinar la salida aunque sala_salida ya esté alcanzada (H1.E12); revisión de paquetes: las tres criptas de terreno_cazador no son resolubles con FR-001, así que prueba_datos_costo usa forzar=True, y prueba_controlador y prueba_replay_menu reciben llaves.json; se conserva iniciar_nueva(id, semilla) (el nombre real) como camino sin verificación; regenerar datos_offline/ como tarea del equipo; SIN DATOS en el bench; oráculo R13; tabla de los 28 escenarios; choques con Pablo (el encabezado del log usa palabras de marca, no posiciones); V en partida cargada; --offline=CARPETA (con signo igual) y $LASTEXITCODE en el quickstart; ordenamiento.mezcla y HeapMinimo (compara con <) verificados. También se ajustaron contracts/registro.md, vista.md y linea-de-comandos.md para que coincidan.
 
 ## Entrada 140
 - **Fecha:** 08/11/2026
 - **Herramienta:** Claude
 - **Prompt:** "Commit 1, 254747e (solo spec.md). FR-034 no decía solo 'del mismo recorrido'... Commit 2, 979ad83. Incluye los cuatro archivos que pediste... Lo siguiente es /speckit-tasks."
+- **Nota:** el texto completo no se encontró: la conversación fue en Claude (web), de la que no queda copia en el repositorio ni en esta máquina; las partes con "..." quedan como se registraron.
 - **Uso:** revisar el reporte de ajustes del plan de resolubilidad y dar el texto para /speckit-tasks.
 
 ## Entrada 141
 - **Fecha:** 08/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-tasks`
-- **Prompt:** "Genera las tareas de resolubilidad con estas reglas: 1) Pruebas primero [...] 2) Una fase por historia, cada una termina con la suite en verde y un commit. H5.E1 salta con el mensaje "SIN DATOS" mientras datos_offline/ no tenga llaves. 3) Tarea temprana para el equipo: regenerar datos_offline/ [...] Tarea final: H5.E1 pasa a obligatorio. 4) Incluye la prueba de oráculo (R13), el bench con la alternativa ingenua (SC-003 por salidas examinadas) y los 200 ms de la cripta de referencia. 5) Tarea de conflicto con Pablo [...] 6) Última fase: README (V, --verificar, --forzar), DECISIONES.md con cifras reales del bench, PROMPTS_LLM.md al día. 7) Si al implementar surge algo que contradice la spec, la tarea dice parar y enmendar spec.md en un commit propio antes de seguir." Seguido de "y agrega" con el texto de la entrada 140.
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-11-08 17:17:57 UTC):
+
+````text
+Genera las tareas de resolubilidad con estas reglas:
+1) Pruebas primero: en cada historia, las pruebas (citando FR-xxx y la marca H*.E*) van antes del código y deben fallar antes de implementar.
+2) Una fase por historia, cada una termina con la suite en verde y un commit. H5.E1 salta con el mensaje "SIN DATOS" mientras datos_offline/ no tenga llaves.
+3) Tarea temprana para el equipo: regenerar datos_offline/ con las versiones nuevas y llaves.json (requiere red; extender guardar_respuestas.py antes). Tarea final: H5.E1 pasa a obligatorio.
+4) Incluye la prueba de oráculo (R13), el bench con la alternativa ingenua (SC-003 por salidas examinadas) y los 200 ms de la cripta de referencia.
+5) Tarea de conflicto con Pablo: después de git pull de main, revisar numeración de DECISIONES.md y PROMPTS_LLM.md, el último campo de EstadoVista, el encabezado del log y las teclas.
+6) Última fase: README (V, --verificar, --forzar), DECISIONES.md con cifras reales del bench, PROMPTS_LLM.md al día.
+7) Si al implementar surge algo que contradice la spec, la tarea dice parar y enmendar spec.md en un commit propio antes de seguir.
+
+ y agrega
+
+Fecha: 08/11/2026
+Herramienta: Claude
+Prompt: “Commit 1, 254747e (solo spec.md). FR-034 no decía solo ‘del mismo recorrido’... Commit 2, 979ad83. Incluye los cuatro archivos que pediste... Lo siguiente es /speckit-tasks.”
+Uso: revisar el reporte de ajustes del plan de resolubilidad y dar el texto para /speckit-tasks.
+````
+
+- **Nota:** el texto que se pidió agregar al final es el registro de la entrada 140.
+
 - **Uso:** specs/003-resolubilidad/tasks.md con 61 tareas en 8 fases: setup (línea base de 46, guardar_respuestas con llaves, T003 del equipo para regenerar datos_offline/, paquete pruebas/datos/resolubilidad), tipos y ayudas (DTO, resultado, apoyo y oráculo), US1, US4 (adelantada porque US2 y US3 necesitan la consulta), US2, US3, US5 y cierre (coordinación con Pablo, README, DECISIONES con cifras reales, PROMPTS, T061 H5.E1 obligatorio). Pruebas primero con tarea de confirmar que fallan, commit por fase y regla de parar y enmendar la spec. Se agregó la actualización de las seis implementaciones de FuenteDatos (FuenteLenta, FuenteMemoria y las falsas de prueba_1_4, 1_8 y 5_5). plan.md, research.md y quickstart.md pasan de "H5.E1 falla" a "H5.E1 salta con SIN DATOS".
 
 ## Entrada 142
@@ -1162,7 +1563,27 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 ## Entrada 143
 - **Fecha:** 08/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5)
-- **Prompt:** "Ajusta tasks.md sin cambiar nada más: 1) Mueve T057 (confirmar con Pablo las letras de niebla, ir a y línea de tiempo) a la Fase 1 como [EQUIPO], y que T038 dependa de ella. 2) Agrega, justo antes de la Fase 5, una tarea: git fetch y merge de main en la rama, resolver conflictos y suite en verde. T056 queda como segundo repaso. 3) En T027 agrega una prueba: jugar una partida resoluble corta, reproducir su log y comparar el estado final con el original; y guardar el binario antes y después de pulsar V en una partida cargada y comprobar que es idéntico. Si el aviso de bitácora rompe la igualdad, la tarea dice parar y decidir (sacarlo del estado serializado o mostrarlo desde la Vista). 4) En T030 agrega: la lista de pruebas que fallan debe ser exactamente T027, T028 y las tres de T029; si falla otra, se investiga antes de seguir. 5) En T003 y T061 agrega: después de regenerar datos_offline/, correr la suite completa y --bench --rapido, y documentar lo que cambie. Registra este prompt en PROMPTS_LLM.md. Haz un commit y no hagas push." Seguido de "y agrega" con el texto de la entrada 142.
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-11-08 17:29:26 UTC):
+
+````text
+Ajusta tasks.md sin cambiar nada más:
+1) Mueve T057 (confirmar con Pablo las letras de niebla, ir a y línea de tiempo) a la Fase 1 como [EQUIPO], y que T038 dependa de ella.
+2) Agrega, justo antes de la Fase 5, una tarea: git fetch y merge de main en la rama, resolver conflictos y suite en verde. T056 queda como segundo repaso.
+3) En T027 agrega una prueba: jugar una partida resoluble corta, reproducir su log y comparar el estado final con el original; y guardar el binario antes y después de pulsar V en una partida cargada y comprobar que es idéntico. Si el aviso de bitácora rompe la igualdad, la tarea dice parar y decidir (sacarlo del estado serializado o mostrarlo desde la Vista).
+4) En T030 agrega: la lista de pruebas que fallan debe ser exactamente T027, T028 y las tres de T029; si falla otra, se investiga antes de seguir.
+5) En T003 y T061 agrega: después de regenerar datos_offline/, correr la suite completa y --bench --rapido, y documentar lo que cambie.
+Registra este prompt en PROMPTS_LLM.md. Haz un commit y no hagas push.
+
+ y agrega
+
+Fecha: 08/11/2026
+Herramienta: Claude
+Prompt: “tasks.md de la feature resolubilidad (adjunto)”
+Uso: revisar las tareas de resolubilidad, señalar cinco ajustes y dar el prompt de corrección para Claude Code.
+````
+
+- **Nota:** el texto que se pidió agregar al final es el registro de la entrada 142.
+
 - **Uso:** tasks.md queda con 62 tareas renumeradas en orden de ejecución: la confirmación con Pablo pasa a T005 (fase 1, [EQUIPO]) y bloquea la tecla V (T040); la sincronización con main es T028, entre las fases 4 y 5, y T058 es el segundo repaso; T029 (antes T027) agrega el replay fiel de una partida resoluble y el binario idéntico antes y después de V, con la regla de parar y decidir; T032 (antes T030) exige que fallen exactamente cinco pruebas; T003 y T062 (antes T061) corren la suite y --bench --rapido y documentan los cambios. El commit incluye también las entradas 140 y 141 y el paso de "H5.E1 falla" a "salta" en plan.md, research.md y quickstart.md, de la generación de tareas.
 
 ## Entrada 144
@@ -1192,7 +1613,29 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 ## Entrada 148
 - **Fecha:** 08/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5)
-- **Prompt:** "Incorpora a tasks.md los hallazgos pendientes del análisis, sin cambiar spec.md. Un solo commit, sin push. - U1: el oráculo compara el resultado estructurado (veredicto, motivo, orden, no obtenibles, frontera y ciclos, convertidos a tuplas de Python) y no el texto [...] - U2: [...] verificar en RegistroArchivo si crear el objeto toca el disco; si lo toca, crearlo en iniciar_preparada. - R1: [...] plan alternativo [...] sin dar por cumplido SC-002. - G1: [...] el orden esperado no la deja última (FR-008). - G2: caso # borde: trampas (FR-005, FR-017) [...]. - L1: la prueba de --verificar en el mismo proceso captura SystemExit y lee su código. - L2: correr prueba_1_4, prueba_1_8 y prueba_5_5 justo después de cambiar las falsas y ServidorFalso. Actualiza referencias cruzadas y conteos si cambian. Registra este prompt en PROMPTS_LLM.md." Seguido de "y agrega" con el texto de la entrada 147.
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-11-08 17:42:47 UTC):
+
+````text
+Incorpora a tasks.md los hallazgos pendientes del análisis, sin cambiar spec.md. Un solo commit, sin push.
+- U1: el oráculo compara el resultado estructurado (veredicto, motivo, orden, no obtenibles, frontera y ciclos, convertidos a tuplas de Python) y no el texto, así no depende del formateador de la fase 3. El texto exacto lo cubre la prueba del reporte. Ajusta las tareas del oráculo y de su prueba, y sus dependencias.
+- U2: en la tarea de la pantalla de inicio/ControladorMenu, verificar en RegistroArchivo si crear el objeto toca el disco; si lo toca, crearlo en iniciar_preparada.
+- R1: en la tarea final de H5.E1 obligatorio, agregar el plan alternativo: si el servicio no publica /llaves al cierre, se documenta como pendiente en DECISIONES.md y se avisa al profesor, sin dar por cumplido SC-002.
+- G1: en la prueba de reglas, un caso donde llave_salida es alcanzable antes que otra llave y el orden esperado no la deja última (FR-008).
+- G2: caso # borde: trampas (FR-005, FR-017), comprobando que la verificación no pide contenido.
+- L1: la prueba de --verificar en el mismo proceso captura SystemExit y lee su código.
+- L2: correr prueba_1_4, prueba_1_8 y prueba_5_5 justo después de cambiar las falsas y ServidorFalso.
+Actualiza referencias cruzadas y conteos si cambian. Registra este prompt en PROMPTS_LLM.md.
+
+ y agrega
+
+Fecha: 08/11/2026
+Herramienta: Claude
+Prompt: informe completo de speckit-analyze de resolubilidad
+Uso: revisar el informe de analyze, decidir incorporar los hallazgos pendientes y dar el prompt de ajuste para Claude Code.
+````
+
+- **Nota:** el texto que se pidió agregar al final es el registro de la entrada 147.
+
 - **Uso:** tasks.md sin tareas nuevas (siguen 63; los conteos de la suite no cambian). U1: T010 devuelve tuplas sin clases del programa ni formateador, a_tuplas en apoyo_resolubilidad, T013 compara campo por campo, y se quitan el [P] de T010 y su dependencia del formateador; research.md R13 y plan.md al día. U2: T039 revisa RegistroArchivo antes de cambiar el flujo. R1: plan alternativo en T063. G1 y G2: casos borde en T011. L1: T043 captura SystemExit. L2: T020 corre prueba_falso_1_9 y prueba_errores_red, y T024 corre prueba_1_4, 1_8, 5_5 y falso_1_9. spec.md sin cambios.
 
 ## Entrada 149
@@ -1204,7 +1647,14 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 ## Entrada 150
 - **Fecha:** 08/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5)
-- **Prompt:** respuesta a la pregunta "¿Ya lo confirmó [Pablo, que sus features no usan la tecla V]?" → "Sí, V está libre".
+- **Prompt:** respuesta a una pregunta que hizo Claude Code (texto copiado de la transcripción, 2026-11-08 18:21:32 UTC):
+
+````text
+Pregunta: Para cerrar la fase 5 (US2) solo falta asignar la tecla V para abrir y cerrar el reporte de resolubilidad en la partida (T041), y la tarea T006 dice que eso requiere que Pablo confirme que sus features (niebla, ir a, línea de tiempo) no usan V. ¿Ya lo confirmó?
+Opciones: "Sí, V está libre" / "Usa V y se ajusta después" / "Pausa hasta confirmar"
+Respuesta: Sí, V está libre
+````
+
 - **Uso:** marcar T006 con la respuesta, asignar V en PantallaJuego (panel con reporte y verbo ver_resolubilidad sin reporte), agregar la fila al README y cerrar la fase 5.
 
 ## Entrada 151
@@ -1216,13 +1666,24 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 ## Entrada 152
 - **Fecha:** 08/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5)
-- **Prompt:** "Corrige el texto largo del reporte de resolubilidad en la Vista, sin cambiar spec.md ni el texto canónico (textoResolubilidad, contracts/reporte.md). Hoy hudJuego._armar_panel_resolubilidad recorta cada línea con _recortar y termina en "…", así que el ciclo largo se pierde. PantallaResolubilidad dibuja la línea completa y se sale del borde de la ventana. 1) Agrega una función pura de la Vista que parta una línea en varias filas según un máximo de caracteres, cortando en espacios, con sangría de continuación de dos espacios, sin perder texto. Debe devolver una ListaEnlazada (en cripta/ no se usa list). Úsala en el panel de V y en PantallaResolubilidad. 2) En el panel de V, si aun así no caben todas las filas, deja las flechas arriba/abajo y RePág/AvPág para desplazarlo, como en PantallaResolubilidad, y muestra la ayuda; el "…" queda solo como último recurso. 3) Pruebas en prueba_vista_resolubilidad: [...] 4) Verifica a mano a 1280x720 y en la ventana por defecto con el reporte de cripta-05 y anota el resultado. 5) Actualiza contracts/vista.md y DECISIONES.md (D80, solo lo agregado) y registra este prompt en PROMPTS_LLM.md. Un commit, sin push."
+- **Prompt:** texto completo, copiado de la transcripción de Claude Code (mensaje del 2026-11-08 21:38:52 UTC):
+
+````text
+Corrige el texto largo del reporte de resolubilidad en la Vista, sin cambiar spec.md ni el texto canónico (textoResolubilidad, contracts/reporte.md). Hoy hudJuego._armar_panel_resolubilidad recorta cada línea con _recortar y termina en "…", así que el ciclo largo se pierde. PantallaResolubilidad dibuja la línea completa y se sale del borde de la ventana.
+1) Agrega una función pura de la Vista que parta una línea en varias filas según un máximo de caracteres, cortando en espacios, con sangría de continuación de dos espacios, sin perder texto. Debe devolver una ListaEnlazada (en cripta/ no se usa list). Úsala en el panel de V y en PantallaResolubilidad.
+2) En el panel de V, si aun así no caben todas las filas, deja las flechas arriba/abajo y RePág/AvPág para desplazarlo, como en PantallaResolubilidad, y muestra la ayuda; el "…" queda solo como último recurso.
+3) Pruebas en prueba_vista_resolubilidad: con un reporte de una línea de 200 caracteres, el panel y la pantalla muestran el texto completo (la unión de las filas, sin la sangría, es la línea original) y ninguna fila supera el máximo; una prueba de la función pura con líneas cortas, largas y sin espacios.
+4) Verifica a mano a 1280x720 y en la ventana por defecto con el reporte de cripta-05 y anota el resultado.
+5) Actualiza contracts/vista.md y DECISIONES.md (D80, solo lo agregado) y registra este prompt en PROMPTS_LLM.md. Un commit, sin push.
+````
+
 - **Uso:** cripta/vista/partirLineas.py (partir_linea, partir_lineas y unir_filas; el espacio del corte queda al final de la fila anterior, así la unión reproduce la línea). estilo.ancho_caracter_mono mide el ancho real de la fuente monoespaciada. El panel de V parte las líneas, se desplaza con flecha arriba/abajo y RePág/AvPág mientras está abierto (sin Comando; al cerrarlo vuelve al principio y las flechas vuelven a mover) y muestra la ayuda "filas a-b de n". PantallaResolubilidad parte las líneas y desplaza por filas. prueba_vista_resolubilidad suma la función pura, la línea de 200 caracteres en el panel y en la pantalla y el desplazamiento: en 400x300, 42 filas de 9 caracteres con 2 visibles. A mano, con capturas a 1280x720 y 1024x720 del reporte de cripta-05: todo dentro del borde (cifras en D80). Suite 55/55. contracts/vista.md y D80 al día.
 
 ## Entrada 153
 - **Fecha:** 15/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-specify`
-- **Prompt:** "/speckit-specify Usa el número 002 y el nombre corto niebla-guerra (pasa -Number 002 -ShortName niebla-guerra al script). Capacidad: niebla de guerra y viaje automático «ir a» de la Parte II de Cripta (§3.3, §3.4, §5.3 y §7.3). [...]" (texto completo: reglas de sala explorada, avistada y desconocida, memoria de puertas, antorcha, conocimiento como estado del juego, comando de mapa conocido, reglas de «ir a» con costo 100 por defecto, desempate por la vecina de menor id, recálculo por paso, motivos de detención, comentario en partida.log y pergamino; los 6 escenarios obligatorios del Apéndice B; requisitos de rendimiento con 5 ms por paso; guardado con versión de formato; sin nombrar estructuras, clases ni módulos).
+- **Prompt:** "/speckit-specify Usa el número 002 y el nombre corto niebla-guerra (pasa -Number 002 -ShortName niebla-guerra al script). Capacidad: niebla de guerra y viaje automático «ir a» de la Parte II de Cripta (§3.3, §3.4, §5.3 y §7.3). [...]" (lo omitido, según el resumen que se registró entonces: reglas de sala explorada, avistada y desconocida, memoria de puertas, antorcha, conocimiento como estado del juego, comando de mapa conocido, reglas de «ir a» con costo 100 por defecto, desempate por la vecina de menor id, recálculo por paso, motivos de detención, comentario en partida.log y pergamino; los 6 escenarios obligatorios del Apéndice B; requisitos de rendimiento con 5 ms por paso; guardado con versión de formato; sin nombrar estructuras, clases ni módulos).
+- **Nota:** el texto completo no se encontró. Esta sesión la hizo el otro integrante en su máquina y no hay transcripción de ella en esta (las transcripciones de Claude Code de esta máquina son del 31/10 y 01/11, del 08/11 y del 17 y 18/11/2026, hora local, y ninguna es de esta sesión). Lo que queda arriba es lo que se registró en su momento; las partes omitidas están marcadas con [...] y no se completan para no inventar texto.
 - **Uso:** rama 002-niebla-guerra y specs/002-niebla-guerra/ con create-new-feature.ps1 (-Number 002 -ShortName niebla-guerra). spec.md con 6 historias (niebla y mapa conocido, memoria de puertas, «ir a», antorcha, pergamino/guardado/replay y rendimiento), 29 escenarios, FR-001 a FR-034 y SC-001 a SC-007, sin marcas NEEDS CLARIFICATION; supuestos propios: puertas de vecinas exploradas con antorcha "no observada", interrupción del viaje entre pasos, veneno detiene el viaje, formato anterior se reporta incompatible. checklists/requirements.md completo. Sin commit.
 
 ## Entrada 154
@@ -1240,7 +1701,8 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 ## Entrada 156
 - **Fecha:** 15/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-plan`
-- **Prompt:** "/speckit-plan Plan de la spec 002 niebla de guerra e «ir a». Sigue la constitución y sé coherente con lo que ya hizo la feature 001 (lee specs/001-terreno-cazador/plan.md y research.md). Orientación del equipo, a evaluar y justificar en research.md con alternativas: 1. Conocimiento del jugador como campos en los objetos que ya existen [...] 2. Todo cambio de conocimiento pasa por el Mutador [...] 3. Para el panel del mapa conocido, salas exploradas y avistadas en orden de id sin recorrer toda la cripta: mantener una colección propia ordenada que crece al explorar [...] 4. Ruta de «ir a»: Dijkstra desde la sala del jugador sobre el subgrafo conocido, con el HeapMinimo propio [...] Decide y justifica con mediciones si se comparte implementación con la búsqueda del cazador o se separa (§5.3) [...] 5. Ejecución del viaje: el Controlador da un paso por vuelta de su bucle [...] 6. Vista: un DTO inmutable del mapa conocido; panel con la letra M (libre) [...] Reserva H para la feature 004 (historia). Elige una letra libre para la interrupción manual. 7. Guardado: subir FORMATO_VERSION (hoy 2) [...] 8. Mediciones para --bench (§6.3 y §5.3) [...] Prohibido: dict, set, list de Python en cripta/, heapq, bisect, collections y bibliotecas de grafos. Registra este prompt en PROMPTS_LLM.md." (texto completo en el comando del 15/11/2026)
+- **Prompt:** "/speckit-plan Plan de la spec 002 niebla de guerra e «ir a». Sigue la constitución y sé coherente con lo que ya hizo la feature 001 (lee specs/001-terreno-cazador/plan.md y research.md). Orientación del equipo, a evaluar y justificar en research.md con alternativas: 1. Conocimiento del jugador como campos en los objetos que ya existen [...] 2. Todo cambio de conocimiento pasa por el Mutador [...] 3. Para el panel del mapa conocido, salas exploradas y avistadas en orden de id sin recorrer toda la cripta: mantener una colección propia ordenada que crece al explorar [...] 4. Ruta de «ir a»: Dijkstra desde la sala del jugador sobre el subgrafo conocido, con el HeapMinimo propio [...] Decide y justifica con mediciones si se comparte implementación con la búsqueda del cazador o se separa (§5.3) [...] 5. Ejecución del viaje: el Controlador da un paso por vuelta de su bucle [...] 6. Vista: un DTO inmutable del mapa conocido; panel con la letra M (libre) [...] Reserva H para la feature 004 (historia). Elige una letra libre para la interrupción manual. 7. Guardado: subir FORMATO_VERSION (hoy 2) [...] 8. Mediciones para --bench (§6.3 y §5.3) [...] Prohibido: dict, set, list de Python en cripta/, heapq, bisect, collections y bibliotecas de grafos. Registra este prompt en PROMPTS_LLM.md."
+- **Nota:** el texto completo no se encontró. Esta sesión la hizo el otro integrante en su máquina y no hay transcripción de ella en esta (las transcripciones de Claude Code de esta máquina son del 31/10 y 01/11, del 08/11 y del 17 y 18/11/2026, hora local, y ninguna es de esta sesión). Lo que queda arriba es lo que se registró en su momento; las partes omitidas están marcadas con [...] y no se completan para no inventar texto.
 - **Uso:** plan.md, research.md (R1 a R11), data-model.md, quickstart.md y contracts/ (partida-binaria.md, registro.md, vista.md) de 002-niebla-guerra. Mediciones previas con un script fuera del proyecto (Python 3.14.5, cripta de referencia de 300 salas y malla de 1024): consulta por campo 0,02 µs sin crecer frente a 0,38 a 10,9 µs de la búsqueda lineal; paso de «ir a» hacia adelante con parada, peor 0,65 ms en la referencia y 3,99 ms en la malla, frente a 0,65 y 7,47 ms hacia atrás con la fórmula del cazador, con el mismo primer paso en 899/899 pares. Decisiones: se aceptan los puntos 1, 2, 4 (buscador separado del cazador), 5, 6 (I para interrumpir), 7 (versión 3) y 8; se cambia el 3: la inserción ordenada cuesta O(conocidas) por sala revelada (18,6 µs con 300 frente a 0,9 µs) y contradice FR-033, así que el registro de conocidas es en orden de descubrimiento (agregar y quitar al final, O(1)) y se ordena con la mezcla propia solo al abrir el panel (0,33 ms con 300). Gate de la constitución en verde, sin enmiendas a la spec. Sin commit.
 
 ## Entrada 157
@@ -1271,6 +1733,7 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 - **Fecha:** 15/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "Ahora corrige tasks.md (y el contrato o research si hace falta) con estos hallazgos del análisis, y haz un commit llamado "Tareas 002: correcciones del análisis": - U1: en T009 el valor por defecto de la clase para conocidas es None, y T042 asigna un RegistroConocidas() nuevo antes de reconstruir. - O1: las viñetas de T034 que prueban el controlador [...] pasan a una tarea de prueba antes de T031; T034 se queda con el cursor del panel, saltar avistadas y Enter. - U2: T002 agrega un modo propio para el guardado de versión 2, con su propia comprobación, sin tocar el camino de versión 1. - C1: T024 también comprueba que la búsqueda de «ir a» no lee nada fuera del conocimiento (instrumentada, como dice R10). - I1: T039 usa las 1000 secuencias de T038 y en cada una guarda y carga en un punto elegido con la semilla [...]. - A1: decide que solo los comandos que cambian la partida (acciones, guardar, cargar, salir) detienen el viaje; los de presentación (M, Tab, O, L) no. Déjalo igual en T031, research R6 y contracts/vista.md. - A2: T044 reemplaza Mundo.sala y el iterador de conocidas por versiones que fallan si se llaman, y después consulta estado y recuerdo. - C2 y C3: agrega las viñetas que propone el análisis en T038, T012 y T019. - D1: los escenarios 4 y 11 de US3 se prueban en T023 con un mismo armado. Registra este prompt en PROMPTS_LLM.md."
+- **Nota:** el texto completo no se encontró. Esta sesión la hizo el otro integrante en su máquina y no hay transcripción de ella en esta (las transcripciones de Claude Code de esta máquina son del 31/10 y 01/11, del 08/11 y del 17 y 18/11/2026, hora local, y ninguna es de esta sesión). Lo que queda arriba es lo que se registró en su momento; las partes omitidas están marcadas con [...] y no se completan para no inventar texto.
 - **Uso:** tasks.md sin renumerar (siguen 54 tareas): T009 y T042 (U1); las pruebas del Controlador pasan a una sección "Controlador" de T023, antes de T031, y T034 queda con el cursor, las avistadas y Enter (O1); T002 con modo propio de la versión 2 (U2); T024 instrumentada (C1); T039 con las 1000 secuencias de T038 a través de `secuencias_sc003` en T003 (I1); T031 con la regla de A1, que incluye también `ver_resolubilidad` (V) entre los de presentación; T044 con `Mundo.sala` y `__iter__` que fallan (A2); viñetas de FR-010 en T038, FR-017 en T012 y FR-014 de la sala actual en T019 (C2, C3); escenarios 4 y 11 juntos en T023 (D1); tablas de escenarios y cobertura al día. research.md R6, contracts/vista.md y plan.md (Controlador y riesgo de guardar/cargar) con la misma regla de A1.
 
 ## Entrada 162
@@ -1318,7 +1781,8 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 ## Entrada 169
 - **Fecha:** 17/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-specify`
-- **Prompt:** "/speckit-specify Usa el número 004 y el nombre corto linea-tiempo (pasa -Number 004 -ShortName linea-tiempo al script). Crea la rama desde 002-niebla-guerra, porque la línea de tiempo muestra el mapa conocido de la feature 002. Capacidad: línea de tiempo de la Parte II de Cripta (§3.6, §5.5, §6.1, §6.3 y §7.3). [...]" (texto completo: estado en el instante t, historia <t> e historia #k con su resumen, consulta sin efectos, --replay --hasta, acciones revertidas fuera de la línea, puntos de control cada K con --checkpoint-cada, guardado con formato 4, tecla H; los 6 escenarios obligatorios del Apéndice B; 50 ms con 5000 acciones, memoria, ubicar el punto de control, recorte con el pergamino, --bench con tres valores de K y la alternativa sin puntos de control, y §5.6; sin nombrar estructuras, clases ni módulos).
+- **Prompt:** "/speckit-specify Usa el número 004 y el nombre corto linea-tiempo (pasa -Number 004 -ShortName linea-tiempo al script). Crea la rama desde 002-niebla-guerra, porque la línea de tiempo muestra el mapa conocido de la feature 002. Capacidad: línea de tiempo de la Parte II de Cripta (§3.6, §5.5, §6.1, §6.3 y §7.3). [...]" (lo omitido, según el resumen que se registró entonces: estado en el instante t, historia <t> e historia #k con su resumen, consulta sin efectos, --replay --hasta, acciones revertidas fuera de la línea, puntos de control cada K con --checkpoint-cada, guardado con formato 4, tecla H; los 6 escenarios obligatorios del Apéndice B; 50 ms con 5000 acciones, memoria, ubicar el punto de control, recorte con el pergamino, --bench con tres valores de K y la alternativa sin puntos de control, y §5.6; sin nombrar estructuras, clases ni módulos).
+- **Nota:** el texto completo no se encontró. Esta sesión la hizo el otro integrante en su máquina y no hay transcripción de ella en esta (las transcripciones de Claude Code de esta máquina son del 31/10 y 01/11, del 08/11 y del 17 y 18/11/2026, hora local, y ninguna es de esta sesión). Lo que queda arriba es lo que se registró en su momento; las partes omitidas están marcadas con [...] y no se completan para no inventar texto.
 - **Uso:** rama 004-linea-tiempo creada desde 002-niebla-guerra y specs/004-linea-tiempo/ con spec.md: 6 historias (consultar un instante, pergamino, --replay --hasta, guardado, tecla H, memoria y rendimiento), 27 escenarios, FR-001 a FR-026 y SC-001 a SC-007, sin marcas NEEDS CLARIFICATION. Supuestos propios: el pergamino gastado figura en los instantes anteriores; --replay --hasta muestra la historia tal como quedó con los pergaminos aplicados; H detiene un viaje «ir a» en curso; formato 4 y la versión 3 o anterior se reporta incompatible. checklists/requirements.md completo. Sin commit.
 
 ## Entrada 170
@@ -1336,7 +1800,8 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 ## Entrada 172
 - **Fecha:** 17/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5), `/speckit-plan`
-- **Prompt:** "/speckit-plan Plan de la spec 004 línea de tiempo. Sigue la constitución y sé coherente con 001, 002 y lo que ya existe: el Mutador y el Diario (pergamino de 5 acciones), PartidaBinaria (formato 3 de la 002) y ModoReplay. Orientación del equipo, a evaluar con alternativas y mediciones en research.md: 1. Puntos de control [...] con el mismo escritor de PartidaBinaria pero en memoria [...] 2. Reconstrucción: comparar (a) re-simular hacia adelante [...] (b) aplicar cambios registrados [...] (c) deshacer hacia atrás [...] preferir la opción con menos código nuevo, porque la entrega es el 18 de noviembre. 3. Instante t dentro de los eventos [...] 4. Ubicar el punto de control más cercano: estructura propia con costo sublineal [...] 5. Pergamino: recortar la cola [...] 6. Persistencia: FORMATO_VERSION 4 [...] 7. --replay … --hasta t y --checkpoint-cada K [...] 8. Ventana: tecla H [...] 9. Mediciones para --bench (benchLineaTiempo) [...] Prohibido: dict, set, list de Python en cripta/, heapq, bisect, collections, pickle y copy.deepcopy como sustituto de la estructura. Registra este prompt en PROMPTS_LLM.md." (texto completo en el comando del 17/11/2026)
+- **Prompt:** "/speckit-plan Plan de la spec 004 línea de tiempo. Sigue la constitución y sé coherente con 001, 002 y lo que ya existe: el Mutador y el Diario (pergamino de 5 acciones), PartidaBinaria (formato 3 de la 002) y ModoReplay. Orientación del equipo, a evaluar con alternativas y mediciones en research.md: 1. Puntos de control [...] con el mismo escritor de PartidaBinaria pero en memoria [...] 2. Reconstrucción: comparar (a) re-simular hacia adelante [...] (b) aplicar cambios registrados [...] (c) deshacer hacia atrás [...] preferir la opción con menos código nuevo, porque la entrega es el 18 de noviembre. 3. Instante t dentro de los eventos [...] 4. Ubicar el punto de control más cercano: estructura propia con costo sublineal [...] 5. Pergamino: recortar la cola [...] 6. Persistencia: FORMATO_VERSION 4 [...] 7. --replay … --hasta t y --checkpoint-cada K [...] 8. Ventana: tecla H [...] 9. Mediciones para --bench (benchLineaTiempo) [...] Prohibido: dict, set, list de Python en cripta/, heapq, bisect, collections, pickle y copy.deepcopy como sustituto de la estructura. Registra este prompt en PROMPTS_LLM.md."
+- **Nota:** el texto completo no se encontró. Esta sesión la hizo el otro integrante en su máquina y no hay transcripción de ella en esta (las transcripciones de Claude Code de esta máquina son del 31/10 y 01/11, del 08/11 y del 17 y 18/11/2026, hora local, y ninguna es de esta sesión). Lo que queda arriba es lo que se registró en su momento; las partes omitidas están marcadas con [...] y no se completan para no inventar texto.
 - **Uso:** plan.md, research.md (R1 a R10), data-model.md, quickstart.md y contracts/ (cli.md, vista.md, partida-binaria.md) de 004-linea-tiempo. Mediciones previas con scripts fuera del proyecto (cripta de referencia de 300 salas, 5000 acciones): acción 1,17 ms de mediana; punto de control de 57 KB, tomarlo 2,4 ms y restaurarlo 13 ms; restaurar + re-simular K acciones: 12 ms (K=10), 24 ms (K=25), 42,5 ms (K=50) y 88 ms (K=100); deshacer con el Diario 0,03 ms por acción con unos 70 cambios por acción. Decisiones: re-simular hacia adelante (menos código, exacto por determinismo), K = 25 por omisión, bloques en un arreglo por árbol propio, servicio de solo lectura con contenidos iniciales registrados, ajuste del pergamino para FR-008 y D50, formato 4. Hallazgo: la referencia de SC-002 y de las pruebas independientes de US1 y US3 no reproduce el pergamino gastado ni la regla D50; hay que corregir la spec en su propio commit antes de /speckit-tasks. Sin commit.
 
 ## Entrada 173
@@ -1361,6 +1826,7 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 - **Fecha:** 17/11/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "Sí, corrige todo en tasks.md y los contratos, sin tocar la spec, en un solo commit "Tareas 004: correcciones del análisis": - C1: T035 (o T031) agrega a prueba_4_4 la comprobación de que benchHistorial trae la tabla con la carga nueva y su veredicto, citando FR-025. - F1: en T026 la sección de la línea se escribe ANTES del índice de salas [...]; T025 agrega una prueba que verifica cuántos bytes lee cargar_sala con una línea grande. Actualiza contracts/partida-binaria.md. - F2: en T003 el oráculo en vivo también captura el estado después de cada instante de evento distinto [...]. - G1: agrega a T019 o T025 el caso SC-004 [...]. - F3: el punto de control lleva una bandera explícita con_linea (falso) [...]. - G2: en la prueba, K = 1 contra K = 25 en una partida de 500 acciones [...]. - G3: mantén las 1000 consultas de SC-002 y SC-004 [...]. - I1: anota en T031 [...]. - T1: anota en research R2 [...]. - G4: agrega a T025 el caso del pergamino justo después de cargar. Registra este prompt en PROMPTS_LLM.md."
+- **Nota:** el texto completo no se encontró. Esta sesión la hizo el otro integrante en su máquina y no hay transcripción de ella en esta (las transcripciones de Claude Code de esta máquina son del 31/10 y 01/11, del 08/11 y del 17 y 18/11/2026, hora local, y ninguna es de esta sesión). Lo que queda arriba es lo que se registró en su momento; las partes omitidas están marcadas con [...] y no se completan para no inventar texto.
 - **Uso:** tasks.md: T003 (oráculo también en cada instante de evento, F2), T019 (SC-004 con 1000 secuencias y tope propio si pasa de 120 s, G1 y G3), T025 (bytes que lee cargar_sala con una línea grande y pergamino justo después de cargar, F1 y G4), T026 (línea antes del índice y bandera con_linea, F1 y F3), T031 (K = 1 contra 25 en 500 acciones y nota de I1, G2), T035 (prueba de FR-025 en prueba_4_4, C1), T040 (topes propios, G3) y tablas de cobertura (FR-025 y SC-004). contracts/partida-binaria.md reescrito con la línea antes del índice y con_linea; data-model.md (con_linea en CopiadorEstado y Bloque); research.md R2 (T1) y R7 (orden del archivo). La spec no cambia.
 
 ## Entrada 177
@@ -1416,3 +1882,40 @@ Uso: analizar el fallo de prueba_rendimiento_cazador, señalar que P3 no pasa en
 - **Herramienta:** Claude Code (Claude Opus 5.5)
 - **Prompt:** "Revisa las secciones D71 a D97 de DECISIONES.md contra el §7.1 de la Parte II. En cada una agrega, sin inventar datos nuevos, lo que falte: una línea 'Alternativas', una línea 'Complejidad' (si no aplica, escribir por qué) y la línea 'Coincide con plan.md: sí/no; si no, qué medición motivó el cambio', sacándolo del plan.md, research.md y del propio código de esa feature. Solo agrega lo que falte y dime la lista de lo que añadiste. Un commit, sin push. Además: agrega en la tabla del inicio de DECISIONES.md las filas que falten de cada feature, por lo menos la 001 (terreno y cazador) y la 004 (línea de tiempo, D89 a D96), y revisa que la 002 y la 003 también tengan la suya. Revisa también D98 y D99 con el mismo criterio de §7.1. Al final corre la suite y prueba_reglas y muéstrame git log --oneline -5."
 - **Uso:** revisión de D71 a D99 con una matriz (Alternativas, Complejidad, coincidencia con el plan, enlace a spec.md y plan.md). Se agregaron solo las líneas que faltaban, sacadas de research.md, plan.md, data-model.md, tasks.md, el historial de git y el código de cada feature: 20 líneas 'Coincide con plan.md', 9 'Alternativas', 8 'Complejidad' y 14 enlaces a plan.md; D83, D89 a D96 y D99 ya decían si coincidían con el plan. Filas nuevas de 001 y 004 en la tabla del inicio. Rama cierre-parte-2, sin push.
+
+## Entrada 186
+- **Fecha:** 18/11/2026
+- **Herramienta:** Claude Code (Claude Opus 5.5)
+- **Prompt:** texto completo:
+
+````text
+Trabaja directamente en la rama main, sin crear ninguna rama nueva. Antes de empezar corre git status y git pull para confirmar que main está limpia y al día con origin. Cada punto lleva su propio commit en main y no hagas push. Después de cada punto corre py pruebas/ejecutar_pruebas.py y py pruebas/prueba_reglas.py; si alguna falla, arréglalo antes de pasar al siguiente punto. No cambies ninguna decisión ni ninguna regla; solo documentación, trazabilidad y la prueba del punto 7. Registra este prompt, con el texto completo, en PROMPTS_LLM.md, dentro del commit del punto 2.
+
+1) Constitución. La entrada 93 de PROMPTS_LLM.md está cortada ("Actúa como un Arquitecto...") y no hay ninguna entrada de /speckit-constitution, aunque §2.6 pide registrar cada comando de Spec Kit. Busca el texto completo de la 93 y la invocación real de /speckit-constitution en tus transcripciones (C:\Users\<usuario>\.claude\projects\*CRIPTA*\*.jsonl). Completa la 93 y agrega la entrada que falta SIN RENUMERAR (por ejemplo "Entrada 93-bis"), porque otros documentos citan números de entrada (specs/002-niebla-guerra/tasks.md:325 cita "entradas 156 a 165"). No inventes texto: si no aparece, dilo dentro de la entrada.
+
+2) Resto de PROMPTS_LLM.md. (a) Reemplaza el texto resumido por el prompt real, en las entradas 94, 104, 106, 124, 133, 136, 139, 141, 148, 152, 156 y 172, y en cualquier otra que diga "texto completo en..." o "[...]". (b) Donde una entrada dice 'Seguido de "y agrega" con el texto de la entrada N', deja cada entrada autocontenida. (c) La entrada 1 está repetida: deja una y anota la otra. (d) Agrega al inicio una nota con los saltos de numeración (4, 6, 14 y 15 de la Parte I) y cómo se sabe que no se registraron. Mismo criterio: no inventes.
+
+3) specs/003-resolubilidad/tasks.md: estas tareas no citan FR, SC ni principio, y §2.4 y §2.5 dicen que no puede haber tareas sin requisito: T001, T003, T014, T019, T020, T022, T028, T029, T033, T042, T044, T047, T049, T053, T056 y T058 a T062. Agrega a cada una el FR o SC que sostiene; si es de soporte, el principio de la constitución y el FR al que sirve. Haz lo mismo con T002 y T056 de specs/001-terreno-cazador/tasks.md (hoy solo citan un principio general): agrega el FR o SC al que sirven. Revisa también 002 y 004 y avísame si hay alguna sin cita; no las edites sin avisar.
+
+4) Cambio de comportamiento sin spec: enmienda specs/003-resolubilidad/spec.md con lo que introdujo 7ca2ab3 (el reporte partido en líneas y con desplazamiento, en el panel de V y en la pantalla de reporte). Commit solo de la spec, con mensaje que diga que la spec se actualiza después del código y por qué. Revisa además el commit 59dcbc5 (de la feature 004: el motivo de un pedido inválido se lee completo dentro del panel de Historia) y dime si cambia algo observable que la spec 004 no describa; no edites la spec 004, solo informa.
+
+5) DECISIONES.md, cifras viejas. D71 y D72 dicen "cripta de referencia (la de más salas de datos_offline, 50)" y "(50 salas"; hoy es la de 300 salas. D73 da enlazar() en 0,15 ms. Corre el bench de benchCazador otra vez y actualiza esas cifras sin cambiar las decisiones. Busca otras cifras o frases de la misma cripta de referencia en D71 a D99 y corrígelas con el mismo criterio. En Límites de D73 agrega que Mundo.sala es O(salas) y que enlazar() es O(salas²), con la medición en 300 y en 1024 salas.
+
+6) README.md: la línea 31 dice "Corre las 76 pruebas" y la suite tiene 77 (cuenta las de ejecutar_pruebas.py después de todos los cambios). Corrígelo y busca otros números de pruebas en README, DECISIONES.md y los tasks.
+
+7) prueba_vista_resolubilidad falla en Linux porque el paso 7 supone que el encabezado cabe en una fila y eso depende del ancho de la fuente. Haz que no dependa de la fuente (por ejemplo, comparar contra partir_linea(encabezado, maximo) como en el paso 8). Si no se puede, documéntalo en la prueba.
+
+8) En D78 o D79 agrega una nota de que 33a4db8 juntó specify y clarify en un solo commit, contra "un commit por fase" de la constitución, y por qué pasó. No reescribas el historial.
+
+9) cripta/vista/estadoVista.py:105: cambia el ejemplo "cripta-02" del comentario por uno genérico ("cripta-XX"). Confirma que la prueba de datos concretos sigue en verde.
+
+10) specs/001-terreno-cazador/spec.md: marca, sin cambiar reglas, los 7 casos del Apéndice B (los de terreno y cazador) que ya existen como escenarios, con "(Apéndice B)" junto al escenario. Commit solo de la spec.
+
+11) DECISIONES.md, límites de D80: agrega que en las 5 criptas de datos_offline la única sala de entrada a la sala de salida es la puerta cerrada con la llave de salida, así que la regla de victoria de partida.py (victoria al entrar a la sala de salida) y la del enunciado (§2.12 de la Parte I) coinciden con los datos publicados. Compruébalo leyendo datos_offline antes de escribirlo.
+
+12) DECISIONES.md: la "Nota sobre veneno y regeneración" quedó pegada al final de D99 y no pertenece a esa sección. Muévela a la sección donde corresponda (busca la decisión de efectos) o dale su propio título.
+
+Al final muestra git status, git log --oneline -20 y el resultado de la suite y de prueba_reglas. No hagas push; lo haré yo.
+````
+
+- **Uso:** doce correcciones de documentación y trazabilidad en main, sin cambiar decisiones ni reglas, con un commit por punto y sin push: PROMPTS_LLM.md (entrada 93 con nota, 93-bis de /speckit-constitution, textos reales desde las transcripciones de Claude Code, entradas autocontenidas, la entrada 1 repetida y los saltos de numeración), citas de FR, SC o principio en las tareas de 003 y 001, enmienda de la spec 003 por 7ca2ab3, cifras de la cripta de referencia en D71 a D99, número de pruebas del README, prueba_vista_resolubilidad sin depender de la fuente, nota de 33a4db8 en D78 o D79, comentario de estadoVista.py, marcas del Apéndice B en la spec 001, límites de D80 y la nota de veneno y regeneración en su lugar.
