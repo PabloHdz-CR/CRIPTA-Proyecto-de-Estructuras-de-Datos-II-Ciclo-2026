@@ -853,10 +853,18 @@ R: Tamaño pequeño O casi ordenado -> inserción; si no, mezcla (recomendada)"
 - **Uso:** Plantear el prompt para la generación del constitution.md por claude.
 
 ## Entrada 93
-Fecha: 31/10/2026
-Herramienta: Claude
-Prompt: “Actúa como un Arquitecto de Software Principal experto en Spec-Driven Development (SDD). Tu primera tarea es redactar la “Constitución del Proyecto”...”
-Uso: revisar el prompt de constitución propuesto contra el enunciado, señalar lo que falta y lo que choca con el proyecto, y entregar una versión combinada.
+- **Fecha:** 31/10/2026
+- **Herramienta:** Claude
+- **Prompt:** “Actúa como un Arquitecto de Software Principal experto en Spec-Driven Development (SDD). Tu primera tarea es redactar la “Constitución del Proyecto”...”
+- **Nota:** el texto completo de este prompt no se encontró. Quedó registrado cortado desde el commit que lo agregó (08f7829, 31/10/2026 17:53, hora local) y ninguna versión anterior del archivo lo tuvo entero. La conversación fue en Claude (web), no en Claude Code, así que tampoco está en las transcripciones de Claude Code de esta máquina (C:\Users\<usuario>\.claude\projects\*CRIPTA*\*.jsonl), ni en su historial (history.jsonl) ni en las copias de texto pegado (paste-cache). Lo único que se conserva es el comienzo de arriba.
+- **Uso:** revisar el prompt de constitución propuesto contra el enunciado, señalar lo que falta y lo que choca con el proyecto, y entregar una versión combinada.
+
+## Entrada 93-bis
+- **Fecha:** 31/10/2026
+- **Herramienta:** comando de spec-kit `/speckit-constitution` (spec-kit se inicializó para Claude Code en 1d02b67, 31/10/2026 16:36, hora local).
+- **Prompt:** no se encontró la invocación real. Lo que se sabe: la constitución 1.0.0 (ratificada el 2026-10-31) entró en el commit 08f7829 (31/10/2026 17:53, hora local), que reemplazó los marcadores de la plantilla de spec-kit ([CONSTITUTION_VERSION], [RATIFICATION_DATE] y los principios de ejemplo) en .specify/memory/constitution.md. La primera transcripción de Claude Code de esta máquina empieza el 31/10/2026 a las 17:59 (hora local), después de ese commit, y ni ella ni las demás, ni history.jsonl ni paste-cache, tienen un /speckit-constitution con texto. Por eso no se puede confirmar con qué texto se corrió (por ejemplo, si fue la versión combinada de la entrada 93).
+- **Uso:** generar .specify/memory/constitution.md 1.0.0 desde la plantilla de spec-kit (commit 08f7829). Se registra con el sufijo -bis para no renumerar: otros documentos citan números de entrada (por ejemplo, specs/002-niebla-guerra/tasks.md cita las entradas 156 a 165).
+
 ## Entrada 94
 - **Fecha:** 31/10/2026
 - **Herramienta:** Claude Code (Claude Opus 5.5), comando de spec-kit `/speckit-specify`
