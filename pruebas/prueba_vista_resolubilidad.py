@@ -186,9 +186,18 @@ try:
     pantalla = vista._pantalla_actual
     vista.actualizar()
     filas = list(pantalla.filas)
-    assert filas[0] == "Cripta c (versión v): NO RESOLUBLE"
-    comprobar_filas(filas[1:], pantalla.maximo_caracteres, LINEA_LARGA)
-    assert len(filas) > 2, "la línea larga debía partirse"
+    # No se supone que el encabezado quepa en una fila: el máximo de
+    # caracteres sale del ancho real de la fuente monoespaciada, que cambia
+    # con el sistema (en Linux el encabezado puede partirse). Se compara con
+    # partir_linea con el mismo máximo, como en el paso 8.
+    encabezado = "Cripta c (versión v): NO RESOLUBLE"
+    maximo = pantalla.maximo_caracteres
+    cuantas = len(partir_linea(encabezado, maximo))
+    comprobar_filas(filas[:cuantas], maximo, encabezado)
+    comprobar_filas(filas[cuantas:], maximo, LINEA_LARGA)
+    assert len(filas) - cuantas == len(partir_linea(LINEA_LARGA, maximo)), (maximo, filas)
+    if len(LINEA_LARGA) > maximo:
+        assert len(filas) - cuantas > 1, "la línea larga debía partirse"
 
     # 8. Texto largo en el panel de V: completo, dentro del ancho y con
     # desplazamiento; las flechas no mueven al jugador mientras está abierto.
