@@ -22,11 +22,13 @@ py -m pip install -r requirements.txt
 | `py main.py --offline` | Juega con los datos de `datos_offline/` (sin red). |
 | `py main.py` | Juega contra el API real (gasta solicitudes del presupuesto). |
 | `py main.py --replay partidas/<cripta>.log` | Reproduce un log en la terminal y verifica que sea fiel. |
+| `py main.py --replay partidas/<cripta>.log --hasta T` | Reproduce el log y además imprime el estado del instante T (el mismo resumen que la tecla H). Si la partida terminó antes de T, muestra el estado final y lo dice. `--hasta` sin `--replay` o con un T que no es un entero ≥ 0 termina con código 2. |
+| `py main.py --checkpoint-cada K` | Acciones entre puntos de control de la línea de tiempo (entero ≥ 1; 25 por defecto). También sirve con `--replay`. |
 | `py main.py --verificar <cripta>` (con `--offline` o `--offline=CARPETA`) | Solo verifica si la cripta se puede ganar: imprime el reporte y sale con 0 (resoluble), 1 (no resoluble) o 2 (no se pudo verificar). No abre la ventana ni crea partida. |
 | `py main.py --forzar` | Permite jugar una cripta no resoluble (o que no se pudo verificar) después de ver su reporte. |
 | `py main.py --bench` (o `--bench --rapido`) | Mide las estructuras (§5.3). |
 | `py main.py --cache-size N` | Cambia el tope de fichas en memoria (25 por defecto). |
-| `py pruebas/ejecutar_pruebas.py` | Corre las 67 pruebas sin red. Las `prueba_real_*` usan el API real (gastan presupuesto) y se corren aparte. |
+| `py pruebas/ejecutar_pruebas.py` | Corre las 76 pruebas sin red. Las `prueba_real_*` usan el API real (gastan presupuesto) y se corren aparte. |
 | `py pruebas/prueba_reglas.py` | Verifica las reglas del proyecto sobre `cripta/`. |
 | `py main.py --offline=pruebas/datos/terreno_cazador` | Juega con el paquete de prueba de terreno y cazador (costos de salida y un cazador). |
 | `py -m cripta.controlador.bench.benchCazador` (o `--rapido`) | Mide el cazador: ciclo con 20, 50 y 100 cazadores, política de cota y salas examinadas. |
@@ -71,7 +73,7 @@ En Windows se usa `py`; `python` puede abrir la Microsoft Store.
 | V | Mostrar / ocultar el reporte de resolubilidad (orden de llaves) |
 | M | Mostrar / ocultar el mapa conocido; con el mapa abierto, flecha arriba/abajo eligen una sala explorada, **ENTER** viaja a ella («ir a») y RePág/AvPág desplazan |
 | I | Detener el viaje «ir a» en curso |
-| H | Reservada para la línea de tiempo (feature 004) |
+| H | Consultar la línea de tiempo: escribe un instante (`120`) o un número de acción (`#3`), **ENTER** consulta, flechas y RePág/AvPág desplazan el resumen y **ESC** vuelve. Con un viaje en curso, primero lo detiene |
 | ESC | Volver al menú (lo no guardado se descarta) |
 
 Al elegir objetivo: flecha arriba/abajo, ENTER confirma y ESC cancela.
@@ -167,11 +169,30 @@ Especificación, plan y tareas en `specs/002-niebla-guerra/`.
 - **Log.** Cada orden queda como una línea `# IR_A <id>` y cada paso como un
   `MOVER`; `--replay` salta los comentarios.
 
-## Archivos que genera el juego
+## Línea de tiempo
+
+Especificación, plan y tareas en `specs/004-linea-tiempo/`.
+
+- **Qué muestra.** El estado de la partida en cualquier instante pasado:
+  reloj, sala, vida y estadísticas, inventario, efectos, enemigos de esa sala
+  con su vida y el mapa conocido en ese momento. `historia 120` es el estado
+  después de todos los eventos con tiempo ≤ 120 (si a 120 le toca una
+  decisión tuya, justo antes de tomarla); `historia #3`, justo antes de tu
+  acción número 3 (cada paso de «ir a» cuenta como una acción).
+- **Solo mira.** Consultar no gasta tiempo, no va a `partida.log`, no cambia
+  la partida ni lo que puede deshacer el pergamino. Un instante posterior al
+  reloj actual se rechaza con el motivo.
+- **Pergamino.** Lo que deshaces con un pergamino deja de existir en la
+  línea: la línea es la historia tal como quedó.
+- **Puntos de control.** Cada K acciones (`--checkpoint-cada K`, 25 por
+  defecto) se guarda una copia completa del estado; una consulta parte de la
+  copia más cercana y vuelve a simular como mucho K acciones.
+- **Guardar y cargar** conservan la línea completa (formato de guardado 4).
+
 
 No se suben al repositorio (están en `.gitignore`):
 
-- `guardados/<cripta>.bin`: la partida guardada de cada cripta (formato binario propio, §4.10). Se borra al ganar o morir la partida que lo usó. Desde niebla de guerra el formato es la **versión 3** (guarda, además del costo de cada salida de la versión 2, el conocimiento de cada sala y el recuerdo de cada puerta): **un guardado de un formato anterior (1 o 2) se reporta incompatible y no se migra**; hay que empezar una partida nueva de esa cripta.
+- `guardados/<cripta>.bin`: la partida guardada de cada cripta (formato binario propio, §4.10). Se borra al ganar o morir la partida que lo usó. Desde la línea de tiempo el formato es la **versión 4** (además del costo de cada salida de la versión 2 y el conocimiento de cada sala y el recuerdo de cada puerta de la versión 3, guarda la línea de tiempo completa): **un guardado de un formato anterior (1, 2 o 3) se reporta incompatible y no se migra**; hay que empezar una partida nueva de esa cripta.
 - `partidas/<cripta>.log`: el log de la partida en curso; `partidas/historial/`: un log archivado por partida terminada, para el replay.
 - `puntajes.jsonl`: la tabla de puntajes.
 - `fichas_guardadas/`: copia en disco de las fichas del catálogo, para no volver a pedirlas a la red, y en `fichas_guardadas/llaves/` la ubicación de llaves de cada cripta con su versión.

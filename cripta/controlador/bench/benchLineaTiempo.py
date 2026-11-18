@@ -14,7 +14,7 @@ jugador sin daño letal para llegar a miles de acciones (solo para medir):
   3. Ubicar el bloque de un instante: búsqueda binaria en el ArregloArbol
      contra búsqueda lineal, con 10² a 10⁵ bloques.
   4. Recorte con el pergamino según el largo de la historia.
-  5. Tomar, restaurar y tamaño de un punto de control.
+  5. Tamaño y tiempo de un punto de control y del guardado del formato 4.
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ import tracemalloc
 
 from ...adaptadores.almacenLocalDisco import AlmacenLocalDisco
 from ...adaptadores.fuenteOffline import FuenteOffline
-from ...adaptadores.partidaBinaria import CopiadorBinario
+from ...adaptadores.partidaBinaria import CopiadorBinario, PartidaBinaria
 from ...modelo.datos.cacheFichas import CacheFichas
 from ...modelo.datos.fuenteAsincrona import FuenteAsincrona
 from ...modelo.datos.servicioDatos import ServicioDatos
@@ -219,19 +219,21 @@ def _tabla_recorte(reporte, servicio, rapido):
                   ("acciones", "entradas y bloques tocados", "µs"), filas)
 
 
-def _tabla_punto_control(reporte, servicio):
+def _tabla_punto_control(reporte, servicio, acciones):
+    """Un punto de control (sin la línea) y el guardado del formato 4 de una
+    partida de 'acciones' acciones (con la línea completa, T033 punto 5)."""
     filas = ListaEnlazada()
-    copiador = CopiadorBinario()
-    partida, _ = _partida(servicio, K_POR_OMISION, 200)
-    inicio = time.perf_counter()
-    datos = copiador.tomar(partida)
-    tomar = (time.perf_counter() - inicio) * 1000
-    inicio = time.perf_counter()
-    copiador.restaurar(datos, servicio)
-    restaurar = (time.perf_counter() - inicio) * 1000
-    filas.agregar_al_final((f"{len(datos) // 1024}", f"{tomar:.1f}", f"{restaurar:.1f}"))
-    reporte.tabla("5. Un punto de control (estado completo en bytes)",
-                  ("KiB", "tomar ms", "restaurar ms"), filas)
+    partida, _ = _partida(servicio, K_POR_OMISION, acciones)
+    for nombre, con_linea in (("punto de control", False), ("guardado formato 4", True)):
+        inicio = time.perf_counter()
+        datos = PartidaBinaria.a_bytes(partida, con_linea=con_linea)
+        escribir = (time.perf_counter() - inicio) * 1000
+        inicio = time.perf_counter()
+        PartidaBinaria.desde_bytes(datos, servicio)
+        leer = (time.perf_counter() - inicio) * 1000
+        filas.agregar_al_final((nombre, f"{len(datos) // 1024}", f"{escribir:.1f}", f"{leer:.1f}"))
+    reporte.tabla(f"5. Punto de control y guardado con la línea ({acciones} acciones, K = "
+                  f"{K_POR_OMISION})", ("qué", "KiB", "escribir ms", "leer ms"), filas)
 
 
 def ejecutar(reporte=None, rapido=False):
@@ -246,7 +248,7 @@ def ejecutar(reporte=None, rapido=False):
     _tabla_adelante_atras(reporte, servicio, 300 if rapido else 1000)
     _tabla_busqueda(reporte, rapido)
     _tabla_recorte(reporte, servicio, rapido)
-    _tabla_punto_control(reporte, servicio)
+    _tabla_punto_control(reporte, servicio, acciones)
     return reporte
 
 

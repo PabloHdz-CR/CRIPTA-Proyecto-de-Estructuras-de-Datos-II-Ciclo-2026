@@ -717,12 +717,7 @@ class HudJuego:
         resumen = getattr(self._estado, "historia", None)
         if resumen is None:
             return
-        lineas = ListaEnlazada()
-        if resumen.aviso:
-            lineas.agregar_al_final(resumen.aviso)
-        for linea in resumen.lineas:
-            lineas.agregar_al_final(linea)
-        filas = partir_lineas(lineas, maximo)
+        filas = partir_lineas(resumen.lineas, maximo)    # el aviso, si hay, ya va al final
         self._filas_historia = filas
         primera_y = y - 26
         ultima_y = abajo + 30
